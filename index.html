@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HJY STORE</title>
+    <meta
+      name="description"
+      content="متجر HJY STORE لعرض المنتجات ديناميكياً من ملفات CSV و TXT داخل المستودع."
+    />
+    <link rel="icon" href="./root/logo.png" />
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar glass">
+        <div class="container topbar-inner">
+          <a class="brand" href="#home" aria-label="HJY STORE">
+            <div class="brand-logo" id="brandLogo">HJY</div>
+            <div>
+              <strong>HJY STORE</strong>
+              <span>متجر ذكي يقرأ الملفات مباشرة من المستودع</span>
+            </div>
+          </a>
+
+          <form class="searchbar" id="searchForm" autocomplete="off">
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="ابحث بالاسم أو الوصف..."
+              aria-label="بحث عن المنتجات"
+            />
+            <button class="primary-btn" type="submit">بحث</button>
+            <div class="search-suggestions hidden" id="searchSuggestions"></div>
+          </form>
+
+          <button class="cart-trigger" id="cartTrigger" type="button">
+            <span>السلة</span>
+            <strong id="cartCount">0</strong>
+          </button>
+        </div>
+      </header>
+
+      <main id="home">
+        <section class="hero">
+          <div class="container hero-grid">
+            <div class="hero-copy">
+              <span class="eyebrow">HJY STORE</span>
+              <h1>واجهة متجر مرنة تقرأ ملفاتك تلقائياً</h1>
+              <p id="heroDescription">
+                يتم بناء الأقسام والمنتجات والأسئلة الشائعة تلقائياً من ملفات
+                <code>CSV</code> و <code>TXT</code> داخل المستودع.
+              </p>
+              <div class="hero-actions">
+                <a class="primary-btn" href="#catalog">تصفح المنتجات</a>
+                <a class="secondary-btn" href="#faq">الأسئلة الشائعة</a>
+              </div>
+              <div class="hero-pills" id="heroPills"></div>
+            </div>
+            <div class="hero-card glass">
+              <div class="hero-card-row">
+                <span>الحالة</span>
+                <strong id="dataState">جاري التحميل...</strong>
+              </div>
+              <div class="hero-card-row">
+                <span>عدد المنتجات</span>
+                <strong id="productCount">0</strong>
+              </div>
+              <div class="hero-card-row">
+                <span>عدد الأقسام</span>
+                <strong id="categoryCount">0</strong>
+              </div>
+              <div class="hero-card-row">
+                <span>آخر مزامنة</span>
+                <strong id="manifestDate">---</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="container status-strip">
+          <div class="status-card glass">
+            <strong>هيكلية صديقة لـ GitHub</strong>
+            <span>
+              أي تعديل على ملفات <code>csv/txt/images</code> يتم التقاطه عبر
+              ملف <code>manifest</code> المولد تلقائياً.
+            </span>
+          </div>
+          <div class="status-card glass">
+            <strong>الأسعار</strong>
+            <span>
+              السعر المشطوب = سعر تسويقي وهمي أعلى 15%، والسعر الحالي هو السعر
+              الأصلي من ملف البيانات.
+            </span>
+          </div>
+          <div class="status-card glass">
+            <strong>الصور</strong>
+            <span>
+              يتم البحث أولاً باسم <code>code</code> داخل مجلد
+              <code>photo</code> ثم حسب حقل <code>photo</code>.
+            </span>
+          </div>
+        </section>
+
+        <section class="container featured-sections" id="featuredSections"></section>
+
+        <section class="container section-head" id="catalog">
+          <div>
+            <span class="eyebrow">الكتالوج</span>
+            <h2>جميع المنتجات</h2>
+          </div>
+          <div class="catalog-tools">
+            <select id="categoryFilter" class="select-control">
+              <option value="all">كل الأقسام</option>
+            </select>
+            <button type="button" class="secondary-btn" id="clearSearch">
+              مسح البحث
+            </button>
+          </div>
+        </section>
+
+        <section class="container">
+          <div class="catalog-grid" id="catalogGrid"></div>
+          <div class="empty-state hidden" id="catalogEmpty">
+            <strong>لا توجد منتجات مطابقة حالياً</strong>
+            <span>
+              أضف ملفات البيانات داخل <code>data</code> أو غيّر كلمات البحث.
+            </span>
+          </div>
+        </section>
+
+        <section class="container section-head" id="faq">
+          <div>
+            <span class="eyebrow">معلومات</span>
+            <h2>الأسئلة الشائعة وتفاصيل كاملة</h2>
+          </div>
+        </section>
+
+        <section class="container info-section">
+          <div class="info-tabs" id="objectTabs"></div>
+          <article class="info-panel glass" id="objectContent">
+            قريباً
+          </article>
+        </section>
+
+        <section class="container section-head" id="footerInfo">
+          <div>
+            <span class="eyebrow">محتوى إضافي</span>
+            <h2>روابط ونصوص تعريفية</h2>
+          </div>
+        </section>
+
+        <section class="container info-section">
+          <div class="info-tabs" id="aboutTabs"></div>
+          <article class="info-panel glass" id="aboutContent">قريباً</article>
+        </section>
+      </main>
+    </div>
+
+    <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+      <div class="cart-header">
+        <div>
+          <span class="eyebrow">السلة</span>
+          <h3>إتمام الطلب</h3>
+        </div>
+        <button class="icon-btn" id="closeCart" type="button" aria-label="إغلاق">
+          x
+        </button>
+      </div>
+
+      <div class="cart-body">
+        <div class="cart-list" id="cartList"></div>
+
+        <div class="empty-state hidden" id="cartEmpty">
+          <strong>السلة فارغة</strong>
+          <span>ابدأ بإضافة المنتجات ليظهر ملخص الطلب هنا.</span>
+        </div>
+
+        <div class="order-summary glass">
+          <div class="summary-row">
+            <span>إجمالي قبل العروض</span>
+            <strong id="cartOriginalTotal">0 $</strong>
+          </div>
+          <div class="summary-row">
+            <span>إجمالي الخصومات</span>
+            <strong id="cartDiscountTotal">0 $</strong>
+          </div>
+          <div class="summary-row total">
+            <span>الإجمالي النهائي</span>
+            <strong id="cartFinalTotal">0 $</strong>
+          </div>
+        </div>
+
+        <form class="checkout-form glass" id="checkoutForm">
+          <label>
+            الاسم
+            <input type="text" id="customerName" placeholder="اسم العميل" />
+          </label>
+          <label>
+            رقم التواصل
+            <input type="text" id="customerPhone" placeholder="رقم الهاتف" />
+          </label>
+          <label>
+            العنوان أو الملاحظة
+            <textarea
+              id="customerNote"
+              rows="4"
+              placeholder="العنوان، المدينة، أو أي ملاحظة إضافية"
+            ></textarea>
+          </label>
+
+          <div class="checkout-note" id="checkoutNote">
+            ربط الإرسال المباشر إلى تيليغرام يحتاج وسيط آمن لحماية المفتاح.
+            حالياً يتم تجهيز رسالة الطلب لسهولة ربطها لاحقاً.
+          </div>
+
+          <button class="primary-btn block-btn" type="submit">
+            تجهيز رسالة الطلب
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <div class="overlay hidden" id="overlay"></div>
+
+    <dialog class="product-modal" id="productModal">
+      <button class="icon-btn modal-close" id="closeProductModal" type="button">
+        x
+      </button>
+      <div class="product-modal-grid">
+        <div>
+          <div class="modal-image-frame">
+            <img id="modalMainImage" alt="" />
+          </div>
+          <div class="modal-thumbs" id="modalThumbs"></div>
+        </div>
+        <div class="modal-copy">
+          <span class="eyebrow" id="modalCode"></span>
+          <h3 id="modalTitle">---</h3>
+          <div class="price-line" id="modalPriceLine"></div>
+          <p class="modal-about1" id="modalAbout1"></p>
+          <div class="discount-box hidden" id="modalDiscounts"></div>
+          <div class="modal-about2" id="modalAbout2"></div>
+          <div class="modal-actions">
+            <div class="qty-box">
+              <button type="button" data-qty-action="inc">+</button>
+              <input type="number" id="modalQuantity" min="1" value="1" />
+              <button type="button" data-qty-action="dec">-</button>
+            </div>
+            <button class="primary-btn" type="button" id="modalAddToCart">
+              إضافة إلى السلة
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <template id="productCardTemplate">
+      <article class="product-card glass">
+        <div class="product-image-wrap">
+          <img class="product-image" alt="" loading="lazy" />
+          <button class="quick-view" type="button">تفاصيل</button>
+        </div>
+        <div class="product-content">
+          <span class="product-code"></span>
+          <h3 class="product-name"></h3>
+          <p class="product-about1"></p>
+          <div class="price-line product-price"></div>
+          <div class="discount-box hidden product-discounts"></div>
+          <div class="card-actions">
+            <button class="secondary-btn details-btn" type="button">عرض</button>
+            <button class="primary-btn add-btn" type="button">إضافة</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <template id="sliderSectionTemplate">
+      <section class="slider-section">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow section-tag"></span>
+            <h2 class="section-title"></h2>
+          </div>
+          <div class="slider-nav">
+            <button type="button" class="icon-btn slider-prev">&#8249;</button>
+            <button type="button" class="icon-btn slider-next">&#8250;</button>
+          </div>
+        </div>
+        <div class="slider-track-wrap">
+          <div class="slider-track"></div>
+        </div>
+      </section>
+    </template>
+
+    <script src="./scripts/app.js" defer></script>
+  </body>
+</html>

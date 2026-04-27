@@ -3,132 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HJY.co</title>
-    <!-- CSS Links -->
+    <title>HJY.co Store</title>
+    <link rel="icon" href="./root/logo.webp">
+    <!-- CSS -->
     <link rel="stylesheet" href="./styles/main.css">
-    <!-- Meta for Mobile -->
-    <meta name="theme-color" content="#009688">
-    <!-- Excel Support -->
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <meta name="theme-color" content="#009688">
 </head>
 <body>
 
-    <!-- Top Loading Bar -->
+    <!-- Loading Bar -->
     <div id="loadingBar" class="loading-bar"></div>
 
-    <header class="site-header">
-        <div class="container header-inner">
-            <div class="header-top">
-                <div class="logo-area" id="brandLogo">
-                    <img src="./root/LOGO.WEBP" alt="HJY STORE" onerror="this.src='./root/logo.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='block';};">
-                    <h1 class="logo-text" style="display: none;">HJY STORE</h1>
+    <!-- Header Section -->
+    <header class="topbar">
+        <div class="container topbar-inner">
+            <!-- Left: Search & Filters -->
+            <div class="controls">
+                <div class="search-wrap">
+                    <div class="search">
+                        <input type="text" id="searchInput" placeholder="ابحث عن منتجات...">
+                        <span class="search-icon">🔍</span>
+                    </div>
                 </div>
-                
-                <div class="header-actions">
-                    <button class="cart-btn" id="cartTrigger">
-                        <span class="count" id="cartCount">0</span>
-                        <span class="cart-icon">🛒</span>
-                        <span class="cart-label">السلة</span>
-                    </button>
+                <div class="filters">
+                    <select id="sortFilter" class="select-filter">
+                        <option value="default">افتراضي</option>
+                        <option value="high">أعلى سعر</option>
+                        <option value="low">أقل سعر</option>
+                    </select>
+                    <div class="view-modes">
+                        <button class="view-btn active" data-view="grid" title="شبكي م">🔲</button>
+                        <button class="view-btn" data-view="list" title="قائمة">≡</button>
+                        <button class="view-btn" data-view="compact" title="شبكي مضغوط">▦</button>
+                        <button class="view-btn" data-view="brief" title="مختصر">▫</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="header-bottom">
-                <div class="search-box">
-                    <form id="searchForm" onsubmit="return false;">
-                        <input type="text" id="searchInput" placeholder="ابحث عن المنتجات (اسم، كود، وصف)...">
-                        <button class="search-btn">🔍</button>
-                    </form>
+            <!-- Right: Logo & Name -->
+            <div class="brand">
+                <div class="brand-text">
+                    <h1>HJY.co Store</h1>
+                </div>
+                <div class="logo">
+                    <img src="./root/logo.webp" alt="HJY.co" onerror="this.src='./root/logo.png';">
                 </div>
             </div>
         </div>
     </header>
 
     <main class="container">
-        <!-- Categories / Tabs -->
-        <nav class="filter-bar" id="categoryFilterContainer">
-            <button class="filter-pill active" data-category="all">الكل</button>
-            <!-- Categories will be injected here -->
+        <!-- Categories Pill Bar -->
+        <nav class="pillbar-container">
+            <div id="categoryPills" class="pillbar">
+                <!-- Categories injected here -->
+            </div>
         </nav>
 
-        <!-- Data Sync Status -->
-        <div class="data-status" id="dataInfo">
-            جاري مزامنة المنتجات...
-        </div>
-
-        <!-- Catalog Grid -->
-        <section class="products-grid" id="catalogGrid">
-            <!-- Product cards will be injected here -->
+        <!-- Home Sections (Fav, More Fav, More Sell) -->
+        <section id="homeSections" class="home-sections">
+            <!-- Section carousels injected here -->
         </section>
 
-        <!-- No Results -->
-        <div id="catalogEmpty" class="empty-state hidden">
+        <!-- Catalog Grid -->
+        <section id="catalogSection" class="catalog-section">
+            <div class="section-header">
+                <h2 id="catalogTitle">كل المنتجات</h2>
+                <span id="productCount" class="count-badge">0 منتج</span>
+            </div>
+            <div id="productsGrid" class="products-grid" data-view="grid">
+                <!-- Products injected here -->
+            </div>
+        </section>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state hidden">
             <div class="empty-icon">🔎</div>
             <h3>لا توجد نتائج مطابقة</h3>
-            <p>يرجى التأكد من كلمة البحث أو اختيار قسم آخر</p>
+            <p>جرب كلمات بحث أخرى أو فئة مختلفة</p>
         </div>
     </main>
 
-    <!-- Cart Sidebar (Drawer) -->
-    <div class="overlay" id="overlay"></div>
-    <aside id="cartDrawer" class="cart-drawer hidden">
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div id="footerLinks" class="footer-links">
+                <!-- About buttons injected here -->
+            </div>
+            <div class="footer-bottom">
+                <p>BY HJY.co</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating UI -->
+    <button id="cartToggle" class="cart-floating">
+        <span class="cart-emoji">🛒</span>
+        <span id="cartBadge" class="cart-badge">0</span>
+    </button>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Modals -->
+    <div id="overlay" class="overlay"></div>
+    
+    <!-- Full View Modal -->
+    <div id="productModal" class="modal">
+        <button class="modal-close">&times;</button>
+        <div class="modal-content">
+            <div class="product-full">
+                <div class="product-gallery">
+                    <div class="main-img-container">
+                        <img id="modalMainImg" src="" alt="">
+                        <button class="gallery-nav prev">❮</button>
+                        <button class="gallery-nav next">❯</button>
+                    </div>
+                    <div id="modalThumbnails" class="thumbnails"></div>
+                </div>
+                <div class="product-details">
+                    <div class="detail-header">
+                        <span id="modalCode" class="full-code"></span>
+                        <h2 id="modalName" class="full-name"></h2>
+                    </div>
+                    <div class="detail-prices">
+                        <span id="modalPriceOld" class="price-old"></span>
+                        <span id="modalPriceNew" class="price-now"></span>
+                    </div>
+                    <div class="detail-desc">
+                        <p id="modalAbout1" class="about-1"></p>
+                        <hr>
+                        <p id="modalAbout2" class="about-2"></p>
+                    </div>
+                    <div id="modalDiscounts" class="full-discounts"></div>
+                    <div class="modal-actions">
+                        <button id="modalAddToCart" class="btn-primary">إضافة للسلة</button>
+                        <button id="modalShare" class="btn-share">مشاركة ونسخ المنتج 🔗</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Content Modal -->
+    <div id="aboutModal" class="modal small-modal">
+        <button class="modal-close">&times;</button>
+        <div class="modal-content">
+            <h2 id="aboutTitle"></h2>
+            <div id="aboutBody" class="about-body"></div>
+        </div>
+    </div>
+
+    <!-- Cart Drawer -->
+    <aside id="cartDrawer" class="cart-drawer">
         <div class="drawer-header">
             <h2>سلة المشتريات</h2>
             <button id="closeCart" class="close-btn">&times;</button>
         </div>
-        
-        <div id="cartList" class="drawer-content">
-            <!-- Cart items -->
-        </div>
-
+        <div id="cartList" class="drawer-content"></div>
         <div class="drawer-footer">
             <div class="total-row">
                 <span>الإجمالي النهائي:</span>
                 <span id="cartFinalTotal">0.00 $</span>
             </div>
-            <button class="checkout-btn" id="checkoutBtn">
-                <span>تأكيد الطلب عبر واتساب</span>
-                <span class="wa-icon">📱</span>
+            <button id="checkoutBtn" class="checkout-btn">
+                تأكيد الطلب عبر واتساب 📱
             </button>
         </div>
     </aside>
 
-    <!-- Templates -->
-    <template id="productCardTemplate">
-        <article class="product-card">
-            <!-- Special Badges (Fav, Hot, Out) -->
-            <div class="badge-container left" id="specialBadges"></div>
-            <!-- Discount Badge -->
-            <div class="badge-discount hidden" id="discountBadge"></div>
-
-            <div class="product-image-container">
-                <img src="" alt="" loading="lazy">
-            </div>
-
-            <div class="product-info">
-                <div class="product-meta">
-                    <span class="product-code"></span>
-                    <span class="brand-tag">HJY</span>
-                </div>
-                <h3 class="product-name"></h3>
-                <p class="product-desc"></p>
-                
-                <div class="price-row">
-                    <div class="price-box">
-                        <span class="price-old"></span>
-                        <span class="price-new"></span>
-                    </div>
-                </div>
-
-                <div class="card-actions">
-                    <button class="btn-primary add-btn">إضافة للسلة</button>
-                    <button class="btn-secondary copy-btn" title="نسخ كود المنتج">نسخ CODE</button>
-                </div>
-            </div>
-        </article>
-    </template>
-
-    <!-- Main Script -->
+    <!-- Scripts -->
     <script src="./scripts/app.js" defer></script>
 </body>
 </html>

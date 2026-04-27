@@ -10,6 +10,12 @@ const state = {
   products: [],
   productsByCode: new Map(),
   categories: [],
+  homeLists: {
+    fav: [],
+    more_fav: [],
+    more_sell: [],
+    out_pro: []
+  },
   searchTerm: "",
   selectedCategory: "all",
   cart: loadCart(),
@@ -81,16 +87,19 @@ async function loadManifest() {
 
 async function processData() {
   const dataFiles = state.manifest.files.filter(f => f.dir === "data" && (f.extension === ".csv" || f.extension === ".txt"));
+  const homeFiles = state.manifest.files.filter(f => f.dir === "home" && (f.extension === ".csv" || f.extension === ".txt"));
+  
   const products = [];
   const categoriesSet = new Set();
 
+  // 1. Process regular data products
   for (const file of dataFiles) {
     try {
       const response = await fetch(file.path);
       const text = await response.text();
       const rows = parseCsv(text);
-      
-      // Assume header: code, name, price, about1, about2, dis, photo, category
+      if (rows.length < 2) continue;
+
       const headers = rows[0].map(h => String(h).trim().toLowerCase());
       const codeIdx = headers.indexOf("code");
       const nameIdx = headers.indexOf("name");
@@ -107,7 +116,8 @@ async function processData() {
           name: String(row[nameIdx]).trim(),
           price: parseFloat(row[priceIdx]) || 0,
           discountRaw: row[disIdx] ? String(row[disIdx]).trim() : "",
-          category: row[catIdx] ? String(row[catIdx]).trim() : "عام",
+          // Use filename as category if column is missing or empty
+          category: (catIdx !== -1 && row[catIdx]) ? String(row[catIdx]).trim() : file.baseName,
           image: resolveImagePath(String(row[codeIdx]).trim())
         };
         products.push(product);
@@ -120,7 +130,45 @@ async function processData() {
 
   state.products = products;
   state.productsByCode = new Map(products.map(p => [p.code, p]));
-  state.categories = Array.from(categoriesSet);
+
+  // 2. Process home configurations (categories and lists)
+  const categoryConfigFile = homeFiles.find(f => f.baseName.toLowerCase() === "categories");
+  if (categoryConfigFile) {
+    try {
+      const response = await fetch(categoryConfigFile.path);
+      const text = await response.text();
+      const rows = parseCsv(text);
+      // Assume categories.csv is just a list of names or has a Name column
+      const definedCategories = rows.flat().filter(c => c && c.toLowerCase() !== "name").map(c => c.trim());
+      if (definedCategories.length > 0) {
+        state.categories = definedCategories;
+      } else {
+        state.categories = Array.from(categoriesSet);
+      }
+    } catch (e) {
+      console.error("Error loading categories config:", e);
+      state.categories = Array.from(categoriesSet);
+    }
+  } else {
+    state.categories = Array.from(categoriesSet);
+  }
+
+  // 3. Load special lists (fav, more_sell, etc.)
+  for (const listKey of Object.keys(state.homeLists)) {
+    const listFile = homeFiles.find(f => f.baseName.toLowerCase() === listKey.toLowerCase());
+    if (listFile) {
+      try {
+        const response = await fetch(listFile.path);
+        const text = await response.text();
+        const rows = parseCsv(text);
+        // Assume lists are CSVs where the first column is the product code
+        const codes = rows.map(r => String(r[0]).trim()).filter(c => c && c.toLowerCase() !== "code");
+        state.homeLists[listKey] = codes;
+      } catch (e) {
+        console.error(`Error loading ${listKey} list:`, e);
+      }
+    }
+  }
 }
 
 function resolveImagePath(code) {
@@ -130,17 +178,57 @@ function resolveImagePath(code) {
 }
 
 function parseCsv(text) {
-  // Enhanced CSV parser to handle multiple separators and empty lines
-  const lines = text.split(/\r?\n/).filter(line => line.trim());
-  if (lines.length === 0) return [];
-
-  // Detect separator (comma or semicolon)
-  const firstLine = lines[0];
+  const result = [];
+  let row = [];
+  let cell = '';
+  let inQuotes = false;
+  
+  // Detect separator
+  const firstLine = text.split('\n')[0];
   const separator = firstLine.includes(';') ? ';' : ',';
 
-  return lines.map(line => {
-    return line.split(separator).map(cell => cell.trim().replace(/^["']|["']$/g, ''));
-  });
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (nextChar === '"') {
+          cell += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cell += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === separator) {
+        row.push(cell.trim());
+        cell = '';
+      } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
+        row.push(cell.trim());
+        if (row.length > 0 && row.some(c => c !== '')) {
+          result.push(row);
+        }
+        row = [];
+        cell = '';
+        if (char === '\r') i++;
+      } else {
+        cell += char;
+      }
+    }
+  }
+
+  // Handle last row/cell
+  if (cell || row.length > 0) {
+    row.push(cell.trim());
+    if (row.some(c => c !== '')) result.push(row);
+  }
+
+  return result;
 }
 
 function renderAll() {
@@ -174,6 +262,15 @@ function renderCatalog() {
   if (!els.catalogGrid) return;
   els.catalogGrid.innerHTML = "";
 
+  // Helper to check if a product is in a special list
+  const getBadges = (p) => {
+    const badges = [];
+    if (state.homeLists.fav.includes(p.code)) badges.push({ text: "مفضل", class: "badge-fav" });
+    if (state.homeLists.more_sell.includes(p.code)) badges.push({ text: "الأكثر مبيعاً", class: "badge-hot" });
+    if (state.homeLists.out_pro.includes(p.code)) badges.push({ text: "نفذ", class: "badge-out" });
+    return badges;
+  };
+
   const filtered = state.products.filter(p => {
     const matchesCat = state.selectedCategory === "all" || p.category === state.selectedCategory;
     const matchesSearch = !state.searchTerm || 
@@ -188,6 +285,7 @@ function renderCatalog() {
     els.catalogEmpty.classList.add("hidden");
     filtered.forEach(p => {
       const card = els.productCardTemplate.content.cloneNode(true);
+      const container = card.querySelector(".product-card");
       const img = card.querySelector("img");
       img.src = p.image;
       img.alt = p.name;
@@ -195,10 +293,24 @@ function renderCatalog() {
       card.querySelector(".product-code").textContent = p.code;
       card.querySelector(".product-name").textContent = p.name;
 
+      // Add special badges (fav, hot, out)
+      const badges = getBadges(p);
+      if (badges.length > 0) {
+        const badgeContainer = document.createElement("div");
+        badgeContainer.className = "special-badges";
+        badges.forEach(b => {
+          const span = document.createElement("span");
+          span.className = `badge ${b.class}`;
+          span.textContent = b.text;
+          badgeContainer.appendChild(span);
+        });
+        container.appendChild(badgeContainer);
+      }
+
       // Handle Price and Discount
       const priceNew = card.querySelector(".price-new");
       const priceOld = card.querySelector(".price-old");
-      const badge = card.querySelector(".badge-discount");
+      const discountBadge = card.querySelector(".badge-discount");
 
       if (p.discountRaw) {
         const discountVal = parseFloat(p.discountRaw);
@@ -206,8 +318,8 @@ function renderCatalog() {
           const isPercent = p.discountRaw.includes("%");
           const oldPrice = isPercent ? p.price / (1 - discountVal / 100) : p.price + discountVal;
           priceOld.textContent = `${oldPrice.toFixed(2)} $`;
-          badge.textContent = isPercent ? `-${discountVal}%` : `-${discountVal}$`;
-          badge.classList.remove("hidden");
+          discountBadge.textContent = isPercent ? `-${discountVal}%` : `-${discountVal}$`;
+          discountBadge.classList.remove("hidden");
         }
       }
       priceNew.textContent = `${p.price.toFixed(2)} $`;

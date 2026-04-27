@@ -271,4 +271,27 @@ body {
   }
 }
 
+/* Special Badges */
+.special-badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 2;
+}
+
+.badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.badge-fav { background: #e91e63; }
+.badge-hot { background: #ff5722; }
+.badge-out { background: #757575; }
+
 .hidden { display: none !important; }

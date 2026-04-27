@@ -10,21 +10,29 @@
 
     <header class="site-header">
         <div class="container header-inner">
-            <div class="logo-area" id="brandLogo">
-                <img src="./root/LOGO.WEBP" alt="HJY STORE" style="height: 40px; width: auto; display: block;" onerror="this.src='./root/logo.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='block';};">
-                <h1 style="font-size: 24px; color: var(--primary); display: none;">HJY STORE</h1>
+            <div class="header-top">
+                <div class="logo-area" id="brandLogo">
+                    <img src="./root/LOGO.WEBP" alt="HJY STORE" onerror="this.src='./root/logo.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='block';};">
+                    <h1 class="logo-text">HJY STORE</h1>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="cart-btn" id="cartTrigger">
+                        <span class="count" id="cartCount">0</span>
+                        <i class="icon-cart">🛒</i>
+                        <span>السلة</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="search-box">
-                <form id="searchForm">
-                    <input type="text" id="searchInput" placeholder="ابحث بالاسم أو الكود أو الوصف...">
-                </form>
+            <div class="header-bottom">
+                <div class="search-box">
+                    <form id="searchForm">
+                        <input type="text" id="searchInput" placeholder="ابحث عن المنتجات بالاسم أو الكود...">
+                        <button type="submit" class="search-btn">🔍</button>
+                    </form>
+                </div>
             </div>
-
-            <button class="cart-btn" id="cartTrigger">
-                <span class="count" id="cartCount">0</span>
-                <span>السلة</span>
-            </button>
         </div>
     </header>
 

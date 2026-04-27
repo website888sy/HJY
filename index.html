@@ -3,33 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HJY STORE - متجر توتال سوريا</title>
+    <title>HJY.co</title>
+    <!-- CSS Links -->
     <link rel="stylesheet" href="./styles/main.css">
+    <!-- Meta for Mobile -->
+    <meta name="theme-color" content="#009688">
+    <!-- Excel Support -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+
+    <!-- Top Loading Bar -->
+    <div id="loadingBar" class="loading-bar"></div>
 
     <header class="site-header">
         <div class="container header-inner">
             <div class="header-top">
                 <div class="logo-area" id="brandLogo">
                     <img src="./root/LOGO.WEBP" alt="HJY STORE" onerror="this.src='./root/logo.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='block';};">
-                    <h1 class="logo-text">HJY STORE</h1>
+                    <h1 class="logo-text" style="display: none;">HJY STORE</h1>
                 </div>
                 
                 <div class="header-actions">
                     <button class="cart-btn" id="cartTrigger">
                         <span class="count" id="cartCount">0</span>
-                        <i class="icon-cart">🛒</i>
-                        <span>السلة</span>
+                        <span class="cart-icon">🛒</span>
+                        <span class="cart-label">السلة</span>
                     </button>
                 </div>
             </div>
 
             <div class="header-bottom">
                 <div class="search-box">
-                    <form id="searchForm">
-                        <input type="text" id="searchInput" placeholder="ابحث عن المنتجات بالاسم أو الكود...">
-                        <button type="submit" class="search-btn">🔍</button>
+                    <form id="searchForm" onsubmit="return false;">
+                        <input type="text" id="searchInput" placeholder="ابحث عن المنتجات (اسم، كود، وصف)...">
+                        <button class="search-btn">🔍</button>
                     </form>
                 </div>
             </div>
@@ -37,73 +45,90 @@
     </header>
 
     <main class="container">
-        <!-- Filters / Categories -->
+        <!-- Categories / Tabs -->
         <nav class="filter-bar" id="categoryFilterContainer">
             <button class="filter-pill active" data-category="all">الكل</button>
             <!-- Categories will be injected here -->
         </nav>
 
-        <!-- Stats / Data Info -->
-        <div style="text-align: left; font-size: 12px; color: #888; margin-bottom: 10px;" id="dataInfo">
-            جاري تحميل البيانات...
+        <!-- Data Sync Status -->
+        <div class="data-status" id="dataInfo">
+            جاري مزامنة المنتجات...
         </div>
 
-        <!-- Product Grid -->
+        <!-- Catalog Grid -->
         <section class="products-grid" id="catalogGrid">
-            <!-- Products will be injected here -->
+            <!-- Product cards will be injected here -->
         </section>
 
-        <!-- Empty State -->
-        <div id="catalogEmpty" class="hidden" style="text-align: center; padding: 50px;">
+        <!-- No Results -->
+        <div id="catalogEmpty" class="empty-state hidden">
+            <div class="empty-icon">🔎</div>
             <h3>لا توجد نتائج مطابقة</h3>
-            <p>حاول تغيير كلمات البحث أو التصنيف</p>
+            <p>يرجى التأكد من كلمة البحث أو اختيار قسم آخر</p>
         </div>
     </main>
 
-    <!-- Cart Drawer -->
+    <!-- Cart Sidebar (Drawer) -->
     <div class="overlay" id="overlay"></div>
-    <aside id="cartDrawer" class="hidden" style="position: fixed; left: 0; top: 0; bottom: 0; width: 350px; background: #fff; z-index: 1001; box-shadow: 5px 0 15px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+    <aside id="cartDrawer" class="cart-drawer hidden">
+        <div class="drawer-header">
             <h2>سلة المشتريات</h2>
-            <button id="closeCart" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <button id="closeCart" class="close-btn">&times;</button>
         </div>
-        <div id="cartList" style="flex: 1; overflow-y: auto;">
+        
+        <div id="cartList" class="drawer-content">
             <!-- Cart items -->
         </div>
-        <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; margin-bottom: 20px;">
-                <span>الإجمالي:</span>
-                <span id="cartFinalTotal">0 $</span>
+
+        <div class="drawer-footer">
+            <div class="total-row">
+                <span>الإجمالي النهائي:</span>
+                <span id="cartFinalTotal">0.00 $</span>
             </div>
-            <button class="btn-add" style="width: 100%; padding: 15px;" id="checkoutBtn">إرسال الطلب عبر واتساب</button>
+            <button class="checkout-btn" id="checkoutBtn">
+                <span>تأكيد الطلب عبر واتساب</span>
+                <span class="wa-icon">📱</span>
+            </button>
         </div>
     </aside>
 
     <!-- Templates -->
     <template id="productCardTemplate">
         <article class="product-card">
-            <div class="badge-discount hidden"></div>
+            <!-- Special Badges (Fav, Hot, Out) -->
+            <div class="badge-container left" id="specialBadges"></div>
+            <!-- Discount Badge -->
+            <div class="badge-discount hidden" id="discountBadge"></div>
+
             <div class="product-image-container">
                 <img src="" alt="" loading="lazy">
             </div>
+
             <div class="product-info">
-                <div class="product-code-row">
+                <div class="product-meta">
                     <span class="product-code"></span>
-                    <span class="product-brand">HJY</span>
+                    <span class="brand-tag">HJY</span>
                 </div>
                 <h3 class="product-name"></h3>
-                <div class="price-container">
-                    <span class="price-old"></span>
-                    <span class="price-new"></span>
+                <p class="product-desc"></p>
+                
+                <div class="price-row">
+                    <div class="price-box">
+                        <span class="price-old"></span>
+                        <span class="price-new"></span>
+                    </div>
                 </div>
+
                 <div class="card-actions">
-                    <button class="btn-add add-btn">إضافة للسلة</button>
-                    <button class="btn-copy copy-btn">نسخ CODE</button>
+                    <button class="btn-primary add-btn">إضافة للسلة</button>
+                    <button class="btn-secondary copy-btn" title="نسخ كود المنتج">نسخ CODE</button>
                 </div>
             </div>
         </article>
     </template>
 
+    <!-- Main Script -->
     <script src="./scripts/app.js" defer></script>
 </body>
 </html>

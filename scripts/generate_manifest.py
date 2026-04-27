@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SCAN_DIRS = ["about", "data", "object", "photo", "root"]
+SCAN_DIRS = ["about", "data", "home", "object", "photo", "root"]
 OUTPUT_FILE = PROJECT_ROOT / "root" / "site-manifest.json"
 
 

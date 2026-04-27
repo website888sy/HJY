@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
-const scanDirs = ["about", "data", "object", "photo", "root"];
+const scanDirs = ["about", "data", "home", "object", "photo", "root"];
 
 const manifest = {
   generatedAt: new Date().toISOString(),

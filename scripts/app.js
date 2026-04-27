@@ -150,7 +150,7 @@ async function processData() {
                 code,
                 name: String(row[idx.name]).trim(),
                 price,
-                fakePrice: price * 1.15, // 15% increase as requested
+                fakePrice: price * 1.15, // 15% fake increase for marketing as requested
                 about1: String(row[idx.about1] || "").trim(),
                 about2: String(row[idx.about2] || "").trim(),
                 discountRaw: String(row[idx.dis] || "").trim(),
@@ -459,6 +459,8 @@ function calculatePrice(product, qty) {
     if (!product.discountRaw) return product.price;
     
     // Split by newline to handle multiple discount rules
+    // Format 1: 10p=5% (xp=y%) -> buy x get y% off
+    // Format 2: 10+p=190 (x+p=y) -> buy at least x to get price y
     const lines = product.discountRaw.split("\n").map(l => l.trim().toLowerCase()).filter(l => l);
     let bestPrice = product.price;
 
@@ -563,13 +565,15 @@ function showProductDetails(p) {
     addBtn.onclick = () => addToCart(p.code);
 
     document.getElementById("modalShare").onclick = () => {
-        const shareText = `*${p.name}*\n${p.about1}\nالسعر: ${p.price} $\nالخصم: ${p.discountRaw || 'لا يوجد'}\nرابط المنتج: ${window.location.origin}${window.location.pathname}?p=${p.code}`;
-        
-        // As requested: name, about1, price, dis, and link
-        const fullShareInfo = `اسم المنتج: ${p.name}\nالتفاصيل: ${p.about1}\nالسعر الأصلي: ${p.price} $\nالخصومات: ${p.discountRaw || 'لا يوجد'}\nرابط المادة: ${window.location.origin}${window.location.pathname}?p=${p.code}`;
+        // As requested: name, about1, price, dis, and link to clipboard
+        const shareLink = `${window.location.origin}${window.location.pathname}?p=${p.code}`;
+        const fullShareInfo = `اسم المنتج: ${p.name}\nالتفاصيل: ${p.about1}\nالسعر الأصلي: ${p.price.toFixed(2)} $\nالخصومات:\n${p.discountRaw || 'لا يوجد خصومات حالياً'}\nرابط المادة: ${shareLink}`;
         
         navigator.clipboard.writeText(fullShareInfo).then(() => {
             showToast("تم نسخ بيانات المنتج للمشاركة 🔗");
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            showToast("عذراً، فشل النسخ.");
         });
     };
 

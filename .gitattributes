@@ -1,8 +1,0 @@
-# اجعل GitHub يصنف المشروع بالكامل كـ HTML
-* linguist-language=HTML
-
-# استثناء ملفات البرمجة من الإحصائيات ليركز على الـ HTML
-scripts/*.js linguist-documentation=true
-scripts/*.py linguist-documentation=true
-scripts/*.mjs linguist-documentation=true
-styles/*.css linguist-documentation=true

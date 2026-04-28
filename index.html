@@ -1,0 +1,2756 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HJY.co</title>
+    <link rel="icon" href="logo.webp" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #ffffff;
+        --surface: #ffffff;
+        --text: #0a2430;
+        --muted: #4d6a76;
+        --border: rgba(10, 36, 48, 0.14);
+        --shadow: 0 10px 30px rgba(10, 36, 48, 0.12);
+        --primary: #19b7ff;
+        --primary-2: #0aa0ea;
+        --primary-3: #057bb8;
+        --danger: #c62828;
+        --success: #0f8a3a;
+        --ring: 0 0 0 4px rgba(25, 183, 255, 0.22);
+        --radius: 14px;
+        --promo: #0aa0ea;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      a {
+        color: inherit;
+      }
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      .promo-bar {
+        background: linear-gradient(90deg, var(--primary-2), var(--primary));
+        color: #fff;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      }
+      .promo-bar-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 800;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .topbar {
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+      }
+      .topbar-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 170px;
+      }
+      .logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-3));
+        box-shadow: 0 12px 30px rgba(25, 183, 255, 0.24);
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+      .logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        background: #fff;
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.15;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+      }
+      .search {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        box-shadow: 0 8px 22px rgba(10, 36, 48, 0.06);
+      }
+      .search input {
+        width: 100%;
+        border: 0;
+        outline: none;
+        font-size: 14px;
+        background: transparent;
+        color: var(--text);
+      }
+      .select {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        padding: 10px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        color: var(--text);
+        outline: none;
+      }
+      .select:focus {
+        box-shadow: var(--ring);
+      }
+      .cart-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(25, 183, 255, 0.35);
+        background: rgba(25, 183, 255, 0.12);
+        padding: 10px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        user-select: none;
+        font-weight: 900;
+        color: var(--primary-3);
+      }
+      .badge {
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: var(--primary-3);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .pillbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .pill {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+        font-weight: 800;
+      }
+      .pill[aria-pressed="true"] {
+        border-color: rgba(25, 183, 255, 0.55);
+        background: rgba(25, 183, 255, 0.14);
+        box-shadow: var(--ring);
+      }
+      .pager {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .pager button {
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        cursor: pointer;
+        font-weight: 900;
+      }
+      .pager button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .layout {
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 14px 16px 90px;
+      }
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .panel-header {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .panel-header h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .panel-sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+      .status {
+        padding: 12px 14px;
+        font-weight: 900;
+        display: none;
+      }
+      .status[aria-hidden="false"] {
+        display: block;
+      }
+      .grid {
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .grid[data-view="compact"] {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .grid[data-view="brief"] {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.9);
+        overflow: hidden;
+        display: grid;
+        min-height: 300px;
+      }
+      .thumb {
+        width: 100%;
+        aspect-ratio: 4/3;
+        background: linear-gradient(135deg, rgba(25, 183, 255, 0.12), rgba(255, 255, 255, 0.7));
+        overflow: hidden;
+      }
+      .thumb img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        background: #fff;
+      }
+      .card-body {
+        padding: 12px 12px 10px;
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+      .name {
+        font-weight: 900;
+        font-size: 13px;
+        line-height: 1.35;
+        margin: 0;
+      }
+      .desc {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .code {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        flex-wrap: wrap;
+        direction: ltr;
+        unicode-bidi: plaintext;
+        font-weight: 900;
+        color: var(--primary-3);
+        font-size: 12px;
+      }
+      .prices {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        direction: ltr;
+        unicode-bidi: plaintext;
+      }
+      .price-now {
+        font-weight: 900;
+        color: var(--primary-3);
+        font-size: 16px;
+      }
+      .price-old {
+        font-weight: 800;
+        color: rgba(77, 106, 118, 0.9);
+        font-size: 12px;
+        text-decoration: line-through;
+      }
+      .dis-badge {
+        border: 1px dashed rgba(25, 183, 255, 0.55);
+        background: rgba(25, 183, 255, 0.12);
+        color: var(--primary-3);
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: pre-wrap;
+      }
+      .actions {
+        margin-top: 2px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .btn {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        padding: 10px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 900;
+        user-select: none;
+        font-size: 13px;
+      }
+      .btn-primary {
+        background: var(--primary);
+        border-color: rgba(0, 0, 0, 0);
+        color: #083042;
+      }
+      .btn-muted {
+        background: rgba(77, 106, 118, 0.12);
+        color: var(--muted);
+        cursor: not-allowed;
+      }
+      .btn-ghost {
+        background: rgba(255, 255, 255, 0.6);
+      }
+      .btn-danger {
+        background: rgba(198, 40, 40, 0.1);
+        border-color: rgba(198, 40, 40, 0.25);
+        color: #c62828;
+      }
+      .btn-square {
+        width: 42px;
+        padding: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .fav-btn {
+        position: absolute;
+        inset-inline-start: 10px;
+        inset-block-start: 10px;
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        border: 1px solid rgba(25, 183, 255, 0.35);
+        background: rgba(255, 255, 255, 0.85);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        line-height: 1;
+        color: var(--primary-3);
+      }
+      .grid[data-view="brief"] .desc,
+      .grid[data-view="brief"] .code,
+      .grid[data-view="brief"] .dis-badge {
+        display: none;
+      }
+      .grid[data-view="compact"] .dis-badge,
+      .grid[data-view="compact"] .code {
+        display: none;
+      }
+      .grid[data-view="compact"] .card {
+        min-height: 250px;
+      }
+      .grid[data-view="brief"] .card {
+        min-height: 220px;
+      }
+      .grid[data-view="list"] {
+        grid-template-columns: 1fr;
+      }
+      .grid[data-view="list"] .card {
+        grid-template-columns: 120px 1fr;
+        min-height: unset;
+      }
+      .grid[data-view="list"] .thumb {
+        aspect-ratio: 1/1;
+        height: 100%;
+      }
+      .grid[data-view="list"] .dis-badge {
+        display: block;
+      }
+      .grid[data-view="list"] .card-body {
+        padding: 12px;
+      }
+      .field-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .field-clear {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.65);
+        border-radius: 12px;
+        padding: 10px 12px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .checkrow {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.7);
+      }
+      .checkrow input {
+        margin-top: 3px;
+      }
+      .mini-note {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .cart-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 36, 48, 0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition: 200ms ease;
+        z-index: 40;
+      }
+      .cart-backdrop[data-open="true"] {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .cart-drawer {
+        position: fixed;
+        inset-block: 0;
+        inset-inline-end: 0;
+        width: 420px;
+        max-width: 94vw;
+        background: #fff;
+        border-inline-start: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        transform: translateX(-110%);
+        transition: 220ms ease;
+        z-index: 50;
+        display: grid;
+        grid-template-rows: auto 1fr auto auto;
+      }
+      .cart-drawer[data-open="true"] {
+        transform: translateX(0);
+      }
+      .cart-header {
+        padding: 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .cart-header h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .cart-close {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.6);
+        padding: 8px 10px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 900;
+      }
+      .cart-scroll {
+        overflow: auto;
+        padding: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .cart-empty {
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        color: var(--muted);
+        font-weight: 800;
+      }
+      .cart-item {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.9);
+      }
+      .cart-row {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 10px;
+        padding: 10px;
+      }
+      .cart-thumb {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(10, 36, 48, 0.08);
+        background: rgba(25, 183, 255, 0.1);
+      }
+      .cart-thumb img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        background: #fff;
+      }
+      .cart-info {
+        min-width: 0;
+        display: grid;
+        gap: 6px;
+      }
+      .cart-info-top {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .cart-code {
+        direction: ltr;
+        unicode-bidi: plaintext;
+        font-weight: 900;
+        color: var(--primary-3);
+        font-size: 12px;
+      }
+      .cart-remove {
+        border: 1px solid rgba(198, 40, 40, 0.25);
+        background: rgba(198, 40, 40, 0.08);
+        color: #c62828;
+        padding: 6px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 900;
+        font-size: 12px;
+      }
+      .cart-name {
+        margin: 0;
+        font-weight: 900;
+        font-size: 13px;
+        color: var(--text);
+      }
+      .cart-about {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .cart-table {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .qty-controls {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 4px;
+        background: rgba(255, 255, 255, 0.6);
+      }
+      .qty-controls button {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: pointer;
+        font-weight: 900;
+      }
+      .qty-controls input {
+        width: 54px;
+        border: 0;
+        outline: none;
+        background: transparent;
+        text-align: center;
+        font-weight: 900;
+      }
+      .cart-line-total {
+        direction: ltr;
+        unicode-bidi: plaintext;
+        font-weight: 900;
+        color: var(--primary-3);
+      }
+      .cart-summary {
+        border-top: 1px solid var(--border);
+        padding: 12px 14px;
+        display: grid;
+        gap: 10px;
+      }
+      .sum-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: baseline;
+        font-weight: 900;
+      }
+      .cart-actions {
+        padding: 12px 14px 14px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        border-top: 1px solid var(--border);
+      }
+      .footerbar {
+        position: fixed;
+        inset-inline: 0;
+        inset-block-end: 0;
+        border-top: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        z-index: 30;
+      }
+      .footerbar-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 10px 12px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .footer-links {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .footer-link {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.65);
+        padding: 8px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .toast {
+        position: fixed;
+        inset-inline-start: 12px;
+        inset-block-end: 76px;
+        z-index: 60;
+        pointer-events: none;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: 200ms ease;
+      }
+      .toast[data-open="true"] {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .toast-bubble {
+        pointer-events: none;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(10, 36, 48, 0.92);
+        color: #fff;
+        font-weight: 900;
+        font-size: 13px;
+        max-width: min(520px, calc(100vw - 24px));
+      }
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .grid[data-view="compact"] {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .grid[data-view="brief"] {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 700px) {
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .grid[data-view="compact"] {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .grid[data-view="brief"] {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 520px) {
+        .topbar-inner {
+          flex-wrap: wrap;
+        }
+        .brand {
+          min-width: 0;
+          flex: 1 1 100%;
+        }
+        .cart-drawer {
+          inset-inline: 0;
+          inset-block-end: 0;
+          inset-block-start: auto;
+          width: 100%;
+          max-height: 82vh;
+          border-radius: 18px 18px 0 0;
+          transform: translateY(110%);
+        }
+        .cart-drawer[data-open="true"] {
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="appRoot" data-route="home">
+      <div class="promo-bar" id="promoBar">
+        <div class="promo-bar-inner">HJY.co — تسوق بسهولة • بحث سريع • سلة مشتريات</div>
+      </div>
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="brand">
+            <div class="logo" aria-hidden="true">
+              <img src="logo.webp" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
+            </div>
+            <div>
+              <h1>HJY.co</h1>
+            </div>
+          </div>
+          <div class="controls">
+            <div class="search" role="search">
+              <input id="searchInput" type="search" placeholder="ابحث بالاسم أو الكود..." autocomplete="off" />
+              <select class="select" id="sortSelect" aria-label="ترتيب البحث">
+                <option value="DEFAULT">بحث: افتراضي</option>
+                <option value="PRICE_ASC">بحث: أرخص سعر</option>
+                <option value="PRICE_DESC">بحث: أعلى سعر</option>
+              </select>
+            </div>
+            <select class="select" id="viewSelect" aria-label="طريقة العرض">
+              <option value="grid">شبكي</option>
+              <option value="compact">مضغوط</option>
+              <option value="brief">مختصر</option>
+              <option value="list">قائمة</option>
+            </select>
+          </div>
+          <button class="cart-button" id="cartToggle" type="button" aria-label="سلة المشتريات">
+            <span aria-hidden="true">🛒</span>
+            <span class="badge" id="cartCount">0</span>
+          </button>
+        </div>
+        <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px">
+          <div class="pillbar" role="group" aria-label="التصنيفات">
+            <button class="pill" type="button" data-category="HOME" aria-pressed="true">الرئيسية</button>
+            <button class="pill" type="button" data-category="ALL" aria-pressed="false">الكل</button>
+            <button class="pill" type="button" data-category="FAVORITES" aria-pressed="false">المفضلة</button>
+            <button class="pill" type="button" data-category="OUT" aria-pressed="false">منتهي الكمية</button>
+          </div>
+          <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+            <div class="pager" aria-label="التنقل بين الصفحات">
+              <button id="prevPage" type="button" aria-label="السابق">▶</button>
+              <button id="nextPage" type="button" aria-label="التالي">◀</button>
+            </div>
+            <p class="panel-sub" id="hint" style="margin: 0; max-width: 360px"></p>
+          </div>
+        </div>
+      </header>
+      <main class="layout">
+        <section class="panel" id="homeView" style="display:none">
+          <div class="panel-header">
+            <div>
+              <h2>الرئيسية</h2>
+              <p class="panel-sub">منتجات مختارة</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-ghost" id="goShopBtn" type="button">التسوق</button>
+              <button class="btn btn-ghost btn-square" id="homeFavoritesBtn" type="button" aria-label="المفضلة">♥</button>
+            </div>
+          </div>
+          <div class="status" id="homeStatus" aria-hidden="true"></div>
+          <div class="grid" id="homeProductsGrid" data-view="compact" aria-live="polite"></div>
+        </section>
+        <section class="panel" id="shopView">
+          <div class="panel-header">
+            <div>
+              <p class="panel-sub" style="margin:0">
+                <bdi id="rangeText" style="direction:ltr;unicode-bidi:plaintext;font-weight:800">—</bdi> /
+                <bdi id="totalText" style="direction:ltr;unicode-bidi:plaintext;font-weight:800">—</bdi>
+                <span id="resultsMeta" style="color:var(--muted)">—</span>
+              </p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-ghost" id="openCheckoutBtn" type="button">إتمام الطلب</button>
+            </div>
+          </div>
+          <div class="status" id="status" aria-hidden="true"></div>
+          <div class="grid" id="productsGrid" data-view="compact" aria-live="polite"></div>
+          <div style="padding:0 14px 14px;display:flex;justify-content:center">
+            <div class="pager" aria-label="التنقل بين الصفحات (أسفل)">
+              <button id="prevPageBottom" type="button" aria-label="السابق">▶</button>
+              <button id="nextPageBottom" type="button" aria-label="التالي">◀</button>
+            </div>
+          </div>
+        </section>
+        <section class="panel" id="productView" style="display:none">
+          <div class="panel-header">
+            <div>
+              <h2 id="productTitle">تفاصيل المنتج</h2>
+              <p class="panel-sub" id="productMeta">—</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-ghost" id="backFromProductBtn" type="button">رجوع</button>
+            </div>
+          </div>
+          <div style="padding:14px;display:grid;gap:12px" id="productDetails"></div>
+        </section>
+        <section class="panel" id="checkoutView" style="display:none">
+          <div class="panel-header">
+            <div>
+              <h2>إتمام الطلب</h2>
+              <p class="panel-sub" id="checkoutMeta">—</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-ghost" id="backToShopBtn" type="button">رجوع للتسوق</button>
+            </div>
+          </div>
+          <div style="padding:14px;display:grid;gap:14px">
+            <div class="status" id="checkoutStatus" aria-hidden="true"></div>
+            <form id="checkoutForm" style="display:grid;gap:10px;max-width:520px;margin-inline:auto">
+              <label style="display:grid;gap:6px">
+                <span style="font-weight:800">رقم هاتف</span>
+                <div class="field-row">
+                  <input
+                    id="phoneInput"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    required
+                    style="padding:12px;border:1px solid var(--border);border-radius:12px;direction:ltr;unicode-bidi:plaintext"
+                  />
+                  <button class="field-clear" type="button" data-clear="phoneInput" aria-label="حذف" title="حذف">🗑</button>
+                </div>
+              </label>
+              <label style="display:grid;gap:6px">
+                <span style="font-weight:800">المحافظة</span>
+                <div class="field-row">
+                  <input
+                    id="govInput"
+                    type="text"
+                    autocomplete="address-level1"
+                    required
+                    placeholder="اكتب المحافظة"
+                    style="padding:12px;border:1px solid var(--border);border-radius:12px"
+                  />
+                  <button class="field-clear" type="button" data-clear="govInput" aria-label="حذف" title="حذف">🗑</button>
+                </div>
+              </label>
+              <div style="display:grid;gap:8px">
+                <div class="panel-sub" style="font-weight:900;color:var(--text)">طريقة الاستلام</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <label class="checkrow" style="flex:1;align-items:center">
+                    <input id="shipDamascusRadio" type="radio" name="shipType" value="DAMASCUS" checked />
+                    <div style="display:grid;gap:2px">
+                      <div style="font-weight:900">استلام ضمن دمشق</div>
+                    </div>
+                  </label>
+                  <label class="checkrow" style="flex:1;align-items:center">
+                    <input id="shipGovRadio" type="radio" name="shipType" value="GOV" />
+                    <div style="display:grid;gap:2px">
+                      <div style="font-weight:900">شحن للمحافظات</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <div id="shipGovBlock" style="display:none;gap:10px">
+                <label style="display:grid;gap:6px">
+                  <span style="font-weight:800">اسم ثلاثي <span class="mini-note">مراكز شحن تطلب الاسم ثلاثي</span></span>
+                  <div class="field-row">
+                    <input id="fullNameGovInput" type="text" autocomplete="name" required style="padding:12px;border:1px solid var(--border);border-radius:12px" />
+                    <button class="field-clear" type="button" data-clear="fullNameGovInput" aria-label="حذف" title="حذف">🗑</button>
+                  </div>
+                </label>
+                <label style="display:grid;gap:6px">
+                  <span style="font-weight:800">عنوان مركز شحن</span>
+                  <div class="field-row">
+                    <input
+                      id="shipCenterInput"
+                      type="text"
+                      autocomplete="street-address"
+                      required
+                      style="padding:12px;border:1px solid var(--border);border-radius:12px"
+                    />
+                    <button class="field-clear" type="button" data-clear="shipCenterInput" aria-label="حذف" title="حذف">🗑</button>
+                  </div>
+                </label>
+                <div style="display:grid;gap:8px">
+                  <div class="panel-sub" style="font-weight:900;color:var(--text)">شركة الشحن <span class="mini-note">يفضل اختيار مسارات</span></div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <label class="checkrow" style="flex:1;align-items:center">
+                      <input id="carrierMasarat" type="radio" name="carrier" value="MASARAT" checked />
+                      <div style="font-weight:900">مسارات</div>
+                    </label>
+                    <label class="checkrow" style="flex:1;align-items:center">
+                      <input id="carrierQadmous" type="radio" name="carrier" value="QADMOUS" />
+                      <div style="font-weight:900">قدموس</div>
+                    </label>
+                  </div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button class="btn btn-ghost" id="masaratBranchesBtn" type="button" style="flex:1">فروع مسارات</button>
+                    <button class="btn btn-ghost" id="qadmousBranchesBtn" type="button" style="flex:1">فروع قدموس</button>
+                  </div>
+                </div>
+                <div class="checkrow">
+                  <input id="readShippingAgree" type="checkbox" required />
+                  <div style="display:grid;gap:4px">
+                    <div style="font-weight:900">انا قرأت جميع تفاصيل الشحن وعلى دراية تامة كيف يتم</div>
+                    <button class="btn btn-ghost" id="openShippingBtn" type="button" style="width:fit-content">تفاصيل الشحن</button>
+                  </div>
+                </div>
+                <div class="checkrow">
+                  <input id="payAdvanceInput" type="checkbox" />
+                  <div style="display:grid;gap:2px">
+                    <div style="font-weight:900">سوف أدفع مسبقاً</div>
+                    <div class="mini-note">الشحن مجاني في حال دفع مسبق كـ هدية لثقتكم بنا</div>
+                  </div>
+                </div>
+              </div>
+              <div id="shipDamascusBlock" style="display:grid;gap:10px">
+                <label style="display:grid;gap:6px">
+                  <span style="font-weight:800">الاسم الثلاثي <span class="mini-note">اختياري</span></span>
+                  <div class="field-row">
+                    <input id="fullNameDamascusInput" type="text" autocomplete="name" style="padding:12px;border:1px solid var(--border);border-radius:12px" />
+                    <button class="field-clear" type="button" data-clear="fullNameDamascusInput" aria-label="حذف" title="حذف">🗑</button>
+                  </div>
+                </label>
+                <div style="display:grid;gap:8px">
+                  <div class="panel-sub" style="font-weight:900;color:var(--text)">طريقة الاستلام ضمن دمشق</div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <label class="checkrow" style="flex:1;align-items:center">
+                      <input id="damascusFreeDelivery" type="radio" name="damascusType" value="FREE_DELIVERY" checked />
+                      <div style="display:grid;gap:2px">
+                        <div style="font-weight:900">توصيل مجاني</div>
+                        <div class="mini-note">خدمة مميزة</div>
+                      </div>
+                    </label>
+                    <label class="checkrow" style="flex:1;align-items:center">
+                      <input id="damascusPickup" type="radio" name="damascusType" value="PICKUP" />
+                      <div style="display:grid;gap:2px">
+                        <div style="font-weight:900">استلام ضمن موقعنا</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                <div id="damascusDeliveryBlock" style="display:grid;gap:10px">
+                  <label style="display:grid;gap:6px">
+                    <span style="font-weight:800">الموقع العام</span>
+                    <div class="field-row">
+                      <input
+                        id="locGeneralInput"
+                        type="text"
+                        placeholder="مثال:شارع بغداد - برامكة - ميدان ..."
+                        style="padding:12px;border:1px solid var(--border);border-radius:12px"
+                      />
+                      <button class="field-clear" type="button" data-clear="locGeneralInput" aria-label="حذف" title="حذف">🗑</button>
+                    </div>
+                  </label>
+                  <label style="display:grid;gap:6px">
+                    <span style="font-weight:800">الموقع التفصيلي</span>
+                    <div class="field-row">
+                      <input
+                        id="locDetailInput"
+                        type="text"
+                        placeholder="مثال: دخلة جامع الماجد لـ 100 متر - جانب مركز آدم"
+                        style="padding:12px;border:1px solid var(--border);border-radius:12px"
+                      />
+                      <button class="field-clear" type="button" data-clear="locDetailInput" aria-label="حذف" title="حذف">🗑</button>
+                    </div>
+                  </label>
+                  <label style="display:grid;gap:6px">
+                    <span style="font-weight:800">نطاق الوقت المفضل</span>
+                    <div class="field-row">
+                      <input
+                        id="timeRangeInput"
+                        type="text"
+                        placeholder="مثال: كل يوم من س10 ص إلى 5 م"
+                        style="padding:12px;border:1px solid var(--border);border-radius:12px"
+                      />
+                      <button class="field-clear" type="button" data-clear="timeRangeInput" aria-label="حذف" title="حذف">🗑</button>
+                    </div>
+                  </label>
+                  <div class="mini-note">يرجى عدم إغلاق الهاتف والانتباه لـ التغطية , يفضل تزويدنا بـ رقم احتياطي بقسم ملاحظات</div>
+                </div>
+              </div>
+              <div style="display:grid;gap:8px">
+                <div class="panel-sub" style="font-weight:900;color:var(--text)">الدفع <span class="mini-note">اختياري</span></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <label class="checkrow" style="flex:1;align-items:center">
+                    <input id="payUsdInput" type="radio" name="payCurrency" value="USD" checked />
+                    <div style="display:grid;gap:2px">
+                      <div style="font-weight:900">الدولار</div>
+                      <div class="mini-note">مفضل</div>
+                    </div>
+                  </label>
+                  <label class="checkrow" style="flex:1;align-items:center">
+                    <input id="paySypInput" type="radio" name="payCurrency" value="SYP" />
+                    <div style="display:grid;gap:2px">
+                      <div style="font-weight:900">سوري</div>
+                      <div class="mini-note">بسعر صرف يوم</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <label style="display:grid;gap:6px">
+                <span style="font-weight:800">ملاحظات <span class="mini-note">اختياري طبعاً</span></span>
+                <div class="field-row">
+                  <textarea
+                    id="orderNotesInput"
+                    placeholder="اكتب أي ملاحظة تخص الطلب..."
+                    style="padding:12px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:13px;min-height:110px;resize:vertical"
+                  ></textarea>
+                  <button class="field-clear" type="button" data-clear="orderNotesInput" aria-label="حذف" title="حذف">🗑</button>
+                </div>
+              </label>
+              <div style="display:grid;gap:8px;border:1px solid rgba(10,160,234,0.25);border-radius:12px;padding:10px;background:rgba(255,255,255,0.75)">
+                <div class="checkrow" style="margin:0">
+                  <input id="termsAgreeInput" type="checkbox" required />
+                  <div style="display:grid;gap:4px">
+                    <div style="font-weight:900">انا مطلع على كافة تفاصيل المنتج وموافق على سياسة متجركم</div>
+                    <div class="mini-note">يصلِكم كما في الصور والمواصفات تماماً ونتحمل أي مشكلة أو غلط</div>
+                    <button class="btn btn-ghost" id="openPolicyBtn" type="button" style="width:fit-content">سياسة الاستخدام</button>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-primary" id="confirmOrderBtn" type="submit" style="flex:1">إتمام الطلب</button>
+                <button class="btn btn-ghost" id="copyInvoiceBtn" type="button" style="flex:1;display:none">نسخ الفاتورة</button>
+              </div>
+              <div class="panel-sub" id="invoiceNote" style="display:none">يمكنك نسخ الفاتورة وإرسالها إلينا. الفاتورة تحتوي كل التفاصيل بشكل مرتب.</div>
+            </form>
+          </div>
+        </section>
+        <section class="panel" id="infoView" style="display:none">
+          <div class="panel-header">
+            <div>
+              <h2 id="infoTitle">—</h2>
+              <p class="panel-sub" id="infoMeta">—</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-ghost" id="backFromInfoBtn" type="button">رجوع</button>
+            </div>
+          </div>
+          <div style="padding:14px;display:grid;gap:10px">
+            <div class="status" id="infoStatus" aria-hidden="true"></div>
+            <div id="infoText" class="panel-sub"></div>
+            <form id="complaintForm" style="display:none;gap:10px;max-width:520px">
+              <textarea id="complaintInput" required placeholder="اكتب المشكلة بالتفصيل..." style="padding:12px;border:1px solid var(--border);border-radius:12px;min-height:120px;resize:vertical"></textarea>
+              <button class="btn btn-primary" type="submit">إرسال شكوى</button>
+              <div class="panel-sub" id="complaintNote" style="display:none">تم إرسال الشكوى.</div>
+            </form>
+            <form id="ratingForm" style="display:none;gap:10px;max-width:520px">
+              <div class="panel-sub" id="ratingLabel">التقييم: 0/5</div>
+              <select class="select" id="ratingRank" aria-label="ترتيب التقييم">
+                <option value="سيء جدا">سيء جدا</option>
+                <option value="ضعيف">ضعيف</option>
+                <option value="مقبول">مقبول</option>
+                <option value="جيد">جيد</option>
+                <option value="جيدا جدا">جيدا جدا</option>
+                <option value="ممتاز جدا">ممتاز جدا</option>
+              </select>
+              <textarea id="ratingMsg" required placeholder="اكتب ملاحظتك أو اقتراحك..." style="padding:12px;border:1px solid var(--border);border-radius:12px;min-height:120px;resize:vertical"></textarea>
+              <button class="btn btn-primary" type="submit">إرسال</button>
+              <div class="panel-sub" id="ratingDone" style="display:none">تم إرسال التقييم.</div>
+            </form>
+          </div>
+        </section>
+      </main>
+      <footer class="footerbar">
+        <div class="footerbar-inner">
+          <span style="font-size:11px;color:var(--muted);font-weight:700">BY HJY.co</span>
+          <div class="footer-links" id="footerLinks">
+            <button class="footer-link" type="button" data-info="من نحن">من نحن</button>
+            <button class="footer-link" type="button" data-info="المطور">المطور</button>
+            <button class="footer-link" type="button" data-info="موقعنا">موقعنا</button>
+            <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
+            <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
+            <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
+            <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
+            <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
+            <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
+            <button class="footer-link" type="button" data-info="المفضلة">المفضلة</button>
+            <button class="footer-link" type="button" data-info="التقييم">التقييم</button>
+            <button class="footer-link" type="button" data-info="الشكاوي">الشكاوي</button>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <div class="cart-backdrop" id="cartBackdrop" data-open="false"></div>
+    <aside class="cart-drawer" id="cartPanel" data-open="false" aria-label="سلة المشتريات">
+      <div class="cart-header">
+        <div>
+          <h2>سلة المشتريات</h2>
+          <p class="panel-sub" id="cartMeta">—</p>
+        </div>
+        <button class="cart-close" id="cartCloseBtn" type="button">إغلاق</button>
+      </div>
+      <div class="cart-scroll" id="cartContent"></div>
+      <div class="cart-summary" id="cartSummary"></div>
+      <div class="cart-actions" id="cartActions"></div>
+    </aside>
+    <div class="toast" id="toast" data-open="false" aria-live="polite" aria-atomic="true">
+      <div class="toast-bubble" id="toastBubble"></div>
+    </div>
+    <script>
+      const CONFIG = {
+        BRAND: "HJY.co",
+        DATA_FILES: ["data/cell-bms.csv", "data/smart-home-wifi.csv"],
+        HOME_CODES_URLS: ["home.txt", "home.csv", "home"],
+        OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
+        ABOUT_DIR: "about",
+        TELEGRAM_BOT_TOKEN: "8675164937:AAF8UXeY1eiLoQB-Xz9D_DCA1UaxLJT0jIE",
+        TELEGRAM_CHAT_ID: "2067991553",
+        ITEMS_PER_PAGE: 20,
+        SEARCH_MIN_CHARS: 2,
+        MIN_ORDER_TOTAL: 0,
+        PHOTO_DIRS: ["photo", "photo/bms-test", "photo/hjy-smart-home"],
+      };
+      const PLACEHOLDER_IMG =
+        "data:image/svg+xml;charset=utf-8," +
+        encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9f2ff"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><g fill="#19b7ff" opacity="0.7"><circle cx="130" cy="110" r="18"/><circle cx="190" cy="110" r="10"/><circle cx="170" cy="150" r="12"/></g><text x="50%" y="52%" font-size="26" text-anchor="middle" fill="#057bb8" font-family="Arial">HJY.co</text><text x="50%" y="58%" font-size="14" text-anchor="middle" fill="#4d6a76" font-family="Arial">Loading...</text></svg>`
+        );
+      const els = {
+        appRoot: document.getElementById("appRoot"),
+        promoBar: document.getElementById("promoBar"),
+        search: document.getElementById("searchInput"),
+        sortSelect: document.getElementById("sortSelect"),
+        viewSelect: document.getElementById("viewSelect"),
+        pills: Array.from(document.querySelectorAll(".pill[data-category]")),
+        prevPage: document.getElementById("prevPage"),
+        nextPage: document.getElementById("nextPage"),
+        prevPageBottom: document.getElementById("prevPageBottom"),
+        nextPageBottom: document.getElementById("nextPageBottom"),
+        hint: document.getElementById("hint"),
+        resultsMeta: document.getElementById("resultsMeta"),
+        rangeText: document.getElementById("rangeText"),
+        totalText: document.getElementById("totalText"),
+        status: document.getElementById("status"),
+        homeStatus: document.getElementById("homeStatus"),
+        grid: document.getElementById("productsGrid"),
+        homeGrid: document.getElementById("homeProductsGrid"),
+        homeView: document.getElementById("homeView"),
+        shopView: document.getElementById("shopView"),
+        productView: document.getElementById("productView"),
+        checkoutView: document.getElementById("checkoutView"),
+        infoView: document.getElementById("infoView"),
+        productTitle: document.getElementById("productTitle"),
+        productMeta: document.getElementById("productMeta"),
+        productDetails: document.getElementById("productDetails"),
+        cartToggle: document.getElementById("cartToggle"),
+        cartPanel: document.getElementById("cartPanel"),
+        cartBackdrop: document.getElementById("cartBackdrop"),
+        cartCloseBtn: document.getElementById("cartCloseBtn"),
+        cartCount: document.getElementById("cartCount"),
+        cartMeta: document.getElementById("cartMeta"),
+        cartContent: document.getElementById("cartContent"),
+        cartSummary: document.getElementById("cartSummary"),
+        cartActions: document.getElementById("cartActions"),
+        toast: document.getElementById("toast"),
+        toastBubble: document.getElementById("toastBubble"),
+        goShopBtn: document.getElementById("goShopBtn"),
+        homeFavoritesBtn: document.getElementById("homeFavoritesBtn"),
+        openCheckoutBtn: document.getElementById("openCheckoutBtn"),
+        backFromProductBtn: document.getElementById("backFromProductBtn"),
+        backToShopBtn: document.getElementById("backToShopBtn"),
+        checkoutMeta: document.getElementById("checkoutMeta"),
+        checkoutStatus: document.getElementById("checkoutStatus"),
+        checkoutForm: document.getElementById("checkoutForm"),
+        phoneInput: document.getElementById("phoneInput"),
+        govInput: document.getElementById("govInput"),
+        shipDamascusRadio: document.getElementById("shipDamascusRadio"),
+        shipGovRadio: document.getElementById("shipGovRadio"),
+        shipGovBlock: document.getElementById("shipGovBlock"),
+        shipDamascusBlock: document.getElementById("shipDamascusBlock"),
+        fullNameGovInput: document.getElementById("fullNameGovInput"),
+        shipCenterInput: document.getElementById("shipCenterInput"),
+        carrierMasarat: document.getElementById("carrierMasarat"),
+        carrierQadmous: document.getElementById("carrierQadmous"),
+        masaratBranchesBtn: document.getElementById("masaratBranchesBtn"),
+        qadmousBranchesBtn: document.getElementById("qadmousBranchesBtn"),
+        readShippingAgree: document.getElementById("readShippingAgree"),
+        payAdvanceInput: document.getElementById("payAdvanceInput"),
+        fullNameDamascusInput: document.getElementById("fullNameDamascusInput"),
+        damascusFreeDelivery: document.getElementById("damascusFreeDelivery"),
+        damascusPickup: document.getElementById("damascusPickup"),
+        damascusDeliveryBlock: document.getElementById("damascusDeliveryBlock"),
+        locGeneralInput: document.getElementById("locGeneralInput"),
+        locDetailInput: document.getElementById("locDetailInput"),
+        timeRangeInput: document.getElementById("timeRangeInput"),
+        payUsdInput: document.getElementById("payUsdInput"),
+        paySypInput: document.getElementById("paySypInput"),
+        orderNotesInput: document.getElementById("orderNotesInput"),
+        termsAgreeInput: document.getElementById("termsAgreeInput"),
+        openShippingBtn: document.getElementById("openShippingBtn"),
+        openPolicyBtn: document.getElementById("openPolicyBtn"),
+        confirmOrderBtn: document.getElementById("confirmOrderBtn"),
+        copyInvoiceBtn: document.getElementById("copyInvoiceBtn"),
+        invoiceNote: document.getElementById("invoiceNote"),
+        footerLinks: document.getElementById("footerLinks"),
+        infoTitle: document.getElementById("infoTitle"),
+        infoMeta: document.getElementById("infoMeta"),
+        infoStatus: document.getElementById("infoStatus"),
+        infoText: document.getElementById("infoText"),
+        backFromInfoBtn: document.getElementById("backFromInfoBtn"),
+        complaintForm: document.getElementById("complaintForm"),
+        complaintInput: document.getElementById("complaintInput"),
+        complaintNote: document.getElementById("complaintNote"),
+        ratingForm: document.getElementById("ratingForm"),
+        ratingRank: document.getElementById("ratingRank"),
+        ratingMsg: document.getElementById("ratingMsg"),
+        ratingLabel: document.getElementById("ratingLabel"),
+        ratingDone: document.getElementById("ratingDone"),
+      };
+      const state = {
+        allProducts: [],
+        filteredProducts: [],
+        homeProducts: [],
+        outSet: new Set(),
+        favorites: new Set(),
+        category: "HOME",
+        query: "",
+        page: 1,
+        sortMode: "DEFAULT",
+        viewMode: "compact",
+        lastMainRoute: "shop",
+        lastProductCode: "",
+        lastInvoiceText: "",
+      };
+      let toastTimer = null;
+      function showToast(message, durationMs = 2000) {
+        const msg = String(message ?? "").trim();
+        if (!msg) return;
+        if (!(els.toast instanceof HTMLElement) || !(els.toastBubble instanceof HTMLElement)) return;
+        els.toastBubble.textContent = msg;
+        els.toast.setAttribute("data-open", "true");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => els.toast.setAttribute("data-open", "false"), Math.max(300, Number(durationMs) || 2000));
+      }
+      function safeLower(v) {
+        return String(v ?? "").toLowerCase();
+      }
+      function escapeHtml(s) {
+        return String(s ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+      function escapeHtmlAttr(s) {
+        return escapeHtml(s).replace(/`/g, "&#96;");
+      }
+      function setStatus(text, isError = false) {
+        if (!text) {
+          els.status.setAttribute("aria-hidden", "true");
+          els.status.textContent = "";
+          return;
+        }
+        els.status.setAttribute("aria-hidden", "false");
+        els.status.style.color = isError ? "#c62828" : "";
+        els.status.textContent = text;
+      }
+      function setHomeStatus(text, isError = false) {
+        if (!text) {
+          els.homeStatus.setAttribute("aria-hidden", "true");
+          els.homeStatus.textContent = "";
+          return;
+        }
+        els.homeStatus.setAttribute("aria-hidden", "false");
+        els.homeStatus.style.color = isError ? "#c62828" : "";
+        els.homeStatus.textContent = text;
+      }
+      function setCheckoutStatus(text, isError = false) {
+        if (!text) {
+          els.checkoutStatus.setAttribute("aria-hidden", "true");
+          els.checkoutStatus.textContent = "";
+          return;
+        }
+        els.checkoutStatus.setAttribute("aria-hidden", "false");
+        els.checkoutStatus.style.color = isError ? "#c62828" : "";
+        els.checkoutStatus.textContent = text;
+      }
+      function setInfoStatus(text, isError = false) {
+        if (!text) {
+          els.infoStatus.setAttribute("aria-hidden", "true");
+          els.infoStatus.textContent = "";
+          return;
+        }
+        els.infoStatus.setAttribute("aria-hidden", "false");
+        els.infoStatus.style.color = isError ? "#c62828" : "";
+        els.infoStatus.textContent = text;
+      }
+      function formatMoney(v) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return "0";
+        return n % 1 === 0 ? String(n.toFixed(0)) : String(Number(n.toFixed(2)));
+      }
+      function marketingOldPrice(price) {
+        const p = Number(price) || 0;
+        return p * 1.15;
+      }
+      function normalizeCodeKey(code) {
+        return safeLower(String(code ?? "").trim());
+      }
+      function parsePriceNumber(value) {
+        const raw = String(value ?? "").trim();
+        if (!raw) return 0;
+        const s = raw.replace(/[^\d.,-]/g, "");
+        if (!s) return 0;
+        const lastDot = s.lastIndexOf(".");
+        const lastComma = s.lastIndexOf(",");
+        let normalized = s;
+        if (lastComma > lastDot) {
+          normalized = s.replace(/\./g, "").replace(",", ".");
+        } else {
+          normalized = s.replace(/,/g, "");
+        }
+        const n = Number(normalized);
+        return Number.isFinite(n) ? n : 0;
+      }
+      function parseCsvLine(line, delimiter = ",") {
+        const out = [];
+        let cur = "";
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"' && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+            continue;
+          }
+          if (ch === '"') {
+            inQuotes = !inQuotes;
+            continue;
+          }
+          if (ch === delimiter && !inQuotes) {
+            out.push(cur);
+            cur = "";
+            continue;
+          }
+          cur += ch;
+        }
+        out.push(cur);
+        return out.map((v) => String(v ?? "").trim());
+      }
+      function detectCsvDelimiter(headerLine) {
+        const h = String(headerLine ?? "").replace(/^\uFEFF/, "");
+        const candidates = [";", ",", "\t"];
+        let best = ";";
+        let bestScore = -1;
+        for (const d of candidates) {
+          const cols = parseCsvLine(h, d);
+          let score = cols.length;
+          const c0 = safeLower(cols[0] ?? "");
+          if (c0.includes("code")) score += 10;
+          if (score > bestScore) {
+            bestScore = score;
+            best = d;
+          }
+        }
+        return best;
+      }
+      function splitCsvRows(input) {
+        const s = String(input ?? "");
+        const rows = [];
+        let cur = "";
+        let inQuotes = false;
+        for (let i = 0; i < s.length; i++) {
+          const ch = s[i];
+          if (ch === '"') {
+            if (inQuotes && s[i + 1] === '"') {
+              cur += '""';
+              i++;
+              continue;
+            }
+            inQuotes = !inQuotes;
+            cur += ch;
+            continue;
+          }
+          if ((ch === "\n" || ch === "\r") && !inQuotes) {
+            if (ch === "\r" && s[i + 1] === "\n") i++;
+            if (cur.trim().length > 0) rows.push(cur);
+            cur = "";
+            continue;
+          }
+          cur += ch;
+        }
+        if (cur.trim().length > 0) rows.push(cur);
+        return rows;
+      }
+      function cleanCell(v) {
+        let s = String(v ?? "");
+        s = s.replace(/^\uFEFF/, "");
+        return s.trim();
+      }
+      function normalizeCsvRow(cols, delimiter, expected) {
+        const out = Array.isArray(cols) ? cols.slice() : [];
+        while (out.length < expected) out.push("");
+        if (out.length > expected) {
+          const head = out.slice(0, expected - 1);
+          const tail = out.slice(expected - 1).join(delimiter);
+          return [...head, tail];
+        }
+        return out;
+      }
+      function parseCsvText(text) {
+        const lines = splitCsvRows(text).filter((l) => String(l ?? "").trim().length > 0);
+        if (lines.length === 0) return { headers: [], rows: [], delimiter: ";" };
+        const headerLine = String(lines[0] ?? "").replace(/^\uFEFF/, "");
+        const delimiter = detectCsvDelimiter(headerLine);
+        const headers = parseCsvLine(headerLine, delimiter).map(cleanCell);
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const colsRaw = parseCsvLine(lines[i], delimiter);
+          const cols = normalizeCsvRow(colsRaw, delimiter, headers.length).map(cleanCell);
+          rows.push(cols);
+        }
+        return { headers, rows, delimiter };
+      }
+      function getCachedText(cacheKey, maxAgeMs) {
+        const raw = localStorage.getItem(cacheKey);
+        if (!raw) return null;
+        let parsed = null;
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          return null;
+        }
+        if (!parsed || typeof parsed !== "object") return null;
+        const ts = Number(parsed.ts) || 0;
+        const text = typeof parsed.text === "string" ? parsed.text : "";
+        if (!text) return null;
+        if (maxAgeMs && ts && Date.now() - ts > maxAgeMs) return null;
+        return text;
+      }
+      function setCachedText(cacheKey, text) {
+        const t = String(text ?? "");
+        if (!t.trim()) return;
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), text: t }));
+        } catch {}
+      }
+      async function fetchTextCached(url, maxAgeMs = 6 * 60 * 60 * 1000) {
+        const u = String(url ?? "").trim();
+        if (!u) return null;
+        const cacheKey = `hjy_text_cache_v1::${u}`;
+        const cached = getCachedText(cacheKey, maxAgeMs);
+        if (cached) return { url: u, text: cached, cached: true };
+        try {
+          const res = await fetch(u, { cache: "no-store" });
+          if (!res.ok) throw new Error("Fetch failed");
+          const text = await res.text();
+          if (!String(text ?? "").trim()) throw new Error("Empty");
+          setCachedText(cacheKey, text);
+          return { url: u, text, cached: false };
+        } catch {
+          const stale = getCachedText(cacheKey, 0);
+          if (stale) return { url: u, text: stale, cached: true };
+          return null;
+        }
+      }
+      async function fetchTextFirstAvailable(urls, maxAgeMs = 6 * 60 * 60 * 1000) {
+        const list = Array.isArray(urls) ? urls : [];
+        for (const u of list) {
+          const got = await fetchTextCached(String(u), maxAgeMs);
+          if (got && String(got.text ?? "").trim()) return { url: String(got.url), text: got.text };
+        }
+        return null;
+      }
+      function parsePhotoList(raw) {
+        const s = String(raw ?? "").trim();
+        if (!s) return [];
+        return s
+          .split(",")
+          .map((x) => String(x ?? "").trim())
+          .filter((x) => x.length > 0)
+          .slice(0, 12);
+      }
+      function buildPhotoCandidates(code, extraCodes) {
+        const c = String(code ?? "").trim();
+        const variants = [];
+        if (c) variants.push(c, c.toUpperCase(), c.toLowerCase());
+        const extras = Array.isArray(extraCodes) ? extraCodes : [];
+        for (const ex of extras) {
+          const e = String(ex ?? "").trim();
+          if (!e) continue;
+          variants.push(e, e.toUpperCase(), e.toLowerCase());
+        }
+        const seen = new Set();
+        const out = [];
+        for (const v of variants) {
+          const key = `${v}`;
+          if (!v || seen.has(key)) continue;
+          seen.add(key);
+          for (const dir of CONFIG.PHOTO_DIRS) {
+            out.push(`${dir}/${encodeURIComponent(v)}.webp`);
+          }
+        }
+        return out;
+      }
+      function parseDisRules(raw) {
+        const text = String(raw ?? "").replace(/\r/g, "\n").trim();
+        if (!text) return [];
+        const lines = text
+          .split("\n")
+          .map((l) => String(l ?? "").trim())
+          .filter((l) => l.length > 0);
+        const rules = [];
+        for (const line of lines) {
+          const s = safeLower(line).replace(/\s+/g, "");
+          const mPercent = s.match(/^(\d+)\s*p\s*=\s*([0-9.]+)%$/i);
+          if (mPercent) {
+            const qty = Number(mPercent[1]);
+            const pct = Number(mPercent[2]);
+            if (Number.isFinite(qty) && qty > 0 && Number.isFinite(pct) && pct > 0) rules.push({ qty, type: "PERCENT", value: pct });
+            continue;
+          }
+          const mPrice = s.match(/^(\d+)\s*\+p\s*=\s*([0-9.]+)$/i);
+          if (mPrice) {
+            const qty = Number(mPrice[1]);
+            const price = Number(mPrice[2]);
+            if (Number.isFinite(qty) && qty > 0 && Number.isFinite(price) && price > 0) rules.push({ qty, type: "PRICE", value: price });
+          }
+        }
+        rules.sort((a, b) => a.qty - b.qty);
+        const uniq = [];
+        const seenQty = new Set();
+        for (const r of rules) {
+          const k = `${r.qty}-${r.type}-${r.value}`;
+          if (seenQty.has(k)) continue;
+          seenQty.add(k);
+          uniq.push(r);
+        }
+        return uniq;
+      }
+      function pickRuleForQty(rules, qty) {
+        const q = Math.max(1, Number(qty) || 1);
+        const list = Array.isArray(rules) ? rules : [];
+        let best = null;
+        for (const r of list) {
+          if (!r || typeof r !== "object") continue;
+          if (Number(r.qty) <= q) best = r;
+        }
+        return best;
+      }
+      function unitPriceForQty(product, qty) {
+        const base = Number(product?.price) || 0;
+        const rules = Array.isArray(product?.disRules) ? product.disRules : [];
+        const best = pickRuleForQty(rules, qty);
+        if (!best) return { unit: base, applied: null };
+        if (best.type === "PERCENT") return { unit: base * (1 - Number(best.value || 0) / 100), applied: best };
+        if (best.type === "PRICE") return { unit: Number(best.value) || base, applied: best };
+        return { unit: base, applied: null };
+      }
+      function disTextForProduct(product) {
+        const rules = Array.isArray(product?.disRules) ? product.disRules : [];
+        if (rules.length === 0) return "";
+        const base = Number(product?.price) || 0;
+        let out = "";
+        for (const r of rules) {
+          if (r.type === "PERCENT") {
+            const newPrice = base * (1 - Number(r.value || 0) / 100);
+            out += `اشتري ${r.qty} قطعة لتحصل على خصم ${formatMoney(r.value)}% — سعر القطعة ${formatMoney(newPrice)} بدل ${formatMoney(base)}\n`;
+          } else if (r.type === "PRICE") {
+            out += `اشتري ${r.qty} قطعة على الأقل ليصبح سعر القطعة ${formatMoney(r.value)} بدل ${formatMoney(base)}\n`;
+          }
+        }
+        return out.trim();
+      }
+      function setRoute(route) {
+        const r = String(route ?? "").trim() || "home";
+        els.appRoot.setAttribute("data-route", r);
+      }
+      function showHomeView() {
+        setRoute("home");
+        els.homeView.style.display = "";
+        els.shopView.style.display = "none";
+        els.productView.style.display = "none";
+        els.checkoutView.style.display = "none";
+        els.infoView.style.display = "none";
+        setStatus("");
+        setCheckoutStatus("");
+        setInfoStatus("");
+      }
+      function showShopView() {
+        setRoute("shop");
+        els.homeView.style.display = "none";
+        els.shopView.style.display = "";
+        els.productView.style.display = "none";
+        els.checkoutView.style.display = "none";
+        els.infoView.style.display = "none";
+        setCheckoutStatus("");
+        setInfoStatus("");
+      }
+      function showProductView(code) {
+        setRoute("shop");
+        state.lastMainRoute = "shop";
+        els.homeView.style.display = "none";
+        els.shopView.style.display = "none";
+        els.productView.style.display = "";
+        els.checkoutView.style.display = "none";
+        els.infoView.style.display = "none";
+        setStatus("");
+        setCheckoutStatus("");
+        setInfoStatus("");
+        renderProductDetails(code);
+      }
+      function showCheckoutView() {
+        setRoute("checkout");
+        state.lastMainRoute = "shop";
+        els.homeView.style.display = "none";
+        els.shopView.style.display = "none";
+        els.productView.style.display = "none";
+        els.checkoutView.style.display = "";
+        els.infoView.style.display = "none";
+        setStatus("");
+        setInfoStatus("");
+        const count = cartCountTotal();
+        const total = cartTotals();
+        els.checkoutMeta.textContent = count === 0 ? "السلة فارغة" : `${count} قطعة — $${formatMoney(total)}`;
+      }
+      function showInfoView(key) {
+        setRoute("info");
+        els.homeView.style.display = "none";
+        els.shopView.style.display = "none";
+        els.productView.style.display = "none";
+        els.checkoutView.style.display = "none";
+        els.infoView.style.display = "";
+        setStatus("");
+        setCheckoutStatus("");
+        setInfoStatus("");
+        els.complaintForm.style.display = "none";
+        els.ratingForm.style.display = "none";
+        els.complaintNote.style.display = "none";
+        els.ratingDone.style.display = "none";
+        renderInfo(key);
+      }
+      function setHash(hash) {
+        const h = String(hash ?? "").trim();
+        location.hash = h ? `#${h}` : "";
+      }
+      function applyHashRoute() {
+        const raw = String(location.hash || "").replace(/^#/, "").trim();
+        if (!raw) {
+          state.category = "HOME";
+          updatePills();
+          showHomeView();
+          renderHome();
+          return;
+        }
+        if (raw === "home") {
+          state.category = "HOME";
+          updatePills();
+          showHomeView();
+          renderHome();
+          return;
+        }
+        if (raw === "shop") {
+          state.category = "ALL";
+          updatePills();
+          showShopView();
+          applyFilters();
+          return;
+        }
+        if (raw === "checkout") {
+          showCheckoutView();
+          return;
+        }
+        if (raw.startsWith("product=")) {
+          const code = decodeURIComponent(raw.slice("product=".length));
+          showProductView(code);
+          return;
+        }
+        if (raw.startsWith("info=")) {
+          const key = decodeURIComponent(raw.slice("info=".length));
+          showInfoView(key);
+          return;
+        }
+        setHash("home");
+      }
+      function loadFavorites() {
+        try {
+          const raw = localStorage.getItem("hjy_favorites_v1");
+          const parsed = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(parsed)) return;
+          state.favorites = new Set(parsed.map((x) => normalizeCodeKey(x)).filter((x) => x));
+        } catch {}
+      }
+      function saveFavorites() {
+        try {
+          localStorage.setItem("hjy_favorites_v1", JSON.stringify(Array.from(state.favorites.values())));
+        } catch {}
+      }
+      function isFavorite(code) {
+        return state.favorites.has(normalizeCodeKey(code));
+      }
+      function toggleFavorite(code) {
+        const k = normalizeCodeKey(code);
+        if (!k) return;
+        if (state.favorites.has(k)) {
+          state.favorites.delete(k);
+          saveFavorites();
+          showToast("تمت الإزالة من المفضلة", 1600);
+        } else {
+          state.favorites.add(k);
+          saveFavorites();
+          showToast("تمت الإضافة إلى المفضلة", 1600);
+        }
+        applyFilters();
+        renderHome();
+        if (els.productView.style.display !== "none") renderProductDetails(state.lastProductCode);
+      }
+      function openCart(open) {
+        const next =
+          typeof open === "boolean" ? (open ? "true" : "false") : els.cartPanel.getAttribute("data-open") === "true" ? "false" : "true";
+        els.cartPanel.setAttribute("data-open", next);
+        els.cartBackdrop.setAttribute("data-open", next);
+      }
+      function cartKey(p) {
+        return normalizeCodeKey(p?.code);
+      }
+      function saveCart() {
+        try {
+          const payload = Array.from(state.cart.values()).map((it) => ({ code: it.product.code, qty: it.qty }));
+          localStorage.setItem("hjy_cart_v1", JSON.stringify(payload));
+        } catch {}
+      }
+      function loadCart() {
+        try {
+          const raw = localStorage.getItem("hjy_cart_v1");
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return;
+          state.cart.clear();
+          for (const row of parsed) {
+            const code = String(row?.code ?? "").trim();
+            const qty = Math.max(1, Math.min(999, Number(row?.qty) || 1));
+            const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(code));
+            if (!p) continue;
+            if (p.isOut) continue;
+            state.cart.set(cartKey(p), { product: p, qty });
+          }
+        } catch {}
+      }
+      state.cart = new Map();
+      function cartCountTotal() {
+        let total = 0;
+        for (const it of state.cart.values()) total += Math.max(1, Number(it.qty) || 1);
+        return total;
+      }
+      function cartTotals() {
+        let total = 0;
+        for (const it of state.cart.values()) {
+          const qty = Math.max(1, Number(it.qty) || 1);
+          const got = unitPriceForQty(it.product, qty);
+          total += qty * (Number(got.unit) || 0);
+        }
+        return total;
+      }
+      function addToCart(code) {
+        const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(code));
+        if (!p || p.isOut) return;
+        const k = cartKey(p);
+        const it = state.cart.get(k);
+        const nextQty = it ? Math.max(1, Math.min(999, Number(it.qty) + 1)) : 1;
+        state.cart.set(k, { product: p, qty: nextQty });
+        saveCart();
+        renderCart();
+        showToast("تمت الإضافة إلى السلة", 1700);
+      }
+      function setCartQty(code, qty) {
+        const k = normalizeCodeKey(code);
+        const it = state.cart.get(k);
+        if (!it) return;
+        const q = Math.max(1, Math.min(999, Number(qty) || 1));
+        state.cart.set(k, { product: it.product, qty: q });
+        saveCart();
+        renderCart();
+      }
+      function removeFromCart(code) {
+        state.cart.delete(normalizeCodeKey(code));
+        saveCart();
+        renderCart();
+      }
+      function clearCart() {
+        state.cart.clear();
+        saveCart();
+        renderCart();
+      }
+      function renderCart() {
+        const count = cartCountTotal();
+        els.cartCount.textContent = String(count);
+        els.cartMeta.textContent = count === 0 ? "فارغة" : `${count} قطعة`;
+        if (count === 0) {
+          els.cartContent.innerHTML = `<div class="cart-empty">السلة فارغة. أضف منتجات لعرضها هنا.</div>`;
+          els.cartSummary.innerHTML = "";
+          els.cartActions.innerHTML = "";
+          return;
+        }
+        let html = "";
+        for (const it of state.cart.values()) {
+          const p = it.product;
+          const qty = Math.max(1, Number(it.qty) || 1);
+          const pricing = unitPriceForQty(p, qty);
+          const unit = Number(pricing.unit) || 0;
+          const line = qty * unit;
+          const applied = pricing.applied;
+          const priceNote =
+            applied && unit < (Number(p.price) || 0)
+              ? `<div class="mini-note" style="direction:ltr;unicode-bidi:plaintext">خصم مطبق: $${escapeHtml(formatMoney(unit))}/قطعة</div>`
+              : "";
+          const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
+          const src = cand[0] || PLACEHOLDER_IMG;
+          html += `
+            <div class="cart-item">
+              <div class="cart-row">
+                <div class="cart-thumb">
+                  <img
+                    src="${escapeHtmlAttr(src)}"
+                    data-src-list="${escapeHtmlAttr(JSON.stringify(cand))}"
+                    data-src-idx="0"
+                    alt="${escapeHtmlAttr(p.code)}"
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                    onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
+                  />
+                </div>
+                <div class="cart-info">
+                  <div class="cart-info-top">
+                    <div class="cart-code">${escapeHtml(p.code)}</div>
+                    <button class="cart-remove" type="button" data-remove="${escapeHtmlAttr(p.code)}">حذف</button>
+                  </div>
+                  <p class="cart-name">${escapeHtml(p.name)}</p>
+                  <p class="cart-about">${escapeHtml(p.about1)}</p>
+                  ${priceNote}
+                  <div class="cart-table">
+                    <div class="qty-controls">
+                      <button type="button" data-dec="${escapeHtmlAttr(p.code)}">-</button>
+                      <input inputmode="numeric" pattern="[0-9]*" value="${escapeHtmlAttr(String(qty))}" data-qty="${escapeHtmlAttr(p.code)}" />
+                      <button type="button" data-inc="${escapeHtmlAttr(p.code)}">+</button>
+                    </div>
+                    <div class="cart-line-total">$${escapeHtml(formatMoney(line))}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        const total = cartTotals();
+        els.cartContent.innerHTML = html;
+        els.cartSummary.innerHTML = `
+          <div class="sum-row">
+            <span>الإجمالي</span>
+            <strong style="direction:ltr;unicode-bidi:plaintext">$${escapeHtml(formatMoney(total))}</strong>
+          </div>
+        `;
+        els.cartActions.innerHTML = `
+          <button class="btn btn-danger" type="button" id="clearCartBtn">تفريغ</button>
+          <button class="btn btn-primary" type="button" id="checkoutBtn">إتمام الطلب</button>
+        `;
+      }
+      function buildSearchTokens(q) {
+        const s = safeLower(q).trim();
+        if (!s) return [];
+        return s.split(/\s+/).filter((t) => t.length > 0).slice(0, 10);
+      }
+      function relevanceScore(p, tokens) {
+        const search = safeLower(p.search);
+        if (!tokens.length) return 0;
+        let score = 0;
+        const code = safeLower(p.code);
+        const name = safeLower(p.name);
+        for (const t of tokens) {
+          if (!t) continue;
+          if (code === t) score += 20;
+          if (code.startsWith(t)) score += 12;
+          if (code.includes(t)) score += 8;
+          if (name.includes(t)) score += 10;
+          if (search.includes(t)) score += 6;
+        }
+        return score;
+      }
+      function updatePills() {
+        for (const b of els.pills) {
+          const cat = String(b.getAttribute("data-category") ?? "");
+          b.setAttribute("aria-pressed", cat === state.category ? "true" : "false");
+        }
+      }
+      function paginate(list) {
+        const per = CONFIG.ITEMS_PER_PAGE;
+        const pageCount = Math.max(1, Math.ceil(list.length / per));
+        state.page = Math.max(1, Math.min(pageCount, Number(state.page) || 1));
+        const start = (state.page - 1) * per;
+        const end = Math.min(list.length, start + per);
+        const slice = list.slice(start, end);
+        const prevDisabled = state.page <= 1;
+        const nextDisabled = state.page >= pageCount;
+        els.prevPage.disabled = prevDisabled;
+        els.prevPageBottom.disabled = prevDisabled;
+        els.nextPage.disabled = nextDisabled;
+        els.nextPageBottom.disabled = nextDisabled;
+        els.rangeText.textContent = list.length === 0 ? "0" : `${start + 1}-${end}`;
+        els.totalText.textContent = String(list.length);
+        els.resultsMeta.textContent = pageCount > 1 ? `الصفحة ${state.page}/${pageCount}` : "";
+        return slice;
+      }
+      function applyFilters() {
+        const q = String(state.query ?? "").trim();
+        const tokens = buildSearchTokens(q);
+        let list = state.allProducts.slice();
+        if (state.category === "FAVORITES") list = list.filter((p) => isFavorite(p.code));
+        if (state.category === "OUT") list = list.filter((p) => p.isOut);
+        if (state.category === "HOME") {
+          showHomeView();
+          renderHome();
+          return;
+        }
+        showShopView();
+        if (q.length >= CONFIG.SEARCH_MIN_CHARS) {
+          const scored = [];
+          for (const p of list) {
+            const score = relevanceScore(p, tokens);
+            if (score > 0) scored.push({ p, score });
+          }
+          scored.sort((a, b) => b.score - a.score);
+          list = scored.map((x) => x.p);
+        }
+        if (state.sortMode === "PRICE_ASC") list = [...list].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+        if (state.sortMode === "PRICE_DESC") list = [...list].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+        state.filteredProducts = list;
+        render();
+      }
+      function renderCard(p) {
+        const view = state.viewMode;
+        const favOn = isFavorite(p.code);
+        const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
+        const src = cand[0] || PLACEHOLDER_IMG;
+        const disText = disTextForProduct(p);
+        const showDis = (view === "grid" || view === "list") && disText;
+        const showCode = view === "grid" || view === "list";
+        const showAbout1 = view === "grid" || view === "list" || view === "compact";
+        const btn =
+          p.isOut
+            ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
+            : `<button class="btn btn-primary" type="button" data-add="${escapeHtmlAttr(p.code)}">إضافة</button>`;
+        return `
+          <article class="card" data-code="${escapeHtmlAttr(p.code)}">
+            <button class="fav-btn" type="button" data-fav="${escapeHtmlAttr(p.code)}" aria-pressed="${favOn ? "true" : "false"}" aria-label="المفضلة">${
+          favOn ? "♥" : "♡"
+        }</button>
+            <div class="thumb">
+              <img
+                src="${escapeHtmlAttr(src)}"
+                data-src-list="${escapeHtmlAttr(JSON.stringify(cand))}"
+                data-src-idx="0"
+                alt="${escapeHtmlAttr(p.name)}"
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+                onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
+              />
+            </div>
+            <div class="card-body">
+              <p class="name">${escapeHtml(p.name)}</p>
+              ${showCode ? `<div class="code">${escapeHtml(p.code)}</div>` : ""}
+              ${showAbout1 ? `<p class="desc">${escapeHtml(p.about1)}</p>` : ""}
+              ${showDis ? `<div class="dis-badge">${escapeHtml(disText)}</div>` : ""}
+              <div class="prices">
+                <span class="price-now">$${escapeHtml(formatMoney(p.price))}</span>
+                <span class="price-old">$${escapeHtml(formatMoney(marketingOldPrice(p.price)))}</span>
+              </div>
+              <div class="actions">
+                <button class="btn btn-ghost" type="button" data-product="${escapeHtmlAttr(p.code)}" style="flex:1">تفاصيل</button>
+                ${btn}
+              </div>
+            </div>
+          </article>
+        `;
+      }
+      function render() {
+        const list = Array.isArray(state.filteredProducts) ? state.filteredProducts : [];
+        const slice = paginate(list);
+        els.grid.setAttribute("data-view", state.viewMode);
+        let html = "";
+        for (const p of slice) html += renderCard(p);
+        els.grid.innerHTML = html;
+        if (list.length === 0) setStatus(state.query && state.query.trim() ? "لا توجد نتائج." : "لا توجد منتجات للعرض.", false);
+        else setStatus("", false);
+      }
+      function renderHome() {
+        els.homeGrid.setAttribute("data-view", state.viewMode);
+        if (!Array.isArray(state.homeProducts) || state.homeProducts.length === 0) {
+          els.homeGrid.innerHTML = "";
+          return;
+        }
+        let html = "";
+        for (const p of state.homeProducts) html += renderCard(p);
+        els.homeGrid.innerHTML = html;
+      }
+      function renderProductDetails(code) {
+        const c = String(code ?? "").trim();
+        state.lastProductCode = c;
+        const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(c));
+        if (!p) {
+          els.productTitle.textContent = "تفاصيل المنتج";
+          els.productMeta.textContent = "غير موجود";
+          els.productDetails.innerHTML = "";
+          return;
+        }
+        els.productTitle.textContent = p.name || "تفاصيل المنتج";
+        els.productMeta.textContent = p.code ? `CODE: ${p.code}` : "—";
+        const favOn = isFavorite(p.code);
+        const disText = disTextForProduct(p);
+        const photoList = buildPhotoCandidates(p.code, p.photoList);
+        const mainSrc = photoList[0] || PLACEHOLDER_IMG;
+        let thumbs = "";
+        const thumbUrls = photoList.slice(0, 8);
+        for (const u of thumbUrls) {
+          thumbs += `<button class="btn btn-ghost" type="button" data-gallery="${escapeHtmlAttr(u)}" style="padding:6px 10px;border-radius:999px">صورة</button>`;
+        }
+        const btn =
+          p.isOut
+            ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
+            : `<button class="btn btn-primary" type="button" data-add="${escapeHtmlAttr(p.code)}">إضافة إلى السلة</button>`;
+        els.productDetails.innerHTML = `
+          <div class="card" style="min-height:unset">
+            <button class="fav-btn" type="button" data-fav="${escapeHtmlAttr(p.code)}" aria-pressed="${favOn ? "true" : "false"}" aria-label="المفضلة">${
+          favOn ? "♥" : "♡"
+        }</button>
+            <div class="thumb" style="aspect-ratio:16/10">
+              <img
+                id="productMainImg"
+                src="${escapeHtmlAttr(mainSrc)}"
+                data-src-list="${escapeHtmlAttr(JSON.stringify(photoList))}"
+                data-src-idx="0"
+                alt="${escapeHtmlAttr(p.name)}"
+                loading="eager"
+                decoding="async"
+                referrerpolicy="no-referrer"
+                onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
+              />
+            </div>
+            <div class="card-body" style="gap:10px">
+              ${disText ? `<div class="dis-badge">${escapeHtml(disText)}</div>` : ""}
+              <div class="prices">
+                <span class="price-now">$${escapeHtml(formatMoney(p.price))}</span>
+                <span class="price-old">$${escapeHtml(formatMoney(marketingOldPrice(p.price)))}</span>
+              </div>
+              <div class="code">${escapeHtml(p.code)}</div>
+              <p class="desc" style="display:block;-webkit-line-clamp:unset">${escapeHtml(p.about2 || p.about1 || "")}</p>
+              ${
+                thumbs
+                  ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                      <div class="panel-sub" style="font-weight:900;color:var(--text)">صور إضافية</div>
+                      ${thumbs}
+                    </div>`
+                  : ""
+              }
+              <div class="actions" style="margin-top:4px">${btn}</div>
+            </div>
+          </div>
+        `;
+      }
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(String(text ?? ""));
+          showToast("تم النسخ", 1500);
+          return true;
+        } catch {
+          showToast("لم يتم النسخ", 1800);
+          return false;
+        }
+      }
+      function splitText(text, maxLen) {
+        const t = String(text ?? "");
+        if (t.length <= maxLen) return [t];
+        const out = [];
+        let cur = "";
+        for (const line of t.split("\n")) {
+          const candidate = cur ? `${cur}\n${line}` : line;
+          if (candidate.length <= maxLen) {
+            cur = candidate;
+            continue;
+          }
+          if (cur) out.push(cur);
+          if (line.length <= maxLen) {
+            cur = line;
+            continue;
+          }
+          for (let i = 0; i < line.length; i += maxLen) out.push(line.slice(i, i + maxLen));
+          cur = "";
+        }
+        if (cur) out.push(cur);
+        return out;
+      }
+      async function sendToTelegram(text) {
+        const token = String(CONFIG.TELEGRAM_BOT_TOKEN ?? "").trim();
+        const chatId = String(CONFIG.TELEGRAM_CHAT_ID ?? "").trim();
+        if (!token || !chatId) throw new Error("Missing token/chat");
+        const cleaned = String(text ?? "").replace(/[\u200B-\u200F\uFEFF]/g, "").trim();
+        if (!cleaned) throw new Error("Empty");
+        const chunks = splitText(cleaned, 3500).filter((c) => String(c ?? "").trim().length > 0);
+        for (let i = 0; i < chunks.length; i++) {
+          const part = String(chunks[i] ?? "").trim();
+          if (!part) continue;
+          const prefix = chunks.length > 1 ? `(${i + 1}/${chunks.length})\n` : "";
+          const url = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text: prefix + part, disable_web_page_preview: true }),
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("Telegram failed");
+          await new Promise((r) => setTimeout(r, 220));
+        }
+      }
+      function buildInvoiceText(details) {
+        const lines = [];
+        lines.push(`HJY.co`);
+        lines.push(`----------------`);
+        lines.push(`رقم الهاتف: ${String(details.phone || "—")}`);
+        lines.push(`المحافظة: ${String(details.gov || "—")}`);
+        lines.push(`طريقة الاستلام: ${String(details.shipTypeLabel || "—")}`);
+        if (details.shipType === "GOV") {
+          lines.push(`الاسم الثلاثي: ${String(details.fullName || "—")}`);
+          lines.push(`عنوان مركز الشحن: ${String(details.shipCenter || "—")}`);
+          lines.push(`شركة الشحن: ${String(details.carrier || "—")}`);
+          lines.push(`دفع مسبقاً: ${details.payAdvance ? "نعم" : "لا"}`);
+        } else if (details.shipType === "DAMASCUS") {
+          lines.push(`الاسم الثلاثي: ${String(details.fullName || "—")}`);
+          lines.push(`الخيار: ${String(details.damascusType || "—")}`);
+          if (details.damascusType === "توصيل مجاني") {
+            lines.push(`الموقع العام: ${String(details.locGeneral || "—")}`);
+            lines.push(`الموقع التفصيلي: ${String(details.locDetail || "—")}`);
+            lines.push(`نطاق الوقت المفضل: ${String(details.timeRange || "—")}`);
+          }
+        }
+        lines.push(`الدفع: ${String(details.payCurrency || "—")}`);
+        lines.push(`ملاحظات: ${String(details.notes || "—")}`);
+        lines.push(`----------------`);
+        lines.push(`المشتريات:`);
+        let total = 0;
+        for (const it of Array.from(state.cart.values())) {
+          const p = it.product;
+          const qty = Math.max(1, Number(it.qty) || 1);
+          const pricing = unitPriceForQty(p, qty);
+          const unit = Number(pricing.unit) || 0;
+          const line = qty * unit;
+          total += line;
+          const base = Number(p.price) || 0;
+          const unitTxt = unit === base ? `$${formatMoney(unit)}` : `$${formatMoney(unit)} بدل $${formatMoney(base)}`;
+          lines.push(`${p.code} — ${p.name}`);
+          lines.push(`الكمية: ${qty} | سعر القطعة: ${unitTxt} | الإجمالي: $${formatMoney(line)}`);
+          lines.push(`---`);
+        }
+        lines.push(`الإجمالي النهائي: $${formatMoney(total)}`);
+        return lines.join("\n");
+      }
+      async function loadOutSet() {
+        state.outSet.clear();
+        const res = await fetchTextFirstAvailable(CONFIG.OUT_PRODUCTS_URLS, 2 * 60 * 1000);
+        if (!res) return;
+        const lines = String(res.text ?? "")
+          .split(/\r?\n/)
+          .map((l) => String(l ?? "").trim())
+          .filter((l) => l.length > 0);
+        for (const c of lines) state.outSet.add(normalizeCodeKey(c));
+      }
+      async function loadHomeCodes() {
+        state.homeProducts = [];
+        setHomeStatus("جاري تجهيز الصفحة الرئيسية...", false);
+        const res = await fetchTextFirstAvailable(CONFIG.HOME_CODES_URLS, 10 * 60 * 1000);
+        if (!res) {
+          setHomeStatus("تعذر العثور على home.txt بجانب index.html.", false);
+          return;
+        }
+        const codes = String(res.text ?? "")
+          .split(/\r?\n/)
+          .map((l) => String(l ?? "").trim())
+          .filter((l) => l.length > 0);
+        const picked = [];
+        const seen = new Set();
+        for (const code of codes) {
+          const k = normalizeCodeKey(code);
+          if (!k || seen.has(k)) continue;
+          seen.add(k);
+          const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === k);
+          if (p) picked.push(p);
+        }
+        state.homeProducts = picked;
+        setHomeStatus("", false);
+      }
+      async function loadProducts() {
+        const loadingText = "جاري تحميل الصفحة";
+        els.hint.textContent = `${loadingText}...`;
+        setStatus(`${loadingText}...`);
+        try {
+          await loadOutSet();
+          const productsByCode = new Map();
+          for (const file of CONFIG.DATA_FILES) {
+            const got = await fetchTextFirstAvailable([file], 10 * 60 * 1000);
+            if (!got) continue;
+            const table = parseCsvText(got.text);
+            if (!table.headers.length) continue;
+            const normHeader = (h) => safeLower(String(h ?? "").replace(/^\uFEFF/, "").replace(/\s+/g, ""));
+            const idxOf = (candidates) => {
+              const wanted = new Set((Array.isArray(candidates) ? candidates : []).map((x) => normHeader(x)));
+              for (let i = 0; i < table.headers.length; i++) {
+                if (wanted.has(normHeader(table.headers[i]))) return i;
+              }
+              return -1;
+            };
+            const idxCode = idxOf(["code"]);
+            const idxName = idxOf(["name"]);
+            const idxAbout1 = idxOf(["about1", "about 1", "about"]);
+            const idxAbout2 = idxOf(["about2", "about 2", "details"]);
+            const idxPrice = idxOf(["price"]);
+            const idxPhoto = idxOf(["photo"]);
+            const idxDis = idxOf(["dis", "discount"]);
+            if (idxCode === -1) continue;
+            for (const row of table.rows) {
+              const code = idxCode >= 0 ? String(row[idxCode] ?? "").trim() : "";
+              if (!code) continue;
+              const name = idxName >= 0 ? String(row[idxName] ?? "").trim() : "";
+              const about1 = idxAbout1 >= 0 ? String(row[idxAbout1] ?? "").trim() : "";
+              const about2 = idxAbout2 >= 0 ? String(row[idxAbout2] ?? "").trim() : "";
+              const price = parsePriceNumber(idxPrice >= 0 ? row[idxPrice] : "");
+              const photoRaw = idxPhoto >= 0 ? String(row[idxPhoto] ?? "").trim() : "";
+              const disRaw = idxDis >= 0 ? String(row[idxDis] ?? "").trim() : "";
+              const disRules = parseDisRules(disRaw);
+              const photoList = parsePhotoList(photoRaw);
+              const key = normalizeCodeKey(code);
+              const isOut = state.outSet.has(key);
+              const p = {
+                code: String(code).trim(),
+                name: name || code,
+                about1: about1 || "",
+                about2: about2 || "",
+                price: Number.isFinite(price) ? price : 0,
+                photoList,
+                disRules,
+                disRaw,
+                isOut,
+                search: `${code} ${name} ${about1} ${about2}`.trim(),
+              };
+              productsByCode.set(key, p);
+            }
+          }
+          state.allProducts = Array.from(productsByCode.values());
+          els.hint.textContent = "";
+          setStatus("");
+          loadCart();
+          renderCart();
+          await loadHomeCodes();
+          renderHome();
+          applyHashRoute();
+          if (!location.hash) setHash("home");
+        } catch {
+          els.hint.textContent = "فشل التحميل";
+          setStatus("فشل تحميل ملفات المنتجات. تأكد أن ملفات data موجودة بنفس المجلد وبنفس الأسماء.", true);
+          els.grid.innerHTML = "";
+          setHomeStatus("فشل تحميل المنتجات.", true);
+        }
+      }
+      async function renderInfo(key) {
+        const k = String(key ?? "").trim();
+        els.infoTitle.textContent = k || "—";
+        els.infoMeta.textContent = "";
+        els.infoText.textContent = "";
+        if (k === "الشكاوي") {
+          els.infoMeta.textContent = "يمكنك إرسال شكوى أو مشكلة بالتفصيل";
+          els.complaintForm.style.display = "grid";
+          els.complaintInput.value = "";
+          return;
+        }
+        if (k === "التقييم") {
+          els.infoMeta.textContent = "نقدر رأيك";
+          els.ratingForm.style.display = "grid";
+          els.ratingMsg.value = "";
+          try {
+            els.ratingRank.value = "سيء جدا";
+          } catch {}
+          els.ratingLabel.textContent = "التقييم: 0/5";
+          return;
+        }
+        if (k === "المفضلة") {
+          els.infoMeta.textContent = state.favorites.size === 0 ? "فارغة" : `${state.favorites.size} عنصر`;
+          const favs = Array.from(state.favorites.values());
+          const products = favs.map((c) => state.allProducts.find((p) => normalizeCodeKey(p.code) === c)).filter(Boolean);
+          if (products.length === 0) {
+            els.infoText.textContent = "لا يوجد عناصر في المفضلة حالياً.";
+            return;
+          }
+          let html = `<div style="display:grid;gap:12px">`;
+          for (const p of products) html += renderCard(p);
+          html += `</div>`;
+          els.infoText.innerHTML = html;
+          return;
+        }
+        const fileUrl = `${CONFIG.ABOUT_DIR}/${encodeURIComponent(k)}.txt`;
+        setInfoStatus("جاري التحميل...", false);
+        const res = await fetchTextCached(fileUrl, 10 * 60 * 1000);
+        if (!res) {
+          setInfoStatus("تعذر العثور على ملف المحتوى.", true);
+          els.infoText.textContent = "";
+          return;
+        }
+        setInfoStatus("", false);
+        let content = String(res.text ?? "").trim();
+        if (!content) content = "";
+        if (k === "تفاصيل الشحن") {
+          const buttons = `
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+              <button class="btn btn-ghost" type="button" data-info-btn="فروع مسارات" style="flex:1">فروع مسارات</button>
+              <button class="btn btn-ghost" type="button" data-info-btn="فروع قدموس" style="flex:1">فروع قدموس</button>
+            </div>
+          `;
+          els.infoText.innerHTML = `${escapeHtml(content)}${buttons}`;
+          return;
+        }
+        els.infoText.textContent = content;
+      }
+      function debounce(fn, ms) {
+        let t = null;
+        return (...args) => {
+          if (t) clearTimeout(t);
+          t = setTimeout(() => fn(...args), Math.max(0, Number(ms) || 0));
+        };
+      }
+      function wireEvents() {
+        els.cartToggle.addEventListener("click", () => openCart());
+        els.cartCloseBtn.addEventListener("click", () => openCart(false));
+        els.cartBackdrop.addEventListener("click", () => openCart(false));
+        els.prevPage.addEventListener("click", () => {
+          state.page = Math.max(1, Number(state.page) - 1);
+          render();
+        });
+        els.nextPage.addEventListener("click", () => {
+          state.page = Math.max(1, Number(state.page) + 1);
+          render();
+        });
+        els.prevPageBottom.addEventListener("click", () => els.prevPage.click());
+        els.nextPageBottom.addEventListener("click", () => els.nextPage.click());
+        els.pills.forEach((b) =>
+          b.addEventListener("click", () => {
+            const cat = String(b.getAttribute("data-category") ?? "");
+            state.category = cat || "ALL";
+            state.page = 1;
+            updatePills();
+            if (cat === "HOME") setHash("home");
+            else setHash("shop");
+            applyFilters();
+          })
+        );
+        els.viewSelect.addEventListener("change", () => {
+          state.viewMode = String(els.viewSelect.value ?? "compact");
+          try {
+            localStorage.setItem("hjy_view_mode_v1", state.viewMode);
+          } catch {}
+          els.grid.setAttribute("data-view", state.viewMode);
+          els.homeGrid.setAttribute("data-view", state.viewMode);
+          applyFilters();
+          renderHome();
+        });
+        els.sortSelect.addEventListener("change", () => {
+          state.sortMode = String(els.sortSelect.value ?? "DEFAULT");
+          try {
+            localStorage.setItem("hjy_sort_mode_v1", state.sortMode);
+          } catch {}
+          applyFilters();
+        });
+        els.search.addEventListener(
+          "input",
+          debounce(() => {
+            state.query = String(els.search.value ?? "");
+            state.page = 1;
+            applyFilters();
+          }, 180)
+        );
+        const handleCardsClick = (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          const fav = t.closest("[data-fav]");
+          if (fav instanceof HTMLElement) {
+            const code = fav.getAttribute("data-fav");
+            if (code) toggleFavorite(code);
+            return;
+          }
+          const add = t.closest("[data-add]");
+          if (add instanceof HTMLElement) {
+            const code = add.getAttribute("data-add");
+            if (code) addToCart(code);
+            return;
+          }
+          const prod = t.closest("[data-product]");
+          if (prod instanceof HTMLElement) {
+            const code = prod.getAttribute("data-product");
+            if (code) return setHash(`product=${encodeURIComponent(code)}`);
+            return;
+          }
+          const card = t.closest(".card[data-code]");
+          if (card instanceof HTMLElement) {
+            const code = card.getAttribute("data-code");
+            if (code) return setHash(`product=${encodeURIComponent(code)}`);
+          }
+        };
+        els.grid.addEventListener("click", handleCardsClick);
+        els.homeGrid.addEventListener("click", handleCardsClick);
+        els.productDetails.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          const fav = t.closest("[data-fav]");
+          if (fav instanceof HTMLElement) {
+            const code = fav.getAttribute("data-fav");
+            if (code) toggleFavorite(code);
+            return;
+          }
+          const add = t.closest("[data-add]");
+          if (add instanceof HTMLElement) {
+            const code = add.getAttribute("data-add");
+            if (code) addToCart(code);
+            return;
+          }
+          const g = t.closest("[data-gallery]");
+          if (g instanceof HTMLElement) {
+            const url = g.getAttribute("data-gallery");
+            const img = document.getElementById("productMainImg");
+            if (img instanceof HTMLImageElement && url) img.src = url;
+          }
+        });
+        els.cartContent.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          const rem = t.closest("[data-remove]");
+          if (rem instanceof HTMLElement) {
+            const code = rem.getAttribute("data-remove");
+            if (code) removeFromCart(code);
+            return;
+          }
+          const inc = t.closest("[data-inc]");
+          if (inc instanceof HTMLElement) {
+            const code = inc.getAttribute("data-inc");
+            if (!code) return;
+            const it = state.cart.get(normalizeCodeKey(code));
+            if (!it) return;
+            return setCartQty(code, Number(it.qty) + 1);
+          }
+          const dec = t.closest("[data-dec]");
+          if (dec instanceof HTMLElement) {
+            const code = dec.getAttribute("data-dec");
+            if (!code) return;
+            const it = state.cart.get(normalizeCodeKey(code));
+            if (!it) return;
+            return setCartQty(code, Math.max(1, Number(it.qty) - 1));
+          }
+          if (t.id === "clearCartBtn") return clearCart();
+          if (t.id === "checkoutBtn") return setHash("checkout");
+        });
+        els.cartContent.addEventListener("change", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLInputElement)) return;
+          const code = t.getAttribute("data-qty");
+          if (!code) return;
+          const qty = Number(t.value);
+          if (!Number.isFinite(qty)) return renderCart();
+          setCartQty(code, qty);
+        });
+        els.goShopBtn.addEventListener("click", () => setHash("shop"));
+        if (els.homeFavoritesBtn) els.homeFavoritesBtn.addEventListener("click", () => {
+          state.category = "FAVORITES";
+          updatePills();
+          setHash("shop");
+          applyFilters();
+        });
+        els.openCheckoutBtn.addEventListener("click", () => setHash("checkout"));
+        els.backFromProductBtn.addEventListener("click", () => setHash("shop"));
+        els.backToShopBtn.addEventListener("click", () => setHash("shop"));
+        els.backFromInfoBtn.addEventListener("click", () => setHash("shop"));
+        els.footerLinks.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          const key = t.getAttribute("data-info");
+          if (!key) return;
+          setHash(`info=${encodeURIComponent(key)}`);
+        });
+        els.infoView.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          const infoBtn = t.closest("[data-info-btn]");
+          if (infoBtn instanceof HTMLElement) {
+            const key = infoBtn.getAttribute("data-info-btn");
+            if (key) return setHash(`info=${encodeURIComponent(key)}`);
+          }
+          const fav = t.closest("[data-fav]");
+          if (fav instanceof HTMLElement) {
+            const code = fav.getAttribute("data-fav");
+            if (code) toggleFavorite(code);
+            return;
+          }
+          const add = t.closest("[data-add]");
+          if (add instanceof HTMLElement) {
+            const code = add.getAttribute("data-add");
+            if (code) addToCart(code);
+            return;
+          }
+          const prod = t.closest("[data-product]");
+          if (prod instanceof HTMLElement) {
+            const code = prod.getAttribute("data-product");
+            if (code) return setHash(`product=${encodeURIComponent(code)}`);
+          }
+        });
+        els.complaintForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const msg = String(els.complaintInput.value ?? "").trim();
+          if (msg.length < 6) return setInfoStatus("يرجى كتابة تفاصيل أكثر.", true);
+          els.complaintNote.style.display = "none";
+          setInfoStatus("جارٍ إرسال الشكوى...", false);
+          try {
+            await sendToTelegram(`شكوى جديدة\n\n${msg}`);
+            setInfoStatus("تم إرسال الشكوى.", false);
+            els.complaintNote.style.display = "";
+            els.complaintInput.value = "";
+          } catch {
+            setInfoStatus("تعذر الإرسال. حاول لاحقاً.", true);
+          }
+        });
+        els.ratingForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const msg = String(els.ratingMsg.value ?? "").trim();
+          if (msg.length < 3) return setInfoStatus("يرجى كتابة ملاحظة.", true);
+          const rank = String(els.ratingRank.value ?? "").trim() || "سيء جدا";
+          const labels = ["سيء جدا", "ضعيف", "مقبول", "جيد", "جيدا جدا", "ممتاز جدا"];
+          const idx = labels.indexOf(rank);
+          const rating = Math.max(0, Math.min(5, idx >= 0 ? idx : 0));
+          setInfoStatus("جارٍ إرسال التقييم...", false);
+          try {
+            await sendToTelegram(`تقييم جديد\nالتقييم: ${rating}/5 — ${rank}\n\n${msg}`);
+            setInfoStatus("تم إرسال التقييم.", false);
+            els.ratingMsg.value = "";
+            els.ratingDone.style.display = "";
+          } catch {
+            setInfoStatus("تعذر الإرسال. حاول لاحقاً.", true);
+          }
+        });
+        const syncShipBlocks = () => {
+          const gov = Boolean(els.shipGovRadio.checked);
+          els.shipGovBlock.style.display = gov ? "grid" : "none";
+          els.shipDamascusBlock.style.display = gov ? "none" : "grid";
+        };
+        els.shipDamascusRadio.addEventListener("change", syncShipBlocks);
+        els.shipGovRadio.addEventListener("change", syncShipBlocks);
+        syncShipBlocks();
+        const syncDamascusDelivery = () => {
+          const on = Boolean(els.damascusFreeDelivery.checked);
+          els.damascusDeliveryBlock.style.display = on ? "grid" : "none";
+        };
+        els.damascusFreeDelivery.addEventListener("change", syncDamascusDelivery);
+        els.damascusPickup.addEventListener("change", syncDamascusDelivery);
+        syncDamascusDelivery();
+        els.masaratBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع مسارات")}`));
+        els.qadmousBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع قدموس")}`));
+        els.openShippingBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("تفاصيل الشحن")}`));
+        els.openPolicyBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("سياسية الاستخدام")}`));
+        els.checkoutForm.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          const btn = t.closest("[data-clear]");
+          if (!(btn instanceof HTMLElement)) return;
+          const id = String(btn.getAttribute("data-clear") ?? "").trim();
+          if (!id) return;
+          const el = document.getElementById(id);
+          if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+            el.value = "";
+            el.focus();
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+        });
+        els.checkoutForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          if (state.cart.size === 0) return setCheckoutStatus("السلة فارغة.", true);
+          if (els.termsAgreeInput && !els.termsAgreeInput.checked) return setCheckoutStatus("يرجى الموافقة على سياسة الاستخدام.", true);
+          const phone = String(els.phoneInput.value ?? "").trim();
+          const gov = String(els.govInput.value ?? "").trim();
+          if (phone.replace(/[^0-9]/g, "").length < 9) return setCheckoutStatus("يرجى إدخال رقم هاتف صحيح.", true);
+          if (gov.length < 2) return setCheckoutStatus("يرجى إدخال المحافظة.", true);
+          const shipType = els.shipGovRadio.checked ? "GOV" : "DAMASCUS";
+          let fullName = "";
+          let shipCenter = "";
+          let carrier = "";
+          let shipTypeLabel = shipType === "GOV" ? "شحن للمحافظات" : "استلام ضمن دمشق";
+          let payAdvance = false;
+          let damascusType = "";
+          let locGeneral = "";
+          let locDetail = "";
+          let timeRange = "";
+          if (shipType === "GOV") {
+            fullName = String(els.fullNameGovInput.value ?? "").trim();
+            shipCenter = String(els.shipCenterInput.value ?? "").trim();
+            carrier = els.carrierMasarat.checked ? "مسارات" : "قدموس";
+            payAdvance = Boolean(els.payAdvanceInput.checked);
+            if (fullName.length < 6) return setCheckoutStatus("يرجى إدخال الاسم الثلاثي بشكل صحيح.", true);
+            if (shipCenter.length < 4) return setCheckoutStatus("يرجى إدخال عنوان مركز الشحن.", true);
+            if (!els.readShippingAgree.checked) return setCheckoutStatus("يرجى التأكيد أنك قرأت تفاصيل الشحن.", true);
+          } else {
+            fullName = String(els.fullNameDamascusInput.value ?? "").trim();
+            damascusType = els.damascusFreeDelivery.checked ? "توصيل مجاني" : "استلام ضمن موقعنا";
+            if (els.damascusFreeDelivery.checked) {
+              locGeneral = String(els.locGeneralInput.value ?? "").trim();
+              locDetail = String(els.locDetailInput.value ?? "").trim();
+              timeRange = String(els.timeRangeInput.value ?? "").trim();
+            }
+          }
+          const payCurrency = els.paySypInput.checked ? "سوري" : "الدولار";
+          const notes = String(els.orderNotesInput.value ?? "").trim();
+          const invoiceDetails = {
+            phone,
+            gov,
+            shipType,
+            shipTypeLabel,
+            fullName,
+            shipCenter,
+            carrier,
+            payAdvance,
+            damascusType,
+            locGeneral,
+            locDetail,
+            timeRange,
+            payCurrency,
+            notes,
+          };
+          const invoice = buildInvoiceText(invoiceDetails);
+          state.lastInvoiceText = invoice;
+          els.copyInvoiceBtn.style.display = "";
+          els.invoiceNote.style.display = "";
+          els.confirmOrderBtn.disabled = true;
+          els.confirmOrderBtn.textContent = "جارٍ الإرسال...";
+          setCheckoutStatus("جارٍ إرسال الطلب...", false);
+          try {
+            await sendToTelegram(invoice);
+            setCheckoutStatus("تم إرسال الطلب. سيتم التواصل معك قريباً.", false);
+            els.confirmOrderBtn.textContent = "تم إرسال الطلب";
+          } catch {
+            els.confirmOrderBtn.disabled = false;
+            els.confirmOrderBtn.textContent = "إعادة إرسال الطلب";
+            setCheckoutStatus("تعذر إرسال الطلب. تأكد من اتصال الإنترنت ثم حاول مجدداً.", true);
+          }
+          await copyText(invoice);
+        });
+        els.copyInvoiceBtn.addEventListener("click", async () => {
+          if (!state.lastInvoiceText) return;
+          await copyText(state.lastInvoiceText);
+        });
+      }
+      window.__hjyImgFallback = (img) => {
+        try {
+          if (!(img instanceof HTMLImageElement)) return;
+          const raw = img.getAttribute("data-src-list");
+          const idx = Number(img.getAttribute("data-src-idx") || "0");
+          const list = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(list) || list.length === 0) {
+            img.src = PLACEHOLDER_IMG;
+            return;
+          }
+          const next = Math.max(0, idx + 1);
+          if (next >= list.length) {
+            img.src = PLACEHOLDER_IMG;
+            return;
+          }
+          img.setAttribute("data-src-idx", String(next));
+          img.src = String(list[next]);
+        } catch {
+          try {
+            img.src = PLACEHOLDER_IMG;
+          } catch {}
+        }
+      };
+      try {
+        loadFavorites();
+      } catch {}
+      try {
+        const savedView = String(localStorage.getItem("hjy_view_mode_v1") ?? "").trim();
+        state.viewMode = savedView || "compact";
+      } catch {}
+      try {
+        const savedSort = String(localStorage.getItem("hjy_sort_mode_v1") ?? "").trim();
+        state.sortMode = savedSort || "DEFAULT";
+      } catch {}
+      els.grid.setAttribute("data-view", state.viewMode);
+      els.homeGrid.setAttribute("data-view", state.viewMode);
+      els.viewSelect.value = state.viewMode;
+      els.sortSelect.value = state.sortMode;
+      updatePills();
+      window.addEventListener("hashchange", applyHashRoute);
+      wireEvents();
+      loadProducts();
+    </script>
+  </body>
+</html>

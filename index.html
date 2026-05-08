@@ -1232,6 +1232,10 @@
         DATA_DIR: "data-csv",
         DATA_MANIFEST_URLS: ["data-csv/files.txt"],
         DATA_FILES: [],
+        GITHUB_AUTO_LIST: true,
+        GITHUB_OWNER: "",
+        GITHUB_REPO: "",
+        GITHUB_BRANCH: "main",
         HOME_CODES_URLS: ["home.txt", "home.csv", "home"],
         OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
         ABOUT_DIR: "about",
@@ -1613,6 +1617,60 @@
         }
         return null;
       }
+      async function fetchJsonCached(url, maxAgeMs = 6 * 60 * 60 * 1000) {
+        const u = String(url ?? "").trim();
+        if (!u) return null;
+        const cacheKey = `hjy_json_cache_v1::${u}`;
+        if (!wantsNoCache()) {
+          const cached = getCachedText(cacheKey, maxAgeMs);
+          if (cached) {
+            try {
+              return { url: u, json: JSON.parse(cached), cached: true };
+            } catch {}
+          }
+        }
+        try {
+          const res = await fetch(u, { cache: "no-store" });
+          if (!res.ok) throw new Error("Fetch failed");
+          const json = await res.json();
+          setCachedText(cacheKey, JSON.stringify(json));
+          return { url: u, json, cached: false };
+        } catch {
+          const stale = getCachedText(cacheKey, 0);
+          if (stale) {
+            try {
+              return { url: u, json: JSON.parse(stale), cached: true };
+            } catch {}
+          }
+          return null;
+        }
+      }
+      function detectGithubRepoFromLocation() {
+        const host = String(location.hostname ?? "").trim();
+        const path = String(location.pathname ?? "").replace(/^\/+/, "");
+        if (!host.endsWith(".github.io")) return { owner: "", repo: "" };
+        const owner = host.replace(/\.github\.io$/i, "");
+        const seg = path.split("/").filter(Boolean);
+        const repo = seg.length ? seg[0] : "";
+        return { owner, repo };
+      }
+      async function listGithubCsvFiles() {
+        const detected = detectGithubRepoFromLocation();
+        const owner = String(CONFIG.GITHUB_OWNER || detected.owner || "").trim();
+        const repo = String(CONFIG.GITHUB_REPO || detected.repo || "").trim();
+        const branch = String(CONFIG.GITHUB_BRANCH || "main").trim();
+        if (!owner || !repo) return [];
+        const dir = String(CONFIG.DATA_DIR ?? "data-csv").trim() || "data-csv";
+        const api = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(
+          dir
+        )}?ref=${encodeURIComponent(branch)}`;
+        const res = await fetchJsonCached(api, 10 * 60 * 1000);
+        const list = Array.isArray(res?.json) ? res.json : [];
+        const files = list
+          .filter((x) => x && x.type === "file" && typeof x.name === "string" && /\.csv$/i.test(x.name))
+          .map((x) => `${dir}/${encodeURIComponent(x.name)}`);
+        return files;
+      }
       function parseDataManifestText(text) {
         const dir = String(CONFIG.DATA_DIR ?? "data-csv").trim() || "data-csv";
         const lines = String(text ?? "")
@@ -1638,6 +1696,10 @@
         const res = await fetchTextFirstAvailable(manifestUrls, 5 * 60 * 1000);
         if (res) {
           const files = parseDataManifestText(res.text);
+          if (files.length) return files;
+        }
+        if (CONFIG.GITHUB_AUTO_LIST) {
+          const files = await listGithubCsvFiles();
           if (files.length) return files;
         }
         const fallback = Array.isArray(CONFIG.DATA_FILES) ? CONFIG.DATA_FILES : [];
@@ -2545,7 +2607,7 @@
           const reason = safeLower(String(e?.message ?? "").trim());
           const msg =
             reason === "no_data_files"
-              ? "لا توجد ملفات CSV للتحميل. أضف أسماء الملفات داخل data-csv/files.txt أو حدّث CONFIG.DATA_FILES."
+              ? "لا توجد ملفات CSV للتحميل. ضع ملفات CSV داخل مجلد data-csv في المستودع. إذا لم يتم اكتشافها تلقائياً، املأ data-csv/files.txt."
               : "فشل تحميل ملفات المنتجات. تأكد أن ملفات CSV موجودة داخل المستودع وبنفس الأسماء والمسارات.";
           setStatus(msg, true);
           els.grid.innerHTML = "";

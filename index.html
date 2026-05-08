@@ -1228,15 +1228,9 @@
       const CONFIG = {
         BRAND: "HJY.co",
         PROMO_URLS: ["promo.txt"],
-        DATA_SOURCE: "DRIVE",
-        DRIVE_FOLDER_URL: "https://drive.google.com/drive/folders/1zlq-a8XUV-4UMJpHXdoeJ2vKQxiwmVpj?usp=drive_link",
-        DRIVE_SUBFOLDER_NAME: "",
-        DRIVE_API_KEY: "",
-        DRIVE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwBrD6DnJ9mpwolPyyioKx_uSydLM5IQFC39T6qlcTtWCNBC8r_TzQiFGFzHrFe8Klg/exec",
-        DRIVE_LIST_CACHE_MS: 5 * 60 * 1000,
-        DRIVE_DATA_CACHE_MS: 10 * 60 * 1000,
+        DATA_SOURCE: "LOCAL",
         DATA_DIR: "data-csv",
-        DATA_MANIFEST_URLS: [],
+        DATA_MANIFEST_URLS: ["data-csv/files.txt"],
         DATA_FILES: [],
         HOME_CODES_URLS: ["home.txt", "home.csv", "home"],
         OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
@@ -1388,13 +1382,6 @@
       function wantsNoCache() {
         const v = safeLower(getQueryParam("refresh") || getQueryParam("nocache"));
         return v === "1" || v === "true" || v === "yes";
-      }
-      function extractDriveFolderId(raw) {
-        const s = String(raw ?? "").trim();
-        if (!s) return "";
-        const m = s.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-        if (m && m[1]) return String(m[1]).trim();
-        return s.includes("/") ? "" : s;
       }
       function escapeHtml(s) {
         return String(s ?? "")
@@ -1618,38 +1605,6 @@
           return null;
         }
       }
-      async function fetchJsonCached(url, maxAgeMs = 6 * 60 * 60 * 1000) {
-        const u = String(url ?? "").trim();
-        if (!u) return null;
-        const cacheKey = `hjy_json_cache_v1::${u}`;
-        if (!wantsNoCache()) {
-          const cached = getCachedText(cacheKey, maxAgeMs);
-          if (cached) {
-            try {
-              return { url: u, json: JSON.parse(cached), cached: true };
-            } catch {
-              try {
-                localStorage.removeItem(cacheKey);
-              } catch {}
-            }
-          }
-        }
-        try {
-          const res = await fetch(u, { cache: "no-store" });
-          if (!res.ok) throw new Error("Fetch failed");
-          const json = await res.json();
-          setCachedText(cacheKey, JSON.stringify(json));
-          return { url: u, json, cached: false };
-        } catch {
-          const stale = getCachedText(cacheKey, 0);
-          if (stale) {
-            try {
-              return { url: u, json: JSON.parse(stale), cached: true };
-            } catch {}
-          }
-          return null;
-        }
-      }
       async function fetchTextFirstAvailable(urls, maxAgeMs = 6 * 60 * 60 * 1000) {
         const list = Array.isArray(urls) ? urls : [];
         for (const u of list) {
@@ -1657,71 +1612,6 @@
           if (got && String(got.text ?? "").trim()) return { url: String(got.url), text: got.text };
         }
         return null;
-      }
-      function getDriveApiKey() {
-        const fromQuery = getQueryParam("drive_key") || getQueryParam("driveKey") || getQueryParam("gdrive_key");
-        const fromConfig = String(CONFIG.DRIVE_API_KEY ?? "").trim();
-        return String(fromQuery || fromConfig || "").trim();
-      }
-      async function listDriveCsvUrlsViaScript() {
-        const base = String(CONFIG.DRIVE_SCRIPT_URL ?? "").trim();
-        if (!base) return { urls: [], error: "NO_SCRIPT_URL" };
-        const folderId = extractDriveFolderId(CONFIG.DRIVE_FOLDER_URL);
-        if (!folderId) return { urls: [], error: "NO_FOLDER" };
-        const listCacheMs = Math.max(0, Number(CONFIG.DRIVE_LIST_CACHE_MS) || 5 * 60 * 1000);
-        const url = `${base}${base.includes("?") ? "&" : "?"}folder=${encodeURIComponent(folderId)}&sub=${encodeURIComponent(
-          String(CONFIG.DRIVE_SUBFOLDER_NAME ?? "").trim()
-        )}`;
-        const res = await fetchJsonCached(url, listCacheMs);
-        const data = res?.json;
-        const files = Array.isArray(data?.files) ? data.files : [];
-        const urls = files.map((f) => String(f?.url ?? "").trim()).filter((u) => u.length > 0);
-        return { urls, error: urls.length ? "" : "EMPTY" };
-      }
-      async function listDriveCsvUrls(folderUrlOrId) {
-        const rootFolderId = extractDriveFolderId(folderUrlOrId);
-        const apiKey = getDriveApiKey();
-        if (!rootFolderId || !apiKey) return { urls: [], error: !rootFolderId ? "NO_FOLDER" : "NO_KEY" };
-        const listFilesInFolder = async (folderId) => {
-          let pageToken = "";
-          const files = [];
-          for (let i = 0; i < 10; i++) {
-            const params = new URLSearchParams();
-            params.set("q", `'${folderId}' in parents and trashed=false`);
-            params.set("pageSize", "1000");
-            params.set("fields", "nextPageToken,files(id,name,mimeType,modifiedTime)");
-            params.set("key", apiKey);
-            if (pageToken) params.set("pageToken", pageToken);
-            const url = `https://www.googleapis.com/drive/v3/files?${params.toString()}`;
-            const listCacheMs = Math.max(0, Number(CONFIG.DRIVE_LIST_CACHE_MS) || 5 * 60 * 1000);
-            const res = await fetchJsonCached(url, listCacheMs);
-            const data = res?.json;
-            const batch = Array.isArray(data?.files) ? data.files : [];
-            for (const f of batch) files.push(f);
-            pageToken = String(data?.nextPageToken ?? "").trim();
-            if (!pageToken) break;
-          }
-          return files;
-        };
-        const csvUrlsFromFiles = (files) => {
-          const csvs = (Array.isArray(files) ? files : [])
-            .map((f) => ({ id: String(f?.id ?? "").trim(), name: String(f?.name ?? "").trim() }))
-            .filter((f) => f.id && f.name && /\.csv$/i.test(f.name))
-            .sort((a, b) => a.name.localeCompare(b.name));
-          return csvs.map((f) => `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(f.id)}?alt=media&key=${encodeURIComponent(apiKey)}`);
-        };
-        const rootFiles = await listFilesInFolder(rootFolderId);
-        const rootCsvUrls = csvUrlsFromFiles(rootFiles);
-        if (rootCsvUrls.length) return { urls: rootCsvUrls, error: "" };
-        const subName = String(CONFIG.DRIVE_SUBFOLDER_NAME ?? "").trim();
-        if (!subName) return { urls: [], error: "EMPTY" };
-        const folders = rootFiles.filter((f) => String(f?.mimeType ?? "") === "application/vnd.google-apps.folder");
-        const picked = folders.find((f) => safeLower(String(f?.name ?? "").trim()) === safeLower(subName));
-        const subId = String(picked?.id ?? "").trim();
-        if (!subId) return { urls: [], error: "NO_SUBFOLDER" };
-        const subFiles = await listFilesInFolder(subId);
-        const subCsvUrls = csvUrlsFromFiles(subFiles);
-        return { urls: subCsvUrls, error: subCsvUrls.length ? "" : "EMPTY" };
       }
       function parseDataManifestText(text) {
         const dir = String(CONFIG.DATA_DIR ?? "data-csv").trim() || "data-csv";
@@ -1735,15 +1625,8 @@
           const raw = String(line ?? "").trim();
           if (!raw) continue;
           const isHttp = /^https?:\/\//i.test(raw);
-          const looksLikeId = !raw.includes("/") && /^[a-zA-Z0-9_-]{10,}$/.test(raw);
-          const name = isHttp || looksLikeId ? raw : /\.csv$/i.test(raw) ? raw : `${raw}.csv`;
-          const url = isHttp
-            ? name
-            : looksLikeId
-              ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(name)}`
-              : name.includes("/")
-                ? name
-                : `${dir}/${encodeURIComponent(name)}`;
+          const name = isHttp ? raw : /\.csv$/i.test(raw) ? raw : `${raw}.csv`;
+          const url = isHttp ? name : name.includes("/") ? name : `${dir}/${encodeURIComponent(name)}`;
           if (seen.has(url)) continue;
           seen.add(url);
           out.push(url);
@@ -1751,22 +1634,6 @@
         return out;
       }
       async function resolveDataFiles() {
-        const mode = safeLower(CONFIG.DATA_SOURCE ?? "");
-        if (mode === "drive_script") {
-          const drive = await listDriveCsvUrlsViaScript();
-          if (drive?.urls?.length) return drive.urls;
-          if (drive?.error === "NO_SCRIPT_URL") throw new Error("DRIVE_NO_SCRIPT_URL");
-          if (drive?.error === "NO_FOLDER") throw new Error("DRIVE_NO_FOLDER");
-          throw new Error("DRIVE_EMPTY");
-        }
-        if (mode === "drive") {
-          const drive = await listDriveCsvUrls(CONFIG.DRIVE_FOLDER_URL);
-          if (drive?.urls?.length) return drive.urls;
-          if (drive?.error === "NO_KEY") throw new Error("DRIVE_NO_KEY");
-          if (drive?.error === "NO_FOLDER") throw new Error("DRIVE_NO_FOLDER");
-          if (drive?.error === "NO_SUBFOLDER") throw new Error("DRIVE_NO_SUBFOLDER");
-          throw new Error("DRIVE_EMPTY");
-        }
         const manifestUrls = Array.isArray(CONFIG.DATA_MANIFEST_URLS) ? CONFIG.DATA_MANIFEST_URLS : [];
         const res = await fetchTextFirstAvailable(manifestUrls, 5 * 60 * 1000);
         if (res) {
@@ -2600,19 +2467,15 @@
         setHomeStatus("", false);
       }
       async function loadProducts() {
-        const dataSource = safeLower(CONFIG.DATA_SOURCE ?? "");
-        const wantsDrive = dataSource === "drive" || dataSource === "drive_script";
         const loadingText = "جاري تحميل المنتجات";
         els.hint.textContent = `${loadingText}...`;
-        setStatus(wantsDrive ? `${loadingText} (Google Drive)...` : `${loadingText}...`);
+        setStatus(`${loadingText}...`);
         try {
           await loadOutSet();
           const dataFiles = await resolveDataFiles();
           if (!Array.isArray(dataFiles) || dataFiles.length === 0) throw new Error("NO_DATA_FILES");
-          if (wantsDrive) els.hint.textContent = `تم العثور على ${dataFiles.length} ملف CSV داخل Google Drive...`;
           const productsByCode = new Map();
-          const driveDataCacheMs = Math.max(60 * 1000, Number(CONFIG.DRIVE_DATA_CACHE_MS) || 10 * 60 * 1000);
-          const dataMaxAgeMs = wantsDrive ? driveDataCacheMs : 10 * 60 * 1000;
+          const dataMaxAgeMs = 10 * 60 * 1000;
           let fetchedOk = 0;
           let parsedOk = 0;
           let rowsOk = 0;
@@ -2680,18 +2543,9 @@
         } catch (e) {
           els.hint.textContent = "فشل التحميل";
           const reason = safeLower(String(e?.message ?? "").trim());
-          const msg = wantsDrive
-            ? reason === "drive_no_key"
-              ? "لا يوجد API Key. إذا تريد طريقة API Key افتح: https://website888sy.github.io/HJY/?drive_key=YOUR_KEY#/home أو ضع المفتاح داخل CONFIG.DRIVE_API_KEY. الأفضل: استخدم DRIVE_SCRIPT_URL."
-              : reason === "drive_no_script_url"
-                ? "لم يتم ضبط رابط خدمة Google Apps Script. ضع CONFIG.DRIVE_SCRIPT_URL (رابط Web App) وسيعمل بدون API Key للزوار."
-              : reason === "drive_no_folder"
-                ? "رابط Google Drive غير صحيح أو لا يحتوي Folder ID."
-                : reason === "drive_no_subfolder"
-                  ? "لم يتم العثور على مجلد data-csv داخل المجلد الرئيسي. تأكد من الاسم أو عدّل DRIVE_SUBFOLDER_NAME."
-                  : "فشل تحميل المنتجات من Google Drive. تأكد أن المجلد عام وأن Google Drive API مفعّل وأن داخل data-csv ملفات CSV."
-            : reason === "no_data_files"
-              ? "لا توجد ملفات CSV للتحميل. ضع رابط ملف قائمة CSV داخل CONFIG.DATA_MANIFEST_URLS (أو عدّل CONFIG.DATA_FILES)."
+          const msg =
+            reason === "no_data_files"
+              ? "لا توجد ملفات CSV للتحميل. أضف أسماء الملفات داخل data-csv/files.txt أو حدّث CONFIG.DATA_FILES."
               : "فشل تحميل ملفات المنتجات. تأكد أن ملفات CSV موجودة داخل المستودع وبنفس الأسماء والمسارات.";
           setStatus(msg, true);
           els.grid.innerHTML = "";

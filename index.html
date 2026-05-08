@@ -1228,7 +1228,7 @@
       const CONFIG = {
         BRAND: "HJY.co",
         PROMO_URLS: ["promo.txt"],
-        DATA_SOURCE: "DRIVE",
+        DATA_SOURCE: "DRIVE_SCRIPT",
         DRIVE_FOLDER_URL: "https://drive.google.com/drive/folders/1I0xiaP6aC44d6HAqamQzJnocVWBXoFrG?usp=sharing",
         DRIVE_SUBFOLDER_NAME: "data-csv",
         DRIVE_API_KEY: "",
@@ -2674,9 +2674,9 @@
           const reason = safeLower(String(e?.message ?? "").trim());
           const msg = wantsDrive
             ? reason === "drive_no_key"
-              ? "لم يتم تزويد API Key. أضفه عبر ?drive_key=... أو داخل CONFIG.DRIVE_API_KEY."
+              ? "لا يوجد API Key. إذا تريد طريقة API Key افتح: https://website888sy.github.io/HJY/?drive_key=YOUR_KEY#/home أو ضع المفتاح داخل CONFIG.DRIVE_API_KEY. الأفضل: استخدم DRIVE_SCRIPT_URL."
               : reason === "drive_no_script_url"
-                ? "لم يتم ضبط رابط خدمة Google Apps Script. ضع CONFIG.DRIVE_SCRIPT_URL ثم اجعل DATA_SOURCE=\"DRIVE_SCRIPT\"."
+                ? "لم يتم ضبط رابط خدمة Google Apps Script. ضع CONFIG.DRIVE_SCRIPT_URL (رابط Web App) وسيعمل بدون API Key للزوار."
               : reason === "drive_no_folder"
                 ? "رابط Google Drive غير صحيح أو لا يحتوي Folder ID."
                 : reason === "drive_no_subfolder"

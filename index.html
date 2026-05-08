@@ -150,6 +150,13 @@
         font-weight: 900;
         color: var(--primary-3);
       }
+      #cartToggle {
+        position: fixed;
+        bottom: 16px;
+        inset-inline-start: 16px;
+        z-index: 60;
+        box-shadow: var(--shadow);
+      }
       .badge {
         min-width: 22px;
         height: 22px;
@@ -286,6 +293,16 @@
         grid-template-columns: 1fr 84px;
         gap: 10px;
         align-items: start;
+      }
+      .product-gallery {
+        max-width: 920px;
+        margin-inline: auto;
+      }
+      .product-gallery .thumb {
+        max-height: 380px;
+      }
+      .product-gallery .thumb img {
+        object-fit: contain;
       }
       .gallery-rail {
         display: flex;
@@ -1244,9 +1261,12 @@
         ITEMS_PER_PAGE: 20,
         SEARCH_MIN_CHARS: 2,
         MIN_ORDER_TOTAL: 0,
-        PHOTO_MANIFEST_URLS: [],
-        PHOTO_EXTS: [],
-        PHOTO_DIRS: [],
+        PHOTO_AUTO_LIST: true,
+        PHOTO_DIR: "photo",
+        PHOTO_EXTS: ["webp", "png", "jpg", "jpeg", "gif"],
+        PHOTO_INDEX_CACHE_MS: 30 * 60 * 1000,
+        PHOTO_MAX_FILES: 4000,
+        PHOTO_DIRS: ["photo"],
       };
       const PLACEHOLDER_IMG =
         "data:image/svg+xml;charset=utf-8," +
@@ -1654,14 +1674,26 @@
         const repo = seg.length ? seg[0] : "";
         return { owner, repo };
       }
-      async function listGithubCsvFiles() {
+      function encodePathSegments(p) {
+        const s = String(p ?? "").replace(/\\/g, "/");
+        return s
+          .split("/")
+          .filter((x) => x.length > 0)
+          .map((x) => encodeURIComponent(x))
+          .join("/");
+      }
+      function githubRepoInfo() {
         const detected = detectGithubRepoFromLocation();
         const owner = String(CONFIG.GITHUB_OWNER || detected.owner || "").trim();
         const repo = String(CONFIG.GITHUB_REPO || detected.repo || "").trim();
         const branch = String(CONFIG.GITHUB_BRANCH || "main").trim();
+        return { owner, repo, branch };
+      }
+      async function listGithubCsvFiles() {
+        const { owner, repo, branch } = githubRepoInfo();
         if (!owner || !repo) return [];
         const dir = String(CONFIG.DATA_DIR ?? "data-csv").trim() || "data-csv";
-        const api = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(
+        const api = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodePathSegments(
           dir
         )}?ref=${encodeURIComponent(branch)}`;
         const res = await fetchJsonCached(api, 10 * 60 * 1000);
@@ -1670,6 +1702,45 @@
           .filter((x) => x && x.type === "file" && typeof x.name === "string" && /\.csv$/i.test(x.name))
           .map((x) => `${dir}/${encodeURIComponent(x.name)}`);
         return files;
+      }
+      async function listGithubFilesRecursive(rootDir, wantedExts, maxFiles) {
+        const { owner, repo, branch } = githubRepoInfo();
+        if (!owner || !repo) return [];
+        const dir = String(rootDir ?? "").trim().replace(/\\/g, "/").replace(/^\/+/, "").replace(/\/+$/, "");
+        if (!dir) return [];
+        const exts = Array.isArray(wantedExts) ? wantedExts.map((x) => String(x ?? "").trim().replace(/^\./, "").toLowerCase()).filter(Boolean) : [];
+        const max = Math.max(0, Number(maxFiles) || 0) || 2000;
+        const out = [];
+        const queue = [dir];
+        const seenDirs = new Set();
+        while (queue.length && out.length < max) {
+          const cur = queue.shift();
+          if (!cur || seenDirs.has(cur)) continue;
+          seenDirs.add(cur);
+          const api = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodePathSegments(
+            cur
+          )}?ref=${encodeURIComponent(branch)}`;
+          const res = await fetchJsonCached(api, 30 * 60 * 1000);
+          const list = Array.isArray(res?.json) ? res.json : [];
+          for (const it of list) {
+            if (!it || typeof it !== "object") continue;
+            const type = String(it.type ?? "");
+            const name = String(it.name ?? "");
+            if (!name) continue;
+            if (type === "dir") {
+              queue.push(`${cur}/${name}`);
+              continue;
+            }
+            if (type !== "file") continue;
+            const lower = name.toLowerCase();
+            const dot = lower.lastIndexOf(".");
+            const ext = dot >= 0 ? lower.slice(dot + 1) : "";
+            if (exts.length && !exts.includes(ext)) continue;
+            out.push(`${encodePathSegments(cur)}/${encodeURIComponent(name)}`);
+            if (out.length >= max) break;
+          }
+        }
+        return out;
       }
       function parseDataManifestText(text) {
         const dir = String(CONFIG.DATA_DIR ?? "data-csv").trim() || "data-csv";
@@ -1723,32 +1794,31 @@
         const noQuery = base.split("?")[0] || "";
         return safeLower(noQuery.replace(/\.[^./]+$/, "").trim());
       }
-      function parsePhotoManifestText(text) {
-        const lines = String(text ?? "")
-          .split(/\r?\n/)
-          .map((l) => String(l ?? "").trim())
-          .filter((l) => l.length > 0 && !l.startsWith("#"));
-        const out = [];
-        const seen = new Set();
-        for (const line of lines) {
-          const p = String(line ?? "").trim().replace(/\\/g, "/");
-          if (!p) continue;
-          if (seen.has(p)) continue;
-          seen.add(p);
-          out.push(p);
-        }
-        return out;
-      }
       async function loadPhotoIndex() {
         if (photoIndexLoaded) return;
         photoIndexLoaded = true;
-        const urls = Array.isArray(CONFIG.PHOTO_MANIFEST_URLS) ? CONFIG.PHOTO_MANIFEST_URLS : [];
-        const res = await fetchTextFirstAvailable(urls, 10 * 60 * 1000);
-        if (!res) return;
-        const list = parsePhotoManifestText(res.text);
+        if (!CONFIG.PHOTO_AUTO_LIST) return;
+        const dir = String(CONFIG.PHOTO_DIR ?? "photo").trim() || "photo";
+        const exts = Array.isArray(CONFIG.PHOTO_EXTS) ? CONFIG.PHOTO_EXTS : ["webp", "png", "jpg", "jpeg", "gif"];
+        const max = Math.max(0, Number(CONFIG.PHOTO_MAX_FILES) || 0) || 4000;
+        const cacheMs = Math.max(0, Number(CONFIG.PHOTO_INDEX_CACHE_MS) || 30 * 60 * 1000);
+        const cacheKey = `hjy_photo_index_v1::${dir}`;
+        const prev = cacheMs ? getCachedText(cacheKey, cacheMs) : null;
+        let list = [];
+        if (prev) {
+          try {
+            const parsed = JSON.parse(prev);
+            if (Array.isArray(parsed)) list = parsed;
+          } catch {}
+        }
+        if (list.length === 0) {
+          list = await listGithubFilesRecursive(dir, exts, max);
+          setCachedText(cacheKey, JSON.stringify(list));
+        }
         if (!list.length) return;
         const map = new Map();
-        for (const p of list) {
+        for (const path of list) {
+          const p = String(path ?? "").trim().replace(/\\/g, "/");
           const k = normalizePhotoKeyFromPath(p);
           if (!k) continue;
           const arr = map.get(k) || [];
@@ -2352,8 +2422,8 @@
             <button class="fav-btn" type="button" data-fav="${escapeHtmlAttr(p.code)}" aria-pressed="${favOn ? "true" : "false"}" aria-label="المفضلة">${
           favOn ? "♥" : "♡"
         }</button>
-            <div class="gallery-wrap" style="padding:12px">
-              <div class="thumb" style="aspect-ratio:16/10;position:relative;border-radius:14px">
+            <div class="gallery-wrap product-gallery" style="padding:12px">
+              <div class="thumb" style="aspect-ratio:4/3;position:relative;border-radius:14px">
                 <img
                   id="productMainImg"
                   src="${escapeHtmlAttr(mainSrc)}"
@@ -2601,6 +2671,13 @@
           await loadHomeCodes();
           renderHome();
           applyHashRoute();
+          loadPhotoIndex()
+            .then(() => {
+              if (els.homeView.style.display !== "none") renderHome();
+              if (els.shopView.style.display !== "none") render();
+              if (els.productView.style.display !== "none") renderProductDetails(state.lastProductCode);
+            })
+            .catch(() => {});
           if (!location.hash) setHash("home");
         } catch (e) {
           els.hint.textContent = "فشل التحميل";
@@ -2825,6 +2902,12 @@
             if (!it) return;
             return setCartQty(code, Math.max(1, Number(it.qty) - 1));
           }
+          if (t.id === "clearCartBtn") return clearCart();
+          if (t.id === "checkoutBtn") return setHash("checkout");
+        });
+        els.cartActions.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
           if (t.id === "clearCartBtn") return clearCart();
           if (t.id === "checkoutBtn") return setHash("checkout");
         });

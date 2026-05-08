@@ -1232,6 +1232,7 @@
         DRIVE_FOLDER_URL: "https://drive.google.com/drive/folders/1I0xiaP6aC44d6HAqamQzJnocVWBXoFrG?usp=sharing",
         DRIVE_SUBFOLDER_NAME: "data-csv",
         DRIVE_API_KEY: "",
+        DRIVE_SCRIPT_URL: "",
         DRIVE_LIST_CACHE_MS: 5 * 60 * 1000,
         DRIVE_DATA_CACHE_MS: 10 * 60 * 1000,
         DATA_DIR: "data-csv",
@@ -1662,6 +1663,21 @@
         const fromConfig = String(CONFIG.DRIVE_API_KEY ?? "").trim();
         return String(fromQuery || fromConfig || "").trim();
       }
+      async function listDriveCsvUrlsViaScript() {
+        const base = String(CONFIG.DRIVE_SCRIPT_URL ?? "").trim();
+        if (!base) return { urls: [], error: "NO_SCRIPT_URL" };
+        const folderId = extractDriveFolderId(CONFIG.DRIVE_FOLDER_URL);
+        if (!folderId) return { urls: [], error: "NO_FOLDER" };
+        const listCacheMs = Math.max(0, Number(CONFIG.DRIVE_LIST_CACHE_MS) || 5 * 60 * 1000);
+        const url = `${base}${base.includes("?") ? "&" : "?"}folder=${encodeURIComponent(folderId)}&sub=${encodeURIComponent(
+          String(CONFIG.DRIVE_SUBFOLDER_NAME ?? "").trim()
+        )}`;
+        const res = await fetchJsonCached(url, listCacheMs);
+        const data = res?.json;
+        const files = Array.isArray(data?.files) ? data.files : [];
+        const urls = files.map((f) => String(f?.url ?? "").trim()).filter((u) => u.length > 0);
+        return { urls, error: urls.length ? "" : "EMPTY" };
+      }
       async function listDriveCsvUrls(folderUrlOrId) {
         const rootFolderId = extractDriveFolderId(folderUrlOrId);
         const apiKey = getDriveApiKey();
@@ -1728,6 +1744,13 @@
       }
       async function resolveDataFiles() {
         const mode = safeLower(CONFIG.DATA_SOURCE ?? "");
+        if (mode === "drive_script") {
+          const drive = await listDriveCsvUrlsViaScript();
+          if (drive?.urls?.length) return drive.urls;
+          if (drive?.error === "NO_SCRIPT_URL") throw new Error("DRIVE_NO_SCRIPT_URL");
+          if (drive?.error === "NO_FOLDER") throw new Error("DRIVE_NO_FOLDER");
+          throw new Error("DRIVE_EMPTY");
+        }
         if (mode === "drive") {
           const drive = await listDriveCsvUrls(CONFIG.DRIVE_FOLDER_URL);
           if (drive?.urls?.length) return drive.urls;
@@ -2569,7 +2592,8 @@
         setHomeStatus("", false);
       }
       async function loadProducts() {
-        const wantsDrive = safeLower(CONFIG.DATA_SOURCE ?? "") === "drive";
+        const dataSource = safeLower(CONFIG.DATA_SOURCE ?? "");
+        const wantsDrive = dataSource === "drive" || dataSource === "drive_script";
         const loadingText = "جاري تحميل المنتجات";
         els.hint.textContent = `${loadingText}...`;
         setStatus(wantsDrive ? `${loadingText} (Google Drive)...` : `${loadingText}...`);
@@ -2651,6 +2675,8 @@
           const msg = wantsDrive
             ? reason === "drive_no_key"
               ? "لم يتم تزويد API Key. أضفه عبر ?drive_key=... أو داخل CONFIG.DRIVE_API_KEY."
+              : reason === "drive_no_script_url"
+                ? "لم يتم ضبط رابط خدمة Google Apps Script. ضع CONFIG.DRIVE_SCRIPT_URL ثم اجعل DATA_SOURCE=\"DRIVE_SCRIPT\"."
               : reason === "drive_no_folder"
                 ? "رابط Google Drive غير صحيح أو لا يحتوي Folder ID."
                 : reason === "drive_no_subfolder"

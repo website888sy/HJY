@@ -1228,7 +1228,7 @@
       const CONFIG = {
         BRAND: "HJY.co",
         PROMO_URLS: ["promo.txt"],
-        DATA_SOURCE: "DRIVE_SCRIPT",
+        DATA_SOURCE: "MANIFEST",
         DRIVE_FOLDER_URL: "https://drive.google.com/drive/folders/1I0xiaP6aC44d6HAqamQzJnocVWBXoFrG?usp=sharing",
         DRIVE_SUBFOLDER_NAME: "data-csv",
         DRIVE_API_KEY: "",
@@ -1236,8 +1236,8 @@
         DRIVE_LIST_CACHE_MS: 5 * 60 * 1000,
         DRIVE_DATA_CACHE_MS: 10 * 60 * 1000,
         DATA_DIR: "data-csv",
-        DATA_MANIFEST_URLS: ["data-csv/files.txt"],
-        DATA_FILES: ["data/cell-bms.csv", "data/smart-home-wifi.csv"],
+        DATA_MANIFEST_URLS: ["PUT_MANIFEST_URL_HERE"],
+        DATA_FILES: [],
         HOME_CODES_URLS: ["home.txt", "home.csv", "home"],
         OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
         ABOUT_DIR: "about",
@@ -2691,7 +2691,7 @@
                   ? "لم يتم العثور على مجلد data-csv داخل المجلد الرئيسي. تأكد من الاسم أو عدّل DRIVE_SUBFOLDER_NAME."
                   : "فشل تحميل المنتجات من Google Drive. تأكد أن المجلد عام وأن Google Drive API مفعّل وأن داخل data-csv ملفات CSV."
             : reason === "no_data_files"
-              ? "لا توجد ملفات CSV للتحميل. أضف أسماء الملفات داخل data-csv/files.txt أو حدّث CONFIG.DATA_FILES."
+              ? "لا توجد ملفات CSV للتحميل. ضع رابط ملف قائمة CSV داخل CONFIG.DATA_MANIFEST_URLS (أو عدّل CONFIG.DATA_FILES)."
               : "فشل تحميل ملفات المنتجات. تأكد أن ملفات CSV موجودة داخل المستودع وبنفس الأسماء والمسارات.";
           setStatus(msg, true);
           els.grid.innerHTML = "";

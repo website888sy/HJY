@@ -1162,6 +1162,7 @@
         DATA_FILES: ["data/cell-bms.csv", "data/smart-home-wifi.csv"],
         DATA_SOURCE: "LOCAL",
         DRIVE_FOLDER_URL: "https://drive.google.com/drive/folders/1zlq-a8XUV-4UMJpHXdoeJ2vKQxiwmVpj?usp=sharing",
+        DRIVE_SUBFOLDER_NAME: "data-csv",
         DRIVE_API_KEY: "",
         HOME_CODES_URLS: ["home.txt", "home.csv", "home"],
         OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
@@ -1569,10 +1570,28 @@
         const fromConfig = String(CONFIG.DRIVE_API_KEY ?? "").trim();
         return String(fromQuery || fromConfig || "").trim();
       }
+      function escapeDriveQueryString(s) {
+        return String(s ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+      }
       async function listDriveCsvUrls(folderUrlOrId) {
-        const folderId = extractDriveFolderId(folderUrlOrId);
+        let folderId = extractDriveFolderId(folderUrlOrId);
         const apiKey = getDriveApiKey();
         if (!folderId || !apiKey) return { urls: [], error: !folderId ? "NO_FOLDER" : "NO_KEY" };
+        const subName = String(CONFIG.DRIVE_SUBFOLDER_NAME ?? "").trim();
+        if (subName) {
+          const q = `'${folderId}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder' and name='${escapeDriveQueryString(subName)}'`;
+          const params = new URLSearchParams();
+          params.set("q", q);
+          params.set("pageSize", "10");
+          params.set("fields", "files(id,name)");
+          params.set("key", apiKey);
+          const url = `https://www.googleapis.com/drive/v3/files?${params.toString()}`;
+          const res = await fetchJsonCached(url, 2 * 60 * 1000);
+          const data = res?.json;
+          const found = Array.isArray(data?.files) ? data.files : [];
+          const firstId = String(found?.[0]?.id ?? "").trim();
+          if (firstId) folderId = firstId;
+        }
         let pageToken = "";
         const files = [];
         for (let i = 0; i < 10; i++) {

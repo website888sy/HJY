@@ -1734,8 +1734,16 @@
         for (const line of lines) {
           const raw = String(line ?? "").trim();
           if (!raw) continue;
-          const name = /\.csv$/i.test(raw) ? raw : `${raw}.csv`;
-          const url = name.includes("/") ? name : `${dir}/${encodeURIComponent(name)}`;
+          const isHttp = /^https?:\/\//i.test(raw);
+          const looksLikeId = !raw.includes("/") && /^[a-zA-Z0-9_-]{10,}$/.test(raw);
+          const name = isHttp || looksLikeId ? raw : /\.csv$/i.test(raw) ? raw : `${raw}.csv`;
+          const url = isHttp
+            ? name
+            : looksLikeId
+              ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(name)}`
+              : name.includes("/")
+                ? name
+                : `${dir}/${encodeURIComponent(name)}`;
           if (seen.has(url)) continue;
           seen.add(url);
           out.push(url);

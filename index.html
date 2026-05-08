@@ -1579,7 +1579,7 @@
         if (!folderId || !apiKey) return { urls: [], error: !folderId ? "NO_FOLDER" : "NO_KEY" };
         const subName = String(CONFIG.DRIVE_SUBFOLDER_NAME ?? "").trim();
         if (subName) {
-          const q = `'${folderId}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder' and name='${escapeDriveQueryString(subName)}'`;
+          const q = `'${folderId}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder'`;
           const params = new URLSearchParams();
           params.set("q", q);
           params.set("pageSize", "10");
@@ -1589,8 +1589,11 @@
           const res = await fetchJsonCached(url, 2 * 60 * 1000);
           const data = res?.json;
           const found = Array.isArray(data?.files) ? data.files : [];
-          const firstId = String(found?.[0]?.id ?? "").trim();
+          const wanted = safeLower(subName);
+          const picked = found.find((f) => safeLower(String(f?.name ?? "").trim()) === wanted);
+          const firstId = String(picked?.id ?? "").trim();
           if (firstId) folderId = firstId;
+          else return { urls: [], error: "NO_SUBFOLDER" };
         }
         let pageToken = "";
         const files = [];
@@ -2364,6 +2367,7 @@
             if (drive?.urls?.length) dataFiles = drive.urls;
             else if (drive?.error === "NO_KEY") throw new Error("DRIVE_NO_KEY");
             else if (drive?.error === "NO_FOLDER") throw new Error("DRIVE_NO_FOLDER");
+            else if (drive?.error === "NO_SUBFOLDER") throw new Error("DRIVE_NO_SUBFOLDER");
             else throw new Error("DRIVE_EMPTY");
           }
           const productsByCode = new Map();
@@ -2426,11 +2430,16 @@
           renderHome();
           applyHashRoute();
           if (!location.hash) setHash("home");
-        } catch {
+        } catch (e) {
           els.hint.textContent = "فشل التحميل";
           const wantsDrive = safeLower(CONFIG.DATA_SOURCE ?? "") === "drive";
+          const reason = safeLower(String(e?.message ?? "").trim());
           const msg = wantsDrive
-            ? "فشل تحميل المنتجات من Google Drive. تأكد من: تفعيل Google Drive API + وضع API Key صالح عبر ?drive_key=... أو ضمن CONFIG.DRIVE_API_KEY + أن مجلد Drive عام ويحتوي ملفات CSV."
+            ? reason === "drive_no_subfolder"
+              ? "تعذر العثور على مجلد data-csv داخل المجلد الرئيسي على Google Drive. تأكد أن الاسم مطابق تماماً أو عدّل DRIVE_SUBFOLDER_NAME."
+              : reason === "drive_no_key"
+                ? "لم يتم تزويد API Key. أضفه عبر ?drive_key=... أو داخل CONFIG.DRIVE_API_KEY."
+                : "فشل تحميل المنتجات من Google Drive. تأكد من: تفعيل Google Drive API + أن المجلد عام + وجود ملفات CSV داخل data-csv."
             : "فشل تحميل ملفات المنتجات. تأكد أن ملفات data موجودة بنفس المجلد وبنفس الأسماء.";
           setStatus(msg, true);
           els.grid.innerHTML = "";

@@ -2369,12 +2369,17 @@
             else if (drive?.error === "NO_FOLDER") throw new Error("DRIVE_NO_FOLDER");
             else if (drive?.error === "NO_SUBFOLDER") throw new Error("DRIVE_NO_SUBFOLDER");
             else throw new Error("DRIVE_EMPTY");
+            els.hint.textContent = `تم العثور على ${dataFiles.length} ملف CSV داخل Google Drive...`;
           }
           const productsByCode = new Map();
           const dataMaxAgeMs = wantsDrive ? 60 * 1000 : 10 * 60 * 1000;
+          let fetchedOk = 0;
+          let parsedOk = 0;
+          let rowsOk = 0;
           for (const file of dataFiles) {
             const got = await fetchTextFirstAvailable([file], dataMaxAgeMs);
             if (!got) continue;
+            fetchedOk++;
             const table = parseCsvText(got.text);
             if (!table.headers.length) continue;
             const normHeader = (h) => safeLower(String(h ?? "").replace(/^\uFEFF/, "").replace(/\s+/g, ""));
@@ -2393,9 +2398,11 @@
             const idxPhoto = idxOf(["photo"]);
             const idxDis = idxOf(["dis", "discount"]);
             if (idxCode === -1) continue;
+            parsedOk++;
             for (const row of table.rows) {
               const code = idxCode >= 0 ? String(row[idxCode] ?? "").trim() : "";
               if (!code) continue;
+              rowsOk++;
               const name = idxName >= 0 ? String(row[idxName] ?? "").trim() : "";
               const about1 = idxAbout1 >= 0 ? String(row[idxAbout1] ?? "").trim() : "";
               const about2 = idxAbout2 >= 0 ? String(row[idxAbout2] ?? "").trim() : "";
@@ -2422,7 +2429,9 @@
             }
           }
           state.allProducts = Array.from(productsByCode.values());
-          els.hint.textContent = "";
+          els.hint.textContent = wantsDrive
+            ? `تم تحميل ${fetchedOk}/${dataFiles.length} ملف — وتمت قراءة ${parsedOk} ملف صالح — إجمالي العناصر ${state.allProducts.length} (أسطر مقروءة ${rowsOk}).`
+            : "";
           setStatus("");
           loadCart();
           renderCart();

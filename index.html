@@ -1575,10 +1575,37 @@
         }
         return null;
       }
+      const DRIVE_KEY_STORAGE = "hjy_drive_api_key_v1";
+      function getStoredDriveApiKey() {
+        try {
+          return String(localStorage.getItem(DRIVE_KEY_STORAGE) ?? "").trim();
+        } catch {
+          return "";
+        }
+      }
+      function setStoredDriveApiKey(key) {
+        const k = String(key ?? "").trim();
+        if (!k) return;
+        try {
+          localStorage.setItem(DRIVE_KEY_STORAGE, k);
+        } catch {}
+      }
       function getDriveApiKey() {
         const fromQuery = getQueryParam("drive_key") || getQueryParam("driveKey") || getQueryParam("gdrive_key");
         const fromConfig = String(CONFIG.DRIVE_API_KEY ?? "").trim();
-        return String(fromQuery || fromConfig || "").trim();
+        const fromStorage = getStoredDriveApiKey();
+        return String(fromQuery || fromConfig || fromStorage || "").trim();
+      }
+      async function ensureDriveApiKey() {
+        if (safeLower(CONFIG.DATA_SOURCE ?? "") !== "drive") return true;
+        if (getDriveApiKey()) return true;
+        let entered = "";
+        try {
+          entered = String(prompt("أدخل Google Drive API Key لتحميل المنتجات:") ?? "").trim();
+        } catch {}
+        if (!entered) return false;
+        setStoredDriveApiKey(entered);
+        return true;
       }
       async function listDriveCsvUrls(folderUrlOrId) {
         const rootFolderId = extractDriveFolderId(folderUrlOrId);
@@ -2913,7 +2940,7 @@
       updatePills();
       window.addEventListener("hashchange", applyHashRoute);
       wireEvents();
-      loadProducts();
+      ensureDriveApiKey().then((ok) => (ok ? loadProducts() : setStatus("لم يتم إدخال API Key.", true)));
     </script>
   </body>
 </html>

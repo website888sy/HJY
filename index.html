@@ -1160,7 +1160,7 @@
       const CONFIG = {
         BRAND: "HJY.co",
         DATA_FILES: ["data/cell-bms.csv", "data/smart-home-wifi.csv"],
-        DATA_SOURCE: "LOCAL",
+        DATA_SOURCE: "DRIVE",
         DRIVE_FOLDER_URL: "https://drive.google.com/drive/folders/1zlq-a8XUV-4UMJpHXdoeJ2vKQxiwmVpj?usp=sharing",
         DRIVE_SUBFOLDER_NAME: "data-csv",
         DRIVE_API_KEY: "",
@@ -1574,12 +1574,43 @@
         return String(s ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
       }
       async function listDriveCsvUrls(folderUrlOrId) {
-        let folderId = extractDriveFolderId(folderUrlOrId);
+        const rootFolderId = extractDriveFolderId(folderUrlOrId);
         const apiKey = getDriveApiKey();
-        if (!folderId || !apiKey) return { urls: [], error: !folderId ? "NO_FOLDER" : "NO_KEY" };
+        if (!rootFolderId || !apiKey) return { urls: [], error: !rootFolderId ? "NO_FOLDER" : "NO_KEY" };
+        const listFilesInFolder = async (folderId) => {
+          let pageToken = "";
+          const files = [];
+          for (let i = 0; i < 10; i++) {
+            const params = new URLSearchParams();
+            params.set("q", `'${folderId}' in parents and trashed=false`);
+            params.set("pageSize", "1000");
+            params.set("fields", "nextPageToken,files(id,name,mimeType,modifiedTime)");
+            params.set("key", apiKey);
+            if (pageToken) params.set("pageToken", pageToken);
+            const url = `https://www.googleapis.com/drive/v3/files?${params.toString()}`;
+            const res = await fetchJsonCached(url, 2 * 60 * 1000);
+            const data = res?.json;
+            const batch = Array.isArray(data?.files) ? data.files : [];
+            for (const f of batch) files.push(f);
+            pageToken = String(data?.nextPageToken ?? "").trim();
+            if (!pageToken) break;
+          }
+          return files;
+        };
+        const csvUrlsFromFiles = (files) => {
+          const csvs = (Array.isArray(files) ? files : [])
+            .map((f) => ({ id: String(f?.id ?? "").trim(), name: String(f?.name ?? "").trim() }))
+            .filter((f) => f.id && f.name && /\.csv$/i.test(f.name))
+            .sort((a, b) => a.name.localeCompare(b.name));
+          return csvs.map((f) => `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(f.id)}?alt=media&key=${encodeURIComponent(apiKey)}`);
+        };
+        const rootFiles = await listFilesInFolder(rootFolderId);
+        const rootCsvUrls = csvUrlsFromFiles(rootFiles);
+        if (rootCsvUrls.length) return { urls: rootCsvUrls, error: "" };
         const subName = String(CONFIG.DRIVE_SUBFOLDER_NAME ?? "").trim();
-        if (subName) {
-          const q = `'${folderId}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder'`;
+        if (!subName) return { urls: [], error: "EMPTY" };
+        {
+          const q = `'${rootFolderId}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder'`;
           const params = new URLSearchParams();
           params.set("q", q);
           params.set("pageSize", "10");
@@ -1591,33 +1622,12 @@
           const found = Array.isArray(data?.files) ? data.files : [];
           const wanted = safeLower(subName);
           const picked = found.find((f) => safeLower(String(f?.name ?? "").trim()) === wanted);
-          const firstId = String(picked?.id ?? "").trim();
-          if (firstId) folderId = firstId;
-          else return { urls: [], error: "NO_SUBFOLDER" };
+          const subId = String(picked?.id ?? "").trim();
+          if (!subId) return { urls: [], error: "NO_SUBFOLDER" };
+          const subFiles = await listFilesInFolder(subId);
+          const subCsvUrls = csvUrlsFromFiles(subFiles);
+          return { urls: subCsvUrls, error: subCsvUrls.length ? "" : "EMPTY" };
         }
-        let pageToken = "";
-        const files = [];
-        for (let i = 0; i < 10; i++) {
-          const params = new URLSearchParams();
-          params.set("q", `'${folderId}' in parents and trashed=false`);
-          params.set("pageSize", "1000");
-          params.set("fields", "nextPageToken,files(id,name,mimeType,modifiedTime)");
-          params.set("key", apiKey);
-          if (pageToken) params.set("pageToken", pageToken);
-          const url = `https://www.googleapis.com/drive/v3/files?${params.toString()}`;
-          const res = await fetchJsonCached(url, 2 * 60 * 1000);
-          const data = res?.json;
-          const batch = Array.isArray(data?.files) ? data.files : [];
-          for (const f of batch) files.push(f);
-          pageToken = String(data?.nextPageToken ?? "").trim();
-          if (!pageToken) break;
-        }
-        const csvs = files
-          .map((f) => ({ id: String(f?.id ?? "").trim(), name: String(f?.name ?? "").trim() }))
-          .filter((f) => f.id && f.name && /\.csv$/i.test(f.name))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        const urls = csvs.map((f) => `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(f.id)}?alt=media&key=${encodeURIComponent(apiKey)}`);
-        return { urls, error: urls.length ? "" : "EMPTY" };
       }
       async function fetchTextFirstAvailable(urls, maxAgeMs = 6 * 60 * 60 * 1000) {
         const list = Array.isArray(urls) ? urls : [];

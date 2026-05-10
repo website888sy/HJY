@@ -65,7 +65,7 @@
       .topbar-inner {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 14px 16px;
+        padding: 10px 16px;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -74,11 +74,11 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        min-width: 170px;
+        min-width: 0;
       }
       .logo {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 12px;
         background: linear-gradient(135deg, var(--primary), var(--primary-3));
         box-shadow: 0 12px 30px rgba(25, 183, 255, 0.24);
@@ -133,6 +133,16 @@
         font-size: 13px;
         color: var(--text);
         outline: none;
+      }
+      .search-btn {
+        border: 1px solid rgba(25, 183, 255, 0.35);
+        background: rgba(25, 183, 255, 0.12);
+        color: var(--primary-3);
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-weight: 900;
+        cursor: pointer;
+        white-space: nowrap;
       }
       .select:focus {
         box-shadow: var(--ring);
@@ -215,7 +225,7 @@
         max-width: 1200px;
         width: 100%;
         margin: 0 auto;
-        padding: 14px 16px 90px;
+        padding: 14px 16px 18px;
       }
       .panel {
         border: 1px solid var(--border);
@@ -243,6 +253,15 @@
         font-weight: 700;
         line-height: 1.6;
         white-space: pre-wrap;
+      }
+      .about-em {
+        font-weight: 900;
+        font-size: 1.25em;
+        color: var(--text);
+      }
+      .about-warn {
+        font-weight: 900;
+        color: #d11;
       }
       .status {
         padding: 12px 14px;
@@ -277,15 +296,15 @@
       }
       .thumb {
         width: 100%;
-        aspect-ratio: 4/3;
-        background: linear-gradient(135deg, rgba(25, 183, 255, 0.12), rgba(255, 255, 255, 0.7));
+        aspect-ratio: 1/1;
+        background: #fff;
         overflow: hidden;
       }
       .thumb img {
         width: 100%;
         height: 100%;
         display: block;
-        object-fit: cover;
+        object-fit: contain;
         background: #fff;
       }
       .gallery-wrap {
@@ -324,7 +343,7 @@
       .gallery-thumb img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
         display: block;
         background: #fff;
       }
@@ -635,7 +654,7 @@
         width: 100%;
         height: 100%;
         display: block;
-        object-fit: cover;
+        object-fit: contain;
         background: #fff;
       }
       .cart-info {
@@ -742,9 +761,7 @@
         border-top: 1px solid var(--border);
       }
       .footerbar {
-        position: fixed;
-        inset-inline: 0;
-        inset-block-end: 0;
+        position: static;
         border-top: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(10px);
@@ -778,7 +795,7 @@
       .toast {
         position: fixed;
         inset-inline-start: 12px;
-        inset-block-end: 76px;
+        inset-block-end: 12px;
         z-index: 60;
         pointer-events: none;
         opacity: 0;
@@ -829,6 +846,10 @@
           min-width: 0;
           flex: 1 1 100%;
         }
+        #cartToggle {
+          bottom: 12px;
+          inset-inline-start: 12px;
+        }
         .cart-drawer {
           inset-inline: 0;
           inset-block-end: 0;
@@ -842,9 +863,56 @@
           transform: translateY(0);
         }
       }
+      @media (max-width: 420px) {
+        .topbar-inner {
+          padding: 10px 12px;
+        }
+        .search {
+          padding: 9px 10px;
+        }
+        .search input {
+          font-size: 13px;
+        }
+        .select {
+          padding: 9px 10px;
+          font-size: 12px;
+        }
+        .search-btn {
+          padding: 9px 12px;
+          font-size: 12px;
+        }
+        .grid {
+          gap: 10px;
+          padding: 12px;
+        }
+        .card {
+          min-height: 270px;
+        }
+      }
+      @media (max-width: 360px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .card {
+          min-height: unset;
+        }
+      }
     </style>
   </head>
   <body>
+    <div id="bootOverlay" style="position:fixed;inset:0;display:grid;place-items:center;background:#fff;z-index:100">
+      <div style="display:grid;gap:12px;place-items:center;padding:16px;text-align:center">
+        <div style="width:72px;height:72px;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#fff;display:grid;place-items:center">
+          <img src="logo.webp" alt="" style="width:100%;height:100%;object-fit:contain;display:block" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
+        </div>
+        <div style="font-weight:900;letter-spacing:0.2px">
+          <span style="color:#0a2430">BY </span><span id="bootH" style="color:#0a2430">H</span><span id="bootJ" style="color:#0a2430">J</span><span id="bootY" style="color:#0a2430">Y</span><span style="color:#0a2430">.co</span>
+        </div>
+        <div style="width:min(320px,70vw);height:10px;border-radius:999px;background:rgba(10,36,48,0.08);overflow:hidden">
+          <div id="bootBar" style="height:100%;width:0%;background:linear-gradient(90deg,#d33,#19b7ff,#777);transition:width 220ms ease"></div>
+        </div>
+      </div>
+    </div>
     <div class="app" id="appRoot" data-route="home">
       <div class="promo-bar" id="promoBar">
         <div class="promo-bar-inner" id="promoText"></div>
@@ -861,13 +929,15 @@
           </div>
           <div class="controls">
             <div class="search" role="search">
-              <input id="searchInput" type="search" placeholder="ابحث بالاسم أو الكود..." autocomplete="off" />
+              <input id="searchInput" type="search" placeholder="شريط البحث" autocomplete="off" />
               <select class="select" id="sortSelect" aria-label="ترتيب البحث">
-                <option value="DEFAULT">بحث: افتراضي</option>
-                <option value="PRICE_ASC">بحث: أرخص سعر</option>
-                <option value="PRICE_DESC">بحث: أعلى سعر</option>
+                <option value="DEFAULT">افتراضي</option>
+                <option value="PRICE_ASC">أرخص سعر</option>
+                <option value="PRICE_DESC">أعلى سعر</option>
+                <option value="FAVORITES">مفضلة</option>
               </select>
             </div>
+            <button class="search-btn" id="searchBtn" type="button">بحث</button>
             <select class="select" id="viewSelect" aria-label="طريقة العرض">
               <option value="grid">شبكي</option>
               <option value="compact">مضغوط</option>
@@ -882,10 +952,10 @@
         </div>
         <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px">
           <div class="pillbar" role="group" aria-label="التصنيفات">
-            <button class="pill" type="button" data-category="HOME" aria-pressed="true">الرئيسية</button>
+            <button class="pill" type="button" data-category="HOME" aria-pressed="true">قائمة رئيسية</button>
+            <button class="pill" type="button" data-category="OUT" aria-pressed="false">منتهي كمية</button>
+            <button class="pill" type="button" data-category="FAVORITES" aria-pressed="false">مفضلة</button>
             <button class="pill" type="button" data-category="ALL" aria-pressed="false">الكل</button>
-            <button class="pill" type="button" data-category="FAVORITES" aria-pressed="false">المفضلة</button>
-            <button class="pill" type="button" data-category="OUT" aria-pressed="false">منتهي الكمية</button>
           </div>
           <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
             <div class="pager" aria-label="التنقل بين الصفحات">
@@ -957,6 +1027,8 @@
           </div>
           <div style="padding:14px;display:grid;gap:14px">
             <div class="status" id="checkoutStatus" aria-hidden="true"></div>
+            <div class="panel-sub" style="max-width:520px;margin-inline:auto">بيانات العميل تحفظ للمرة قادمة تلقائياً</div>
+            <div id="checkoutCartSummary" style="max-width:520px;margin-inline:auto;display:grid;gap:10px"></div>
             <form id="checkoutForm" style="display:grid;gap:10px;max-width:520px;margin-inline:auto">
               <label style="display:grid;gap:6px">
                 <span style="font-weight:800">رقم هاتف</span>
@@ -980,10 +1052,37 @@
                     type="text"
                     autocomplete="address-level1"
                     required
-                    placeholder="اكتب المحافظة"
+                    placeholder="اختر المحافظة"
+                    list="govList"
                     style="padding:12px;border:1px solid var(--border);border-radius:12px"
                   />
+                  <datalist id="govList">
+                    <option value="دمشق"></option>
+                    <option value="حمص"></option>
+                    <option value="لاذقية"></option>
+                    <option value="حماة"></option>
+                    <option value="طرطوس"></option>
+                    <option value="حلب"></option>
+                    <option value="إدلب"></option>
+                    <option value="سويداء"></option>
+                    <option value="درعا"></option>
+                    <option value="ريف طرطوس"></option>
+                    <option value="ريف لاذقية"></option>
+                    <option value="ريف حمص"></option>
+                    <option value="ريف إدلب"></option>
+                    <option value="ريف حلب"></option>
+                    <option value="ريف دمشق"></option>
+                    <option value="ريف حماة"></option>
+                    <option value="أخرى"></option>
+                  </datalist>
                   <button class="field-clear" type="button" data-clear="govInput" aria-label="حذف" title="حذف">🗑</button>
+                </div>
+              </label>
+              <label id="govOtherWrap" style="display:none;gap:6px">
+                <span style="font-weight:800">اكتب المحافظة</span>
+                <div class="field-row">
+                  <input id="govOtherInput" type="text" placeholder="المحافظة" style="padding:12px;border:1px solid var(--border);border-radius:12px" />
+                  <button class="field-clear" type="button" data-clear="govOtherInput" aria-label="حذف" title="حذف">🗑</button>
                 </div>
               </label>
               <div style="display:grid;gap:8px">
@@ -1120,6 +1219,8 @@
                     </div>
                   </label>
                   <div class="mini-note">يرجى عدم إغلاق الهاتف والانتباه لـ التغطية , يفضل تزويدنا بـ رقم احتياطي بقسم ملاحظات</div>
+                  <div class="mini-note">توصيل من 1-3 يوم عادة</div>
+                  <div class="mini-note">راجع قسم أسئلة شائعة للتوصيل للمزيد من المعلومات</div>
                 </div>
               </div>
               <div style="display:grid;gap:8px">
@@ -1184,7 +1285,8 @@
             <div class="status" id="infoStatus" aria-hidden="true"></div>
             <div id="infoText" class="panel-sub"></div>
             <form id="complaintForm" style="display:none;gap:10px;max-width:520px">
-              <textarea id="complaintInput" required placeholder="اكتب المشكلة بالتفصيل..." style="padding:12px;border:1px solid var(--border);border-radius:12px;min-height:120px;resize:vertical"></textarea>
+              <input id="complaintContact" type="text" placeholder="رقم الواتس او معرف التيلغرام (اختياري)" style="padding:12px;border:1px solid var(--border);border-radius:12px" />
+              <textarea id="complaintInput" required placeholder="لكي نحسن من خدماتنا يرجى كتابة المشكلة هنا :" style="padding:12px;border:1px solid var(--border);border-radius:12px;min-height:120px;resize:vertical"></textarea>
               <button class="btn btn-primary" type="submit">إرسال شكوى</button>
               <div class="panel-sub" id="complaintNote" style="display:none">تم إرسال الشكوى.</div>
             </form>
@@ -1207,7 +1309,9 @@
       </main>
       <footer class="footerbar">
         <div class="footerbar-inner">
-          <span style="font-size:11px;color:var(--muted);font-weight:700">BY HJY.co</span>
+          <span style="font-size:11px;font-weight:800">
+            <span style="color:var(--muted)">BY </span><span style="color:#d11">H</span><span style="color:#19b7ff">J</span><span style="color:#777">Y</span><span style="color:var(--muted)">.co</span>
+          </span>
           <div class="footer-links" id="footerLinks">
             <button class="footer-link" type="button" data-info="من نحن">من نحن</button>
             <button class="footer-link" type="button" data-info="المطور">المطور</button>
@@ -1256,11 +1360,11 @@
         HOME_CODES_URLS: ["home.txt", "home.csv", "home"],
         OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
         ABOUT_DIR: "about",
-        TELEGRAM_BOT_TOKEN: "8675164937:AAF8UXeY1eiLoQB-Xz9D_DCA1UaxLJT0jIE",
-        TELEGRAM_CHAT_ID: "2067991553",
+        TELEGRAM_ORDERS_PROXY_URL: "",
+        TELEGRAM_FEEDBACK_PROXY_URL: "",
         ITEMS_PER_PAGE: 20,
         SEARCH_MIN_CHARS: 2,
-        MIN_ORDER_TOTAL: 0,
+        MIN_ORDER_TOTAL: 8,
         PHOTO_AUTO_LIST: true,
         PHOTO_DIR: "photo",
         PHOTO_EXTS: ["webp", "png", "jpg", "jpeg", "gif"],
@@ -1280,6 +1384,7 @@
         search: document.getElementById("searchInput"),
         sortSelect: document.getElementById("sortSelect"),
         viewSelect: document.getElementById("viewSelect"),
+        searchBtn: document.getElementById("searchBtn"),
         pills: Array.from(document.querySelectorAll(".pill[data-category]")),
         prevPage: document.getElementById("prevPage"),
         nextPage: document.getElementById("nextPage"),
@@ -1319,9 +1424,12 @@
         backToShopBtn: document.getElementById("backToShopBtn"),
         checkoutMeta: document.getElementById("checkoutMeta"),
         checkoutStatus: document.getElementById("checkoutStatus"),
+        checkoutCartSummary: document.getElementById("checkoutCartSummary"),
         checkoutForm: document.getElementById("checkoutForm"),
         phoneInput: document.getElementById("phoneInput"),
         govInput: document.getElementById("govInput"),
+        govOtherWrap: document.getElementById("govOtherWrap"),
+        govOtherInput: document.getElementById("govOtherInput"),
         shipDamascusRadio: document.getElementById("shipDamascusRadio"),
         shipGovRadio: document.getElementById("shipGovRadio"),
         shipGovBlock: document.getElementById("shipGovBlock"),
@@ -1357,6 +1465,7 @@
         infoText: document.getElementById("infoText"),
         backFromInfoBtn: document.getElementById("backFromInfoBtn"),
         complaintForm: document.getElementById("complaintForm"),
+        complaintContact: document.getElementById("complaintContact"),
         complaintInput: document.getElementById("complaintInput"),
         complaintNote: document.getElementById("complaintNote"),
         ratingForm: document.getElementById("ratingForm"),
@@ -1379,7 +1488,32 @@
         lastMainRoute: "shop",
         lastProductCode: "",
         lastInvoiceText: "",
+        categories: [],
+        similarExpandedCode: "",
       };
+      function setBootProgress(pct) {
+        const el = document.getElementById("bootBar");
+        if (!(el instanceof HTMLElement)) return;
+        const v = Math.max(0, Math.min(100, Number(pct) || 0));
+        el.style.width = `${v}%`;
+        const h = document.getElementById("bootH");
+        const j = document.getElementById("bootJ");
+        const y = document.getElementById("bootY");
+        if (h instanceof HTMLElement && v >= 25) h.style.color = "#d11";
+        if (j instanceof HTMLElement && v >= 55) j.style.color = "#19b7ff";
+        if (y instanceof HTMLElement && v >= 85) y.style.color = "#777";
+      }
+      function hideBootOverlay() {
+        const el = document.getElementById("bootOverlay");
+        if (!(el instanceof HTMLElement)) return;
+        el.style.opacity = "0";
+        el.style.transition = "220ms ease";
+        setTimeout(() => {
+          try {
+            el.remove();
+          } catch {}
+        }, 260);
+      }
       let toastTimer = null;
       function showToast(message, durationMs = 2000) {
         const msg = String(message ?? "").trim();
@@ -1407,6 +1541,49 @@
         const v = safeLower(getQueryParam("refresh") || getQueryParam("nocache"));
         return v === "1" || v === "true" || v === "yes";
       }
+      function clearLocalCaches() {
+        try {
+          const keys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = String(localStorage.key(i) || "");
+            if (
+              k.startsWith("hjy_text_cache_v1::") ||
+              k.startsWith("hjy_json_cache_v1::") ||
+              k.startsWith("hjy_photo_index_v1::")
+            ) {
+              keys.push(k);
+            }
+          }
+          for (const k of keys) localStorage.removeItem(k);
+        } catch {}
+      }
+      if (wantsNoCache()) clearLocalCaches();
+      try {
+        const o = String(getQueryParam("tg_orders_proxy") || "").trim();
+        const f = String(getQueryParam("tg_feedback_proxy") || "").trim();
+        if (o) CONFIG.TELEGRAM_ORDERS_PROXY_URL = o;
+        if (f) CONFIG.TELEGRAM_FEEDBACK_PROXY_URL = f;
+      } catch {}
+      function linkifyOnly(raw) {
+        let html = escapeHtml(String(raw ?? ""));
+        html = html.replace(/(https?:\/\/[^\s<]+)/g, (m) => {
+          let url = String(m);
+          let tail = "";
+          while (url.length) {
+            const last = url[url.length - 1];
+            if (!last) break;
+            if (".,;:!?)]}،؛؟!".includes(last)) {
+              tail = last + tail;
+              url = url.slice(0, -1);
+              continue;
+            }
+            break;
+          }
+          if (!url) return m;
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>${tail}`;
+        });
+        return html;
+      }
       function escapeHtml(s) {
         return String(s ?? "")
           .replace(/&/g, "&amp;")
@@ -1414,6 +1591,28 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#39;");
+      }
+      function formatAboutText(raw) {
+        let html = escapeHtml(String(raw ?? ""));
+        html = html.replace(/(https?:\/\/[^\s<]+)/g, (m) => {
+          let url = String(m);
+          let tail = "";
+          while (url.length) {
+            const last = url[url.length - 1];
+            if (!last) break;
+            if (".,;:!?)]}،؛؟!".includes(last)) {
+              tail = last + tail;
+              url = url.slice(0, -1);
+              continue;
+            }
+            break;
+          }
+          if (!url) return m;
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>${tail}`;
+        });
+        html = html.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
+        html = html.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
+        return html;
       }
       function escapeHtmlAttr(s) {
         return escapeHtml(s).replace(/`/g, "&#96;");
@@ -1930,9 +2129,9 @@
         for (const r of rules) {
           if (r.type === "PERCENT") {
             const newPrice = base * (1 - Number(r.value || 0) / 100);
-            out += `اشتري ${r.qty} قطعة لتحصل على خصم ${formatMoney(r.value)}% — سعر القطعة ${formatMoney(newPrice)} بدل ${formatMoney(base)}\n`;
+            out += `خصم ${formatMoney(r.value)}% عند شراء ${r.qty} قطع — سعر القطعة ${formatMoney(newPrice)} بدل ${formatMoney(base)}\n`;
           } else if (r.type === "PRICE") {
-            out += `اشتري ${r.qty} قطعة على الأقل ليصبح سعر القطعة ${formatMoney(r.value)} بدل ${formatMoney(base)}\n`;
+            out += `سعر خاص ${formatMoney(r.value)} عند شراء ${r.qty} قطع — بدل ${formatMoney(base)}\n`;
           }
         }
         return out.trim();
@@ -2007,6 +2206,7 @@
         const count = cartCountTotal();
         const total = cartTotals();
         els.checkoutMeta.textContent = count === 0 ? "السلة فارغة" : `${count} قطعة — $${formatMoney(total)}`;
+        renderCheckoutCartSummary();
       }
       function showInfoView(key) {
         setRoute("info");
@@ -2195,10 +2395,18 @@
           const unit = Number(pricing.unit) || 0;
           const line = qty * unit;
           const applied = pricing.applied;
-          const priceNote =
-            applied && unit < (Number(p.price) || 0)
-              ? `<div class="mini-note" style="direction:ltr;unicode-bidi:plaintext">خصم مطبق: $${escapeHtml(formatMoney(unit))}/قطعة</div>`
-              : "";
+          const baseUnit = Number(p.price) || 0;
+          const discountApplied = Boolean(applied) && unit < baseUnit;
+          let discountLabel = "";
+          if (discountApplied && applied?.type === "PERCENT") discountLabel = `خصم ${formatMoney(applied.value)}% عند شراء ${applied.qty} قطع`;
+          if (discountApplied && applied?.type === "PRICE") discountLabel = `سعر خاص عند شراء ${applied.qty} قطع`;
+          const priceNote = discountApplied
+            ? `<div class="mini-note" style="display:grid;gap:2px">
+                 <div>${escapeHtml(discountLabel)}</div>
+                 <div style="direction:ltr;unicode-bidi:plaintext">قبل: $${escapeHtml(formatMoney(baseUnit))}/قطعة — بعد: $${escapeHtml(formatMoney(unit))}/قطعة</div>
+                 <div style="direction:ltr;unicode-bidi:plaintext">قبل: $${escapeHtml(formatMoney(qty * baseUnit))} — بعد: $${escapeHtml(formatMoney(line))}</div>
+               </div>`
+            : "";
           const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
           const src = cand[0] || PLACEHOLDER_IMG;
           html += `
@@ -2249,6 +2457,35 @@
           <button class="btn btn-danger" type="button" id="clearCartBtn">تفريغ</button>
           <button class="btn btn-primary" type="button" id="checkoutBtn">إتمام الطلب</button>
         `;
+        renderCheckoutCartSummary();
+      }
+      function renderCheckoutCartSummary() {
+        if (!(els.checkoutCartSummary instanceof HTMLElement)) return;
+        if (state.cart.size === 0) {
+          els.checkoutCartSummary.innerHTML = `<div class="cart-empty">السلة فارغة.</div>`;
+          return;
+        }
+        let html = "";
+        for (const it of state.cart.values()) {
+          const p = it.product;
+          const qty = Math.max(1, Number(it.qty) || 1);
+          const pricing = unitPriceForQty(p, qty);
+          const unit = Number(pricing.unit) || 0;
+          const line = qty * unit;
+          html += `<div style="border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(255,255,255,0.7);display:grid;gap:4px">
+              <div style="display:flex;gap:10px;justify-content:space-between;align-items:baseline;flex-wrap:wrap">
+                <div style="font-weight:900">${escapeHtml(p.name)}</div>
+                <div style="direction:ltr;unicode-bidi:plaintext;font-weight:900;color:var(--primary-3)">$${escapeHtml(formatMoney(line))}</div>
+              </div>
+              <div class="mini-note" style="direction:ltr;unicode-bidi:plaintext">${escapeHtml(p.code)} — qty: ${escapeHtml(String(qty))} — $${escapeHtml(formatMoney(unit))}/pc</div>
+            </div>`;
+        }
+        const total = cartTotals();
+        html += `<div class="sum-row" style="padding:6px 2px">
+            <span>الإجمالي</span>
+            <strong style="direction:ltr;unicode-bidi:plaintext">$${escapeHtml(formatMoney(total))}</strong>
+          </div>`;
+        els.checkoutCartSummary.innerHTML = html;
       }
       function buildSearchTokens(q) {
         const s = safeLower(q).trim();
@@ -2272,7 +2509,9 @@
         return score;
       }
       function updatePills() {
-        for (const b of els.pills) {
+        const pills = Array.from(document.querySelectorAll(".pill[data-category]"));
+        els.pills = pills;
+        for (const b of pills) {
           const cat = String(b.getAttribute("data-category") ?? "");
           b.setAttribute("aria-pressed", cat === state.category ? "true" : "false");
         }
@@ -2301,6 +2540,11 @@
         let list = state.allProducts.slice();
         if (state.category === "FAVORITES") list = list.filter((p) => isFavorite(p.code));
         if (state.category === "OUT") list = list.filter((p) => p.isOut);
+        if (String(state.category || "").startsWith("CAT:")) {
+          const key = normalizeCategoryKey(String(state.category || "").slice("CAT:".length));
+          const cat = (Array.isArray(state.categories) ? state.categories : []).find((c) => c && c.key === key);
+          if (cat) list = list.filter((p) => matchesKeywords(p, cat.keywords));
+        }
         if (state.category === "HOME") {
           showHomeView();
           renderHome();
@@ -2417,13 +2661,102 @@
           p.isOut
             ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
             : `<button class="btn btn-primary" type="button" data-add="${escapeHtmlAttr(p.code)}">إضافة إلى السلة</button>`;
+        const similarAll = computeSimilarProducts(p);
+        const expanded = normalizeCodeKey(state.similarExpandedCode) === normalizeCodeKey(p.code);
+        const simLimit = expanded ? 30 : 10;
+        const similar = similarAll.slice(0, simLimit);
+        let similarHtml = "";
+        if (similar.length) {
+          let cards = "";
+          for (const sp of similar) cards += renderMiniProductCard(sp);
+          const more =
+            similarAll.length > simLimit
+              ? `<div style="padding:0 12px 12px;display:flex;justify-content:center"><button class="btn btn-ghost" type="button" data-similar-more="${escapeHtmlAttr(
+                  p.code
+                )}">عرض المزيد</button></div>`
+              : "";
+          similarHtml = `
+            <div class="panel" style="border-radius:16px">
+              <div class="panel-header" style="padding:12px 14px">
+                <h2 style="margin:0;font-size:16px">منتجات متشابهة</h2>
+              </div>
+              <div style="padding:12px;display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">
+                ${cards}
+              </div>
+              ${more}
+            </div>
+          `;
+        }
+        const formsHtml = `
+          <div class="panel" style="border-radius:16px">
+            <div style="padding:12px;display:grid;gap:12px">
+              <details>
+                <summary class="btn btn-ghost" style="width:fit-content">إبلاغ عن مشكلة بالمنتج؟!</summary>
+                <form data-form="issue" data-code="${escapeHtmlAttr(p.code)}" style="display:grid;gap:10px;margin-top:10px">
+                  <input
+                    name="contact"
+                    type="text"
+                    placeholder="رقم هاتف واتس أو معرف التيلغرام للرد على الاستفسار"
+                    style="padding:12px;border:1px solid var(--border);border-radius:12px"
+                  />
+                  <div style="font-size:12px;font-weight:800;color:#d11">لكي نحسن من خدماتنا يرجى كتابة المشكلة هنا :</div>
+                  <textarea
+                    name="msg"
+                    required
+                    placeholder="وصف المشكلة ؟ لقيت أرخص , مقارنة بمن وماهي مواصفات كاملة + دليل صريح ومباشر عليها ؟ / اقتراحات / استفسار معين  بخصوص المنتج ...الخ"
+                    style="padding:12px;border:1px solid var(--border);border-radius:12px;min-height:120px;resize:vertical"
+                  ></textarea>
+                  <button class="btn btn-primary" type="submit">إرسال</button>
+                </form>
+              </details>
+              <details>
+                <summary class="btn btn-ghost" style="width:fit-content">طلب جملة</summary>
+                <form data-form="wholesale" data-code="${escapeHtmlAttr(p.code)}" style="display:grid;gap:10px;margin-top:10px">
+                  <input
+                    name="whatsapp"
+                    type="text"
+                    required
+                    placeholder="رقم واتساب"
+                    style="padding:12px;border:1px solid var(--border);border-radius:12px;direction:ltr;unicode-bidi:plaintext"
+                  />
+                  <input
+                    name="qty"
+                    type="number"
+                    inputmode="numeric"
+                    min="1"
+                    required
+                    placeholder="الكمية المطلوبة من هذه المادة"
+                    style="padding:12px;border:1px solid var(--border);border-radius:12px"
+                  />
+                  <select class="select" name="urgency" required>
+                    <option value="طلب مستعجل">طلب مستعجل</option>
+                    <option value="غير مستعجل">غير مستعجل</option>
+                  </select>
+                  <textarea
+                    name="notes"
+                    placeholder="ملاحظات إضافية"
+                    style="padding:12px;border:1px solid var(--border);border-radius:12px;min-height:100px;resize:vertical"
+                  ></textarea>
+                  <div class="mini-note" style="white-space:pre-wrap">
+يرجى ارسال بيانات سابقة لكي نرسل التفاصيل والاسعار لكم
+في حال طلب غير مستعجل وعدم توفر كمية لدينا يمكن استيرادها خلال 15 يوم \"حجم صغير\"-\"50 يوم حجم كبير\"
+يرجى زيارة قسم - طلبات خارجية من صين-
+سعر يختلف بين \"دفع مبلغ كامل مسبق\" / \"50%\" / عربون وباقي عند الاستلام
+                  </div>
+                  <button class="btn btn-primary" type="submit">إرسال</button>
+                </form>
+              </details>
+            </div>
+          </div>
+        `;
         els.productDetails.innerHTML = `
+          <div style="display:grid;gap:12px">
           <div class="card" style="min-height:unset">
             <button class="fav-btn" type="button" data-fav="${escapeHtmlAttr(p.code)}" aria-pressed="${favOn ? "true" : "false"}" aria-label="المفضلة">${
           favOn ? "♥" : "♡"
         }</button>
             <div class="gallery-wrap product-gallery" style="padding:12px">
-              <div class="thumb" style="aspect-ratio:4/3;position:relative;border-radius:14px">
+              <div class="thumb" style="aspect-ratio:1/1;position:relative;border-radius:14px;background:#fff">
                 <img
                   id="productMainImg"
                   src="${escapeHtmlAttr(mainSrc)}"
@@ -2451,9 +2784,17 @@
                 <span class="price-old">$${escapeHtml(formatMoney(marketingOldPrice(p.price)))}</span>
               </div>
               <div class="code">${escapeHtml(p.code)}</div>
-              <p class="desc" style="display:block;-webkit-line-clamp:unset">${escapeHtml(p.about2 || p.about1 || "")}</p>
+              <div class="desc" style="display:block;-webkit-line-clamp:unset;font-size:14px;line-height:1.75">${linkifyOnly(p.about2 || p.about1 || "")}</div>
               <div class="actions" style="margin-top:4px">${btn}</div>
+              <div class="actions" style="margin-top:0">
+                <button class="btn btn-ghost" type="button" data-share="${escapeHtmlAttr(p.code)}">مشاركة المنتج</button>
+                <button class="btn btn-ghost" type="button" data-share-app="whatsapp" data-share="${escapeHtmlAttr(p.code)}">واتساب</button>
+                <button class="btn btn-ghost" type="button" data-share-app="facebook" data-share="${escapeHtmlAttr(p.code)}">فيسبوك</button>
+              </div>
             </div>
+          </div>
+          ${similarHtml}
+          ${formsHtml}
           </div>
         `;
       }
@@ -2465,6 +2806,55 @@
         } catch {
           showToast("لم يتم النسخ", 1800);
           return false;
+        }
+      }
+      function productUrlForCode(code) {
+        const c = String(code ?? "").trim();
+        const base = `${location.origin}${location.pathname}`;
+        return `${base}#product=${encodeURIComponent(c)}`;
+      }
+      function buildProductShareText(p) {
+        const code = String(p?.code || "").trim();
+        const name = String(p?.name || "").trim();
+        const price = Number(p?.price) || 0;
+        const dis = disTextForProduct(p);
+        const link = productUrlForCode(code);
+        const lines = [];
+        lines.push(`code: ${code || "—"}`);
+        lines.push(`name: ${name || "—"}`);
+        lines.push(`price: $${formatMoney(price)}`);
+        lines.push(`الخصومات:`);
+        lines.push(dis ? dis : "—");
+        lines.push(`الرابط: ${link}`);
+        return lines.join("\n");
+      }
+      async function shareProductByCode(code) {
+        const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(code));
+        if (!p) return;
+        const link = productUrlForCode(p.code);
+        const text = buildProductShareText(p);
+        try {
+          if (navigator.share) {
+            await navigator.share({ text, url: link, title: p.name || CONFIG.BRAND });
+            return;
+          }
+        } catch {}
+        await copyText(text);
+      }
+      function openShareApp(app, code) {
+        const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(code));
+        if (!p) return;
+        const link = productUrlForCode(p.code);
+        const text = buildProductShareText(p);
+        const appKey = safeLower(app);
+        if (appKey === "whatsapp") {
+          const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+          window.open(url, "_blank", "noopener,noreferrer");
+          return;
+        }
+        if (appKey === "facebook") {
+          const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+          window.open(url, "_blank", "noopener,noreferrer");
         }
       }
       function splitText(text, maxLen) {
@@ -2490,9 +2880,17 @@
         return out;
       }
       async function sendToTelegram(text) {
-        const token = String(CONFIG.TELEGRAM_BOT_TOKEN ?? "").trim();
-        const chatId = String(CONFIG.TELEGRAM_CHAT_ID ?? "").trim();
-        if (!token || !chatId) throw new Error("Missing token/chat");
+        const cleaned = String(text ?? "").replace(/[\u200B-\u200F\uFEFF]/g, "").trim();
+        if (!cleaned) throw new Error("Empty");
+        throw new Error("TELEGRAM_NOT_CONFIGURED");
+      }
+      async function sendToTelegramKind(kind, text) {
+        const k = safeLower(kind);
+        const url =
+          k === "orders"
+            ? String(CONFIG.TELEGRAM_ORDERS_PROXY_URL || "").trim()
+            : String(CONFIG.TELEGRAM_FEEDBACK_PROXY_URL || "").trim();
+        if (!url) throw new Error("TELEGRAM_NOT_CONFIGURED");
         const cleaned = String(text ?? "").replace(/[\u200B-\u200F\uFEFF]/g, "").trim();
         if (!cleaned) throw new Error("Empty");
         const chunks = splitText(cleaned, 3500).filter((c) => String(c ?? "").trim().length > 0);
@@ -2500,26 +2898,15 @@
           const part = String(chunks[i] ?? "").trim();
           if (!part) continue;
           const prefix = chunks.length > 1 ? `(${i + 1}/${chunks.length})\n` : "";
-          const url = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
           const payloadText = prefix + part;
-          let sent = false;
-          try {
-            const res = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chat_id: chatId, text: payloadText, disable_web_page_preview: true }),
-              cache: "no-store",
-            });
-            if (res.ok) sent = true;
-          } catch {}
-          if (!sent) {
-            const body = new URLSearchParams();
-            body.set("chat_id", chatId);
-            body.set("text", payloadText);
-            body.set("disable_web_page_preview", "true");
-            await fetch(url, { method: "POST", mode: "no-cors", body, cache: "no-store" });
-          }
-          await new Promise((r) => setTimeout(r, 220));
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: payloadText }),
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("SEND_FAILED");
+          await new Promise((r) => setTimeout(r, 180));
         }
       }
       function buildInvoiceText(details) {
@@ -2574,6 +2961,117 @@
           .filter((l) => l.length > 0);
         for (const c of lines) state.outSet.add(normalizeCodeKey(c));
       }
+      function normalizeCategoryKey(name) {
+        return safeLower(String(name ?? "")).replace(/\s+/g, " ").trim();
+      }
+      async function loadCategories() {
+        state.categories = [];
+        const res = await fetchTextCached("categories.csv", 10 * 60 * 1000);
+        if (!res) return;
+        const table = parseCsvText(res.text);
+        if (!table.headers.length) return;
+        const normHeader = (h) => safeLower(String(h ?? "").replace(/^\uFEFF/, "").replace(/\s+/g, ""));
+        const idxOf = (candidates) => {
+          const wanted = new Set((Array.isArray(candidates) ? candidates : []).map((x) => normHeader(x)));
+          for (let i = 0; i < table.headers.length; i++) {
+            if (wanted.has(normHeader(table.headers[i]))) return i;
+          }
+          return -1;
+        };
+        const idxName = idxOf(["name"]);
+        const idxKeyword = idxOf(["keyword", "keywords", "key", "keys"]);
+        if (idxName === -1 || idxKeyword === -1) return;
+        const cats = [];
+        for (const row of table.rows) {
+          const name = String(row[idxName] ?? "").trim();
+          const raw = String(row[idxKeyword] ?? "").trim();
+          if (!name) continue;
+          const keywords = raw
+            .split("-")
+            .map((x) => String(x ?? "").trim())
+            .filter((x) => x.length > 0);
+          cats.push({ name, key: normalizeCategoryKey(name), keywords });
+        }
+        state.categories = cats;
+      }
+      function renderCategoryPills() {
+        const bar = document.querySelector(".pillbar");
+        if (!(bar instanceof HTMLElement)) return;
+        for (const old of Array.from(bar.querySelectorAll('.pill[data-category^="CAT:"]'))) {
+          try {
+            old.remove();
+          } catch {}
+        }
+        const cats = Array.isArray(state.categories) ? state.categories : [];
+        for (const c of cats) {
+          const btn = document.createElement("button");
+          btn.className = "pill";
+          btn.type = "button";
+          btn.setAttribute("data-category", `CAT:${c.key}`);
+          btn.setAttribute("aria-pressed", "false");
+          btn.textContent = c.name;
+          bar.appendChild(btn);
+        }
+        updatePills();
+      }
+      function matchesKeywords(p, keywords) {
+        const list = Array.isArray(keywords) ? keywords : [];
+        if (!list.length) return false;
+        const hay = safeLower(String(p?.search ?? ""));
+        for (const kw of list) {
+          const k = safeLower(String(kw ?? "")).trim();
+          if (!k) continue;
+          if (hay.includes(k)) return true;
+        }
+        return false;
+      }
+      function matchingCategoriesForProduct(p) {
+        const cats = Array.isArray(state.categories) ? state.categories : [];
+        return cats.filter((c) => c && matchesKeywords(p, c.keywords));
+      }
+      function computeSimilarProducts(p) {
+        const key = normalizeCodeKey(p?.code);
+        const cats = matchingCategoriesForProduct(p);
+        if (!cats.length) return [];
+        const scored = [];
+        for (const other of state.allProducts) {
+          if (!other) continue;
+          if (normalizeCodeKey(other.code) === key) continue;
+          let score = 0;
+          for (const c of cats) {
+            if (matchesKeywords(other, c.keywords)) score += 1;
+          }
+          if (score > 0) scored.push({ p: other, score });
+        }
+        scored.sort((a, b) => b.score - a.score || (Number(a.p.price) || 0) - (Number(b.p.price) || 0));
+        return scored.map((x) => x.p);
+      }
+      function renderMiniProductCard(p) {
+        const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
+        const src = cand[0] || PLACEHOLDER_IMG;
+        return `
+          <article class="card" data-code="${escapeHtmlAttr(p.code)}" style="min-height:200px">
+            <div class="thumb">
+              <img
+                src="${escapeHtmlAttr(src)}"
+                data-src-list="${escapeHtmlAttr(JSON.stringify(cand))}"
+                data-src-idx="0"
+                alt="${escapeHtmlAttr(p.name)}"
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+                onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
+              />
+            </div>
+            <div class="card-body" style="gap:6px">
+              <p class="name">${escapeHtml(p.name)}</p>
+              <div class="prices">
+                <span class="price-now">$${escapeHtml(formatMoney(p.price))}</span>
+              </div>
+            </div>
+          </article>
+        `;
+      }
       async function loadHomeCodes() {
         state.homeProducts = [];
         setHomeStatus("جاري تجهيز الصفحة الرئيسية...", false);
@@ -2600,10 +3098,12 @@
       }
       async function loadProducts() {
         const loadingText = "جاري تحميل المنتجات";
-        els.hint.textContent = `${loadingText}...`;
+        els.hint.textContent = loadingText;
         setStatus(`${loadingText}...`);
+        setBootProgress(20);
         try {
           await loadOutSet();
+          setBootProgress(35);
           const dataFiles = await resolveDataFiles();
           if (!Array.isArray(dataFiles) || dataFiles.length === 0) throw new Error("NO_DATA_FILES");
           const productsByCode = new Map();
@@ -2664,8 +3164,11 @@
             }
           }
           state.allProducts = Array.from(productsByCode.values());
-          els.hint.textContent = `تم تحميل ${fetchedOk}/${dataFiles.length} ملف — تمت قراءة ${parsedOk} ملف صالح — إجمالي العناصر ${state.allProducts.length}.`;
+          await loadCategories();
+          renderCategoryPills();
+          els.hint.textContent = "";
           setStatus("");
+          setBootProgress(70);
           loadCart();
           renderCart();
           await loadHomeCodes();
@@ -2678,6 +3181,8 @@
               if (els.productView.style.display !== "none") renderProductDetails(state.lastProductCode);
             })
             .catch(() => {});
+          setBootProgress(100);
+          hideBootOverlay();
           if (!location.hash) setHash("home");
         } catch (e) {
           els.hint.textContent = "فشل التحميل";
@@ -2687,6 +3192,8 @@
               ? "لا توجد ملفات CSV للتحميل. ضع ملفات CSV داخل مجلد data-csv في المستودع. إذا لم يتم اكتشافها تلقائياً، املأ data-csv/files.txt."
               : "فشل تحميل ملفات المنتجات. تأكد أن ملفات CSV موجودة داخل المستودع وبنفس الأسماء والمسارات.";
           setStatus(msg, true);
+          setBootProgress(100);
+          hideBootOverlay();
           els.grid.innerHTML = "";
           setHomeStatus("فشل تحميل المنتجات.", true);
         }
@@ -2697,9 +3204,11 @@
         els.infoMeta.textContent = "";
         els.infoText.textContent = "";
         if (k === "الشكاوي") {
-          els.infoMeta.textContent = "يمكنك إرسال شكوى أو مشكلة بالتفصيل";
+          els.infoMeta.textContent =
+            "يمكنك إرسال شكوى أو مشكلة بالتفصيل : أخطاء برمجية بالموقع - موقع يعرض على شاشة هاتفي بطريقة سيئة - حجم خطوط كبيرة وغير متناسبة مع هاتفي - لقيت أرخص : مقارنة بمن؟ + دليل مادي مباشر عن المواصفات كاملة!! ";
           els.complaintForm.style.display = "grid";
           els.complaintInput.value = "";
+          if (els.complaintContact) els.complaintContact.value = "";
           return;
         }
         if (k === "التقييم") {
@@ -2720,7 +3229,7 @@
             els.infoText.textContent = "لا يوجد عناصر في المفضلة حالياً.";
             return;
           }
-          let html = `<div style="display:grid;gap:12px">`;
+          let html = `<div class="grid" data-view="brief" aria-live="polite" style="padding:0">`;
           for (const p of products) html += renderCard(p);
           html += `</div>`;
           els.infoText.innerHTML = html;
@@ -2744,10 +3253,10 @@
               <button class="btn btn-ghost" type="button" data-info-btn="فروع قدموس" style="flex:1">فروع قدموس</button>
             </div>
           `;
-          els.infoText.innerHTML = `${escapeHtml(content)}${buttons}`;
+          els.infoText.innerHTML = `${formatAboutText(content)}${buttons}`;
           return;
         }
-        els.infoText.textContent = content;
+        els.infoText.innerHTML = formatAboutText(content);
       }
       function debounce(fn, ms) {
         let t = null;
@@ -2770,8 +3279,13 @@
         });
         els.prevPageBottom.addEventListener("click", () => els.prevPage.click());
         els.nextPageBottom.addEventListener("click", () => els.nextPage.click());
-        els.pills.forEach((b) =>
-          b.addEventListener("click", () => {
+        const pillbar = document.querySelector(".pillbar");
+        if (pillbar instanceof HTMLElement) {
+          pillbar.addEventListener("click", (e) => {
+            const t = e.target;
+            if (!(t instanceof HTMLElement)) return;
+            const b = t.closest(".pill[data-category]");
+            if (!(b instanceof HTMLElement)) return;
             const cat = String(b.getAttribute("data-category") ?? "");
             state.category = cat || "ALL";
             state.page = 1;
@@ -2779,8 +3293,8 @@
             if (cat === "HOME") setHash("home");
             else setHash("shop");
             applyFilters();
-          })
-        );
+          });
+        }
         els.viewSelect.addEventListener("change", () => {
           state.viewMode = String(els.viewSelect.value ?? "compact");
           try {
@@ -2796,8 +3310,25 @@
           try {
             localStorage.setItem("hjy_sort_mode_v1", state.sortMode);
           } catch {}
+          if (state.sortMode === "FAVORITES") {
+            state.category = "FAVORITES";
+            updatePills();
+            setHash("shop");
+          }
           applyFilters();
         });
+        if (els.searchBtn instanceof HTMLElement) {
+          els.searchBtn.addEventListener("click", () => {
+            state.query = String(els.search.value ?? "");
+            state.page = 1;
+            if (state.category === "HOME") {
+              state.category = "ALL";
+              updatePills();
+            }
+            setHash("shop");
+            applyFilters();
+          });
+        }
         els.search.addEventListener(
           "input",
           debounce(() => {
@@ -2850,6 +3381,28 @@
             if (code) addToCart(code);
             return;
           }
+          const shareAppBtn = t.closest("[data-share-app][data-share]");
+          if (shareAppBtn instanceof HTMLElement) {
+            const app = String(shareAppBtn.getAttribute("data-share-app") ?? "").trim();
+            const code = String(shareAppBtn.getAttribute("data-share") ?? "").trim();
+            if (app && code) openShareApp(app, code);
+            return;
+          }
+          const shareBtn = t.closest("[data-share]");
+          if (shareBtn instanceof HTMLElement) {
+            const code = String(shareBtn.getAttribute("data-share") ?? "").trim();
+            if (code) shareProductByCode(code);
+            return;
+          }
+          const moreBtn = t.closest("[data-similar-more]");
+          if (moreBtn instanceof HTMLElement) {
+            const code = String(moreBtn.getAttribute("data-similar-more") ?? "").trim();
+            if (code) {
+              state.similarExpandedCode = code;
+              renderProductDetails(code);
+            }
+            return;
+          }
           const stepBtn = t.closest("[data-gallery-step]");
           if (stepBtn instanceof HTMLElement) {
             const img = document.getElementById("productMainImg");
@@ -2877,6 +3430,104 @@
             }
           }
         });
+        els.productDetails.addEventListener(
+          "submit",
+          async (e) => {
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement)) return;
+            const kind = String(form.getAttribute("data-form") ?? "").trim();
+            if (!kind) return;
+            e.preventDefault();
+            const code = String(form.getAttribute("data-code") ?? "").trim();
+            const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(code));
+            if (!p) return;
+            const link = productUrlForCode(p.code);
+            if (kind === "issue") {
+              const contact = String(new FormData(form).get("contact") ?? "").trim();
+              const msg = String(new FormData(form).get("msg") ?? "").trim();
+              if (msg.length < 8) return showToast("يرجى كتابة تفاصيل أكثر", 1800);
+              try {
+                await sendToTelegramKind(
+                  "feedback",
+                  `إبلاغ مشكلة بالمنتج\n\ncode: ${p.code}\nname: ${p.name}\nprice: $${formatMoney(p.price)}\nlink: ${link}\n\nالتواصل: ${contact || "—"}\n\n${msg}`
+                );
+                showToast("تم الإرسال", 1600);
+                try {
+                  form.reset();
+                } catch {}
+              } catch {
+                showToast("تعذر الإرسال", 1800);
+              }
+              return;
+            }
+            if (kind === "wholesale") {
+              const fd = new FormData(form);
+              const wa = String(fd.get("whatsapp") ?? "").trim();
+              const qty = String(fd.get("qty") ?? "").trim();
+              const urgency = String(fd.get("urgency") ?? "").trim();
+              const notes = String(fd.get("notes") ?? "").trim();
+              if (wa.replace(/[^0-9]/g, "").length < 8) return showToast("رقم واتساب غير صحيح", 1800);
+              if (!qty || Number(qty) <= 0) return showToast("يرجى إدخال الكمية", 1800);
+              try {
+                await sendToTelegramKind(
+                  "orders",
+                  `طلب جملة\n\ncode: ${p.code}\nname: ${p.name}\nprice: $${formatMoney(p.price)}\nlink: ${link}\n\nواتساب: ${wa}\nالكمية: ${qty}\nالحالة: ${urgency || "—"}\nملاحظات: ${notes || "—"}`
+                );
+                showToast("تم إرسال الطلب", 1600);
+                try {
+                  form.reset();
+                } catch {}
+              } catch {
+                showToast("تعذر الإرسال", 1800);
+              }
+            }
+          },
+          true
+        );
+        let gTouchX = 0;
+        let gTouchY = 0;
+        let gTouchActive = false;
+        els.productDetails.addEventListener(
+          "touchstart",
+          (e) => {
+            const t = e.target;
+            if (!(t instanceof HTMLElement)) return;
+            const img = t.closest("#productMainImg");
+            if (!(img instanceof HTMLImageElement)) return;
+            const touch = e.touches && e.touches[0];
+            if (!touch) return;
+            gTouchX = touch.clientX;
+            gTouchY = touch.clientY;
+            gTouchActive = true;
+          },
+          { passive: true }
+        );
+        els.productDetails.addEventListener(
+          "touchend",
+          (e) => {
+            if (!gTouchActive) return;
+            gTouchActive = false;
+            const img = document.getElementById("productMainImg");
+            if (!(img instanceof HTMLImageElement)) return;
+            const touch = e.changedTouches && e.changedTouches[0];
+            if (!touch) return;
+            const dx = touch.clientX - gTouchX;
+            const dy = touch.clientY - gTouchY;
+            if (Math.abs(dx) < 50) return;
+            if (Math.abs(dx) <= Math.abs(dy) + 10) return;
+            const step = dx > 0 ? -1 : 1;
+            try {
+              const raw = img.getAttribute("data-src-list");
+              const list = raw ? JSON.parse(raw) : [];
+              const cur = Number(img.getAttribute("data-src-idx") || "0");
+              if (!Array.isArray(list) || list.length === 0) return;
+              const next = ((cur + step) % list.length + list.length) % list.length;
+              img.setAttribute("data-src-idx", String(next));
+              img.src = String(list[next]);
+            } catch {}
+          },
+          { passive: true }
+        );
         els.cartContent.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
@@ -2968,15 +3619,17 @@
           e.preventDefault();
           const msg = String(els.complaintInput.value ?? "").trim();
           if (msg.length < 6) return setInfoStatus("يرجى كتابة تفاصيل أكثر.", true);
+          const contact = String(els.complaintContact?.value ?? "").trim();
           els.complaintNote.style.display = "none";
           setInfoStatus("جارٍ إرسال الشكوى...", false);
           try {
-            await sendToTelegram(`شكوى جديدة\n\n${msg}`);
+            await sendToTelegramKind("feedback", `شكوى جديدة\n\nالتواصل (اختياري): ${contact || "—"}\n\n${msg}`);
             setInfoStatus("تم إرسال الشكوى.", false);
             els.complaintNote.style.display = "";
             els.complaintInput.value = "";
+            if (els.complaintContact) els.complaintContact.value = "";
           } catch {
-            setInfoStatus("تعذر الإرسال. حاول لاحقاً.", true);
+            setInfoStatus("تعذر الإرسال. لم يتم ضبط خدمة الإرسال.", true);
           }
         });
         els.ratingForm.addEventListener("submit", async (e) => {
@@ -2989,12 +3642,12 @@
           const rating = Math.max(0, Math.min(5, idx >= 0 ? idx : 0));
           setInfoStatus("جارٍ إرسال التقييم...", false);
           try {
-            await sendToTelegram(`تقييم جديد\nالتقييم: ${rating}/5 — ${rank}\n\n${msg}`);
+            await sendToTelegramKind("feedback", `تقييم جديد\nالتقييم: ${rating}/5 — ${rank}\n\n${msg}`);
             setInfoStatus("تم إرسال التقييم.", false);
             els.ratingMsg.value = "";
             els.ratingDone.style.display = "";
           } catch {
-            setInfoStatus("تعذر الإرسال. حاول لاحقاً.", true);
+            setInfoStatus("تعذر الإرسال. لم يتم ضبط خدمة الإرسال.", true);
           }
         });
         const syncShipBlocks = () => {
@@ -3012,6 +3665,18 @@
         els.damascusFreeDelivery.addEventListener("change", syncDamascusDelivery);
         els.damascusPickup.addEventListener("change", syncDamascusDelivery);
         syncDamascusDelivery();
+        const syncGovOther = () => {
+          const v = String(els.govInput.value ?? "").trim();
+          const on = v === "أخرى";
+          if (els.govOtherWrap) els.govOtherWrap.style.display = on ? "grid" : "none";
+          if (els.govOtherInput) {
+            els.govOtherInput.required = on;
+            if (!on) els.govOtherInput.value = "";
+          }
+        };
+        els.govInput.addEventListener("input", syncGovOther);
+        els.govInput.addEventListener("change", syncGovOther);
+        syncGovOther();
         els.masaratBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع مسارات")}`));
         els.qadmousBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع قدموس")}`));
         els.openShippingBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("تفاصيل الشحن")}`));
@@ -3034,6 +3699,10 @@
         els.checkoutForm.addEventListener("submit", async (e) => {
           e.preventDefault();
           if (state.cart.size === 0) return setCheckoutStatus("السلة فارغة.", true);
+          const totalNow = cartTotals();
+          if (Number(CONFIG.MIN_ORDER_TOTAL) > 0 && totalNow < Number(CONFIG.MIN_ORDER_TOTAL)) {
+            return setCheckoutStatus(`أقل فاتورة للطلب هي $${formatMoney(CONFIG.MIN_ORDER_TOTAL)}.`, true);
+          }
           if (els.termsAgreeInput && !els.termsAgreeInput.checked) return setCheckoutStatus("يرجى الموافقة على سياسة الاستخدام.", true);
           const phone = String(els.phoneInput.value ?? "").trim();
           if (phone.replace(/[^0-9]/g, "").length < 9) return setCheckoutStatus("يرجى إدخال رقم هاتف صحيح.", true);
@@ -3048,6 +3717,7 @@
           let locDetail = "";
           let timeRange = "";
           let gov = String(els.govInput.value ?? "").trim();
+          if (gov === "أخرى") gov = String(els.govOtherInput?.value ?? "").trim();
           if (shipType === "GOV") {
             fullName = String(els.fullNameGovInput.value ?? "").trim();
             shipCenter = String(els.shipCenterInput.value ?? "").trim();
@@ -3096,7 +3766,7 @@
           els.confirmOrderBtn.textContent = "جارٍ الإرسال...";
           setCheckoutStatus("جارٍ إرسال الطلب...", false);
           try {
-            await sendToTelegram(invoice);
+            await sendToTelegramKind("orders", invoice);
             setCheckoutStatus("تم إرسال الطلب. سيتم التواصل معك قريباً.", false);
             els.confirmOrderBtn.textContent = "تم إرسال الطلب";
             els.confirmOrderBtn.disabled = false;
@@ -3107,7 +3777,7 @@
           } catch {
             els.confirmOrderBtn.disabled = false;
             els.confirmOrderBtn.textContent = "إعادة إرسال الطلب";
-            setCheckoutStatus("تعذر إرسال الطلب. تأكد من اتصال الإنترنت ثم حاول مجدداً.", true);
+            setCheckoutStatus("تعذر إرسال الطلب. لم يتم ضبط خدمة الإرسال.", true);
           }
           await copyText(invoice);
         });
@@ -3142,6 +3812,39 @@
       try {
         loadFavorites();
       } catch {}
+      function loadSavedCustomer() {
+        try {
+          const raw = localStorage.getItem("hjy_customer_v1");
+          if (!raw) return;
+          const obj = JSON.parse(raw);
+          if (!obj || typeof obj !== "object") return;
+          if (els.phoneInput) els.phoneInput.value = String(obj.phone || "");
+          if (els.govInput) els.govInput.value = String(obj.gov || "");
+          if (els.govOtherInput) els.govOtherInput.value = String(obj.govOther || "");
+          if (els.fullNameDamascusInput) els.fullNameDamascusInput.value = String(obj.fullNameDamascus || "");
+          if (els.fullNameGovInput) els.fullNameGovInput.value = String(obj.fullNameGov || "");
+        } catch {}
+      }
+      function saveCustomer() {
+        try {
+          const obj = {
+            phone: String(els.phoneInput?.value || ""),
+            gov: String(els.govInput?.value || ""),
+            govOther: String(els.govOtherInput?.value || ""),
+            fullNameDamascus: String(els.fullNameDamascusInput?.value || ""),
+            fullNameGov: String(els.fullNameGovInput?.value || ""),
+          };
+          localStorage.setItem("hjy_customer_v1", JSON.stringify(obj));
+        } catch {}
+      }
+      loadSavedCustomer();
+      ["input", "change"].forEach((ev) => {
+        els.phoneInput?.addEventListener(ev, saveCustomer);
+        els.govInput?.addEventListener(ev, saveCustomer);
+        els.govOtherInput?.addEventListener(ev, saveCustomer);
+        els.fullNameDamascusInput?.addEventListener(ev, saveCustomer);
+        els.fullNameGovInput?.addEventListener(ev, saveCustomer);
+      });
       try {
         const savedView = String(localStorage.getItem("hjy_view_mode_v1") ?? "").trim();
         state.viewMode = savedView || "compact";

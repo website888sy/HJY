@@ -161,11 +161,8 @@
         color: var(--primary-3);
       }
       #cartToggle {
-        position: fixed;
-        bottom: 16px;
-        inset-inline-start: 16px;
-        z-index: 60;
-        box-shadow: var(--shadow);
+        position: static;
+        box-shadow: none;
       }
       .badge {
         min-width: 22px;
@@ -293,6 +290,10 @@
         overflow: hidden;
         display: grid;
         min-height: 300px;
+      }
+      .card[data-hot="true"] {
+        border-color: rgba(198, 40, 40, 0.55);
+        box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.12), 0 10px 26px rgba(198, 40, 40, 0.14);
       }
       .thumb {
         width: 100%;
@@ -846,10 +847,6 @@
           min-width: 0;
           flex: 1 1 100%;
         }
-        #cartToggle {
-          bottom: 12px;
-          inset-inline-start: 12px;
-        }
         .cart-drawer {
           inset-inline: 0;
           inset-block-end: 0;
@@ -953,11 +950,13 @@
         <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px">
           <div class="pillbar" role="group" aria-label="التصنيفات">
             <button class="pill" type="button" data-category="HOME" aria-pressed="true">قائمة رئيسية</button>
+            <button class="pill" type="button" data-category="HOT" aria-pressed="false">عروض مغرية</button>
             <button class="pill" type="button" data-category="OUT" aria-pressed="false">منتهي كمية</button>
             <button class="pill" type="button" data-category="FAVORITES" aria-pressed="false">مفضلة</button>
             <button class="pill" type="button" data-category="ALL" aria-pressed="false">الكل</button>
           </div>
           <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+            <button class="btn btn-ghost" id="qaTopBtn" type="button">أسئلة شائعة للمنتجات</button>
             <div class="pager" aria-label="التنقل بين الصفحات">
               <button id="prevPage" type="button" aria-label="السابق">▶</button>
               <button id="nextPage" type="button" aria-label="التالي">◀</button>
@@ -1014,6 +1013,9 @@
             </div>
           </div>
           <div style="padding:14px;display:grid;gap:12px" id="productDetails"></div>
+          <div style="padding:0 14px 14px;display:flex;justify-content:center">
+            <button class="btn btn-ghost" id="backFromProductBtnBottom" type="button">رجوع</button>
+          </div>
         </section>
         <section class="panel" id="checkoutView" style="display:none">
           <div class="panel-header">
@@ -1306,6 +1308,27 @@
             </form>
           </div>
         </section>
+        <section class="panel" id="qaView" style="display:none">
+          <div class="panel-header">
+            <div>
+              <h2 id="qaTitle">أسئلة شائعة للمنتجات</h2>
+              <p class="panel-sub" id="qaMeta">
+                قسم هام جداً يشرح الفروقات والمواصفات وسبب اختلاف الاسعار - سعر رخيص ليس عمل خير بل مواصفات أقل
+              </p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-ghost" id="backFromQaBtn" type="button">رجوع</button>
+            </div>
+          </div>
+          <div style="padding:14px;display:grid;gap:12px">
+            <div class="status" id="qaStatus" aria-hidden="true"></div>
+            <div id="qaButtons" class="pillbar" role="group" aria-label="أسئلة شائعة"></div>
+            <div id="qaText" class="panel-sub"></div>
+            <div style="display:flex;justify-content:center">
+              <button class="btn btn-ghost" id="backFromQaBtnBottom" type="button">رجوع</button>
+            </div>
+          </div>
+        </section>
       </main>
       <footer class="footerbar">
         <div class="footerbar-inner">
@@ -1320,6 +1343,7 @@
             <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
             <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
             <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
+            <button class="footer-link" type="button" data-qa="1">أسئلة شائعة للمنتجات</button>
             <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
             <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
             <button class="footer-link" type="button" data-info="المفضلة">المفضلة</button>
@@ -1391,6 +1415,7 @@
         prevPageBottom: document.getElementById("prevPageBottom"),
         nextPageBottom: document.getElementById("nextPageBottom"),
         hint: document.getElementById("hint"),
+        qaTopBtn: document.getElementById("qaTopBtn"),
         resultsMeta: document.getElementById("resultsMeta"),
         rangeText: document.getElementById("rangeText"),
         totalText: document.getElementById("totalText"),
@@ -1403,6 +1428,7 @@
         productView: document.getElementById("productView"),
         checkoutView: document.getElementById("checkoutView"),
         infoView: document.getElementById("infoView"),
+        qaView: document.getElementById("qaView"),
         productTitle: document.getElementById("productTitle"),
         productMeta: document.getElementById("productMeta"),
         productDetails: document.getElementById("productDetails"),
@@ -1421,6 +1447,7 @@
         homeFavoritesBtn: document.getElementById("homeFavoritesBtn"),
         openCheckoutBtn: document.getElementById("openCheckoutBtn"),
         backFromProductBtn: document.getElementById("backFromProductBtn"),
+        backFromProductBtnBottom: document.getElementById("backFromProductBtnBottom"),
         backToShopBtn: document.getElementById("backToShopBtn"),
         checkoutMeta: document.getElementById("checkoutMeta"),
         checkoutStatus: document.getElementById("checkoutStatus"),
@@ -1473,6 +1500,13 @@
         ratingMsg: document.getElementById("ratingMsg"),
         ratingLabel: document.getElementById("ratingLabel"),
         ratingDone: document.getElementById("ratingDone"),
+        qaTitle: document.getElementById("qaTitle"),
+        qaMeta: document.getElementById("qaMeta"),
+        qaStatus: document.getElementById("qaStatus"),
+        qaButtons: document.getElementById("qaButtons"),
+        qaText: document.getElementById("qaText"),
+        backFromQaBtn: document.getElementById("backFromQaBtn"),
+        backFromQaBtnBottom: document.getElementById("backFromQaBtnBottom"),
       };
       const state = {
         allProducts: [],
@@ -1490,6 +1524,9 @@
         lastInvoiceText: "",
         categories: [],
         similarExpandedCode: "",
+        hotSet: new Set(),
+        qaFiles: [],
+        qaSelected: "",
       };
       function setBootProgress(pct) {
         const el = document.getElementById("bootBar");
@@ -1657,6 +1694,16 @@
         els.infoStatus.style.color = isError ? "#c62828" : "";
         els.infoStatus.textContent = text;
       }
+      function setQaStatus(text, isError = false) {
+        if (!text) {
+          els.qaStatus.setAttribute("aria-hidden", "true");
+          els.qaStatus.textContent = "";
+          return;
+        }
+        els.qaStatus.setAttribute("aria-hidden", "false");
+        els.qaStatus.style.color = isError ? "#c62828" : "";
+        els.qaStatus.textContent = text;
+      }
       function formatMoney(v) {
         const n = Number(v);
         if (!Number.isFinite(n)) return "0";
@@ -1808,8 +1855,14 @@
         } catch {}
       }
       async function fetchTextCached(url, maxAgeMs = 6 * 60 * 60 * 1000) {
-        const u = String(url ?? "").trim();
+        let u = String(url ?? "").trim();
         if (!u) return null;
+        const ghPages = String(location.hostname || "").toLowerCase().endsWith(".github.io");
+        if (ghPages && !wantsNoCache()) {
+          const sep = u.includes("?") ? "&" : "?";
+          u = `${u}${sep}v=${Math.floor(Date.now() / 60000)}`;
+          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 60 * 1000) || 60 * 1000;
+        }
         const cacheKey = `hjy_text_cache_v1::${u}`;
         if (!wantsNoCache()) {
           const cached = getCachedText(cacheKey, maxAgeMs);
@@ -1837,8 +1890,14 @@
         return null;
       }
       async function fetchJsonCached(url, maxAgeMs = 6 * 60 * 60 * 1000) {
-        const u = String(url ?? "").trim();
+        let u = String(url ?? "").trim();
         if (!u) return null;
+        const ghPages = String(location.hostname || "").toLowerCase().endsWith(".github.io");
+        if (ghPages && !wantsNoCache()) {
+          const sep = u.includes("?") ? "&" : "?";
+          u = `${u}${sep}v=${Math.floor(Date.now() / 60000)}`;
+          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 60 * 1000) || 60 * 1000;
+        }
         const cacheKey = `hjy_json_cache_v1::${u}`;
         if (!wantsNoCache()) {
           const cached = getCachedText(cacheKey, maxAgeMs);
@@ -2000,7 +2059,9 @@
         const dir = String(CONFIG.PHOTO_DIR ?? "photo").trim() || "photo";
         const exts = Array.isArray(CONFIG.PHOTO_EXTS) ? CONFIG.PHOTO_EXTS : ["webp", "png", "jpg", "jpeg", "gif"];
         const max = Math.max(0, Number(CONFIG.PHOTO_MAX_FILES) || 0) || 4000;
-        const cacheMs = Math.max(0, Number(CONFIG.PHOTO_INDEX_CACHE_MS) || 30 * 60 * 1000);
+        let cacheMs = Math.max(0, Number(CONFIG.PHOTO_INDEX_CACHE_MS) || 30 * 60 * 1000);
+        const ghPages = String(location.hostname || "").toLowerCase().endsWith(".github.io");
+        if (ghPages && !wantsNoCache()) cacheMs = Math.min(cacheMs, 60 * 1000);
         const cacheKey = `hjy_photo_index_v1::${dir}`;
         const prev = cacheMs ? getCachedText(cacheKey, cacheMs) : null;
         let list = [];
@@ -2162,6 +2223,7 @@
         els.productView.style.display = "none";
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "none";
+        els.qaView.style.display = "none";
         setPromoVisible(true);
         setStatus("");
         setCheckoutStatus("");
@@ -2174,6 +2236,7 @@
         els.productView.style.display = "none";
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "none";
+        els.qaView.style.display = "none";
         setPromoVisible(false);
         setCheckoutStatus("");
         setInfoStatus("");
@@ -2186,6 +2249,7 @@
         els.productView.style.display = "";
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "none";
+        els.qaView.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -2200,6 +2264,7 @@
         els.productView.style.display = "none";
         els.checkoutView.style.display = "";
         els.infoView.style.display = "none";
+        els.qaView.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setInfoStatus("");
@@ -2215,6 +2280,7 @@
         els.productView.style.display = "none";
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "";
+        els.qaView.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -2225,45 +2291,85 @@
         els.ratingDone.style.display = "none";
         renderInfo(key);
       }
+      function showQaView(selected) {
+        setRoute("qa");
+        els.homeView.style.display = "none";
+        els.shopView.style.display = "none";
+        els.productView.style.display = "none";
+        els.checkoutView.style.display = "none";
+        els.infoView.style.display = "none";
+        els.qaView.style.display = "";
+        setPromoVisible(false);
+        setStatus("");
+        setCheckoutStatus("");
+        setInfoStatus("");
+        renderQa(selected);
+      }
       function setHash(hash) {
         const h = String(hash ?? "").trim();
         location.hash = h ? `#${h}` : "";
       }
+      function parseHashParams(raw) {
+        const s = String(raw ?? "").trim();
+        if (!s) return { route: "", params: new URLSearchParams() };
+        const parts = s.split("&");
+        const route = String(parts.shift() || "").trim();
+        const params = new URLSearchParams(parts.join("&"));
+        return { route, params };
+      }
+      function setShopHashWithCategory(cat) {
+        const c = String(cat ?? "").trim();
+        if (!c || c === "ALL") return setHash("shop");
+        setHash(`shop&cat=${encodeURIComponent(c)}`);
+      }
       function applyHashRoute() {
         const raw = String(location.hash || "").replace(/^#/, "").trim();
-        if (!raw) {
+        const parsed = parseHashParams(raw);
+        const route = parsed.route;
+        const params = parsed.params;
+        const catParam = String(params.get("cat") || "").trim();
+        if (!route) {
           state.category = "HOME";
           updatePills();
           showHomeView();
           renderHome();
           return;
         }
-        if (raw === "home") {
+        if (route === "home") {
           state.category = "HOME";
           updatePills();
           showHomeView();
           renderHome();
           return;
         }
-        if (raw === "shop") {
-          state.category = "ALL";
+        if (route === "shop") {
+          state.category = catParam ? catParam : "ALL";
           updatePills();
           showShopView();
           applyFilters();
           return;
         }
-        if (raw === "checkout") {
+        if (route === "checkout") {
           showCheckoutView();
           return;
         }
-        if (raw.startsWith("product=")) {
-          const code = decodeURIComponent(raw.slice("product=".length));
+        if (route.startsWith("product=")) {
+          const code = decodeURIComponent(route.slice("product=".length));
           showProductView(code);
           return;
         }
-        if (raw.startsWith("info=")) {
-          const key = decodeURIComponent(raw.slice("info=".length));
+        if (route.startsWith("info=")) {
+          const key = decodeURIComponent(route.slice("info=".length));
           showInfoView(key);
+          return;
+        }
+        if (route === "qa") {
+          showQaView("");
+          return;
+        }
+        if (route.startsWith("qa=")) {
+          const key = decodeURIComponent(route.slice("qa=".length));
+          showQaView(key);
           return;
         }
         setHash("home");
@@ -2539,6 +2645,7 @@
         const tokens = buildSearchTokens(q);
         let list = state.allProducts.slice();
         if (state.category === "FAVORITES") list = list.filter((p) => isFavorite(p.code));
+        if (state.category === "HOT") list = list.filter((p) => state.hotSet && state.hotSet.has(normalizeCodeKey(p.code)));
         if (state.category === "OUT") list = list.filter((p) => p.isOut);
         if (String(state.category || "").startsWith("CAT:")) {
           const key = normalizeCategoryKey(String(state.category || "").slice("CAT:".length));
@@ -2568,6 +2675,7 @@
       function renderCard(p) {
         const view = state.viewMode;
         const favOn = isFavorite(p.code);
+        const isHot = state.hotSet && state.hotSet.has(normalizeCodeKey(p.code));
         const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
         const src = cand[0] || PLACEHOLDER_IMG;
         const disText = disTextForProduct(p);
@@ -2579,10 +2687,11 @@
             ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
             : `<button class="btn btn-primary" type="button" data-add="${escapeHtmlAttr(p.code)}">إضافة</button>`;
         return `
-          <article class="card" data-code="${escapeHtmlAttr(p.code)}">
+          <article class="card" data-code="${escapeHtmlAttr(p.code)}" data-hot="${isHot ? "true" : "false"}">
             <button class="fav-btn" type="button" data-fav="${escapeHtmlAttr(p.code)}" aria-pressed="${favOn ? "true" : "false"}" aria-label="المفضلة">${
           favOn ? "♥" : "♡"
         }</button>
+            ${isHot ? `<div style="position:absolute;inset-inline-end:10px;inset-block-start:10px;z-index:2;font-weight:900;font-size:12px;color:#d11;background:#fff;border:1px solid rgba(198,40,40,0.35);border-radius:999px;padding:6px 10px">HOT</div>` : ""}
             <div class="thumb">
               <img
                 src="${escapeHtmlAttr(src)}"
@@ -2709,43 +2818,6 @@
                   <button class="btn btn-primary" type="submit">إرسال</button>
                 </form>
               </details>
-              <details>
-                <summary class="btn btn-ghost" style="width:fit-content">طلب جملة</summary>
-                <form data-form="wholesale" data-code="${escapeHtmlAttr(p.code)}" style="display:grid;gap:10px;margin-top:10px">
-                  <input
-                    name="whatsapp"
-                    type="text"
-                    required
-                    placeholder="رقم واتساب"
-                    style="padding:12px;border:1px solid var(--border);border-radius:12px;direction:ltr;unicode-bidi:plaintext"
-                  />
-                  <input
-                    name="qty"
-                    type="number"
-                    inputmode="numeric"
-                    min="1"
-                    required
-                    placeholder="الكمية المطلوبة من هذه المادة"
-                    style="padding:12px;border:1px solid var(--border);border-radius:12px"
-                  />
-                  <select class="select" name="urgency" required>
-                    <option value="طلب مستعجل">طلب مستعجل</option>
-                    <option value="غير مستعجل">غير مستعجل</option>
-                  </select>
-                  <textarea
-                    name="notes"
-                    placeholder="ملاحظات إضافية"
-                    style="padding:12px;border:1px solid var(--border);border-radius:12px;min-height:100px;resize:vertical"
-                  ></textarea>
-                  <div class="mini-note" style="white-space:pre-wrap">
-يرجى ارسال بيانات سابقة لكي نرسل التفاصيل والاسعار لكم
-في حال طلب غير مستعجل وعدم توفر كمية لدينا يمكن استيرادها خلال 15 يوم \"حجم صغير\"-\"50 يوم حجم كبير\"
-يرجى زيارة قسم - طلبات خارجية من صين-
-سعر يختلف بين \"دفع مبلغ كامل مسبق\" / \"50%\" / عربون وباقي عند الاستلام
-                  </div>
-                  <button class="btn btn-primary" type="submit">إرسال</button>
-                </form>
-              </details>
             </div>
           </div>
         `;
@@ -2784,12 +2856,10 @@
                 <span class="price-old">$${escapeHtml(formatMoney(marketingOldPrice(p.price)))}</span>
               </div>
               <div class="code">${escapeHtml(p.code)}</div>
-              <div class="desc" style="display:block;-webkit-line-clamp:unset;font-size:14px;line-height:1.75">${linkifyOnly(p.about2 || p.about1 || "")}</div>
+              <div class="desc" style="display:block;-webkit-line-clamp:unset;font-size:14px;line-height:1.75;white-space:pre-wrap">${linkifyOnly(p.about2 || p.about1 || "")}</div>
               <div class="actions" style="margin-top:4px">${btn}</div>
               <div class="actions" style="margin-top:0">
                 <button class="btn btn-ghost" type="button" data-share="${escapeHtmlAttr(p.code)}">مشاركة المنتج</button>
-                <button class="btn btn-ghost" type="button" data-share-app="whatsapp" data-share="${escapeHtmlAttr(p.code)}">واتساب</button>
-                <button class="btn btn-ghost" type="button" data-share-app="facebook" data-share="${escapeHtmlAttr(p.code)}">فيسبوك</button>
               </div>
             </div>
           </div>
@@ -2813,18 +2883,39 @@
         const base = `${location.origin}${location.pathname}`;
         return `${base}#product=${encodeURIComponent(c)}`;
       }
+      function discountSummaryForShare(p) {
+        const rules = Array.isArray(p?.disRules) ? p.disRules : [];
+        if (!rules.length) return "—";
+        const base = Number(p?.price) || 0;
+        const lines = [];
+        for (const r of rules) {
+          if (!r) continue;
+          if (r.type === "PERCENT") {
+            const newPrice = base * (1 - Number(r.value || 0) / 100);
+            lines.push(`خصم ${formatMoney(r.value)}% عند ${r.qty}+ | سعر القطعة ${formatMoney(newPrice)} بدل ${formatMoney(base)}`);
+            continue;
+          }
+          if (r.type === "PRICE") {
+            lines.push(`سعر خاص ${formatMoney(r.value)} عند ${r.qty}+ | بدل ${formatMoney(base)}`);
+          }
+        }
+        return lines.length ? lines.join("\n") : "—";
+      }
       function buildProductShareText(p) {
         const code = String(p?.code || "").trim();
         const name = String(p?.name || "").trim();
         const price = Number(p?.price) || 0;
-        const dis = disTextForProduct(p);
+        const dis = discountSummaryForShare(p);
         const link = productUrlForCode(code);
+        const about1 = String(p?.about1 || "").trim();
         const lines = [];
         lines.push(`code: ${code || "—"}`);
         lines.push(`name: ${name || "—"}`);
         lines.push(`price: $${formatMoney(price)}`);
         lines.push(`الخصومات:`);
         lines.push(dis ? dis : "—");
+        lines.push(`الوصف:`);
+        lines.push(about1 || "—");
         lines.push(`الرابط: ${link}`);
         return lines.join("\n");
       }
@@ -2840,22 +2931,6 @@
           }
         } catch {}
         await copyText(text);
-      }
-      function openShareApp(app, code) {
-        const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(code));
-        if (!p) return;
-        const link = productUrlForCode(p.code);
-        const text = buildProductShareText(p);
-        const appKey = safeLower(app);
-        if (appKey === "whatsapp") {
-          const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-          window.open(url, "_blank", "noopener,noreferrer");
-          return;
-        }
-        if (appKey === "facebook") {
-          const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
-          window.open(url, "_blank", "noopener,noreferrer");
-        }
       }
       function splitText(text, maxLen) {
         const t = String(text ?? "");
@@ -2961,6 +3036,16 @@
           .filter((l) => l.length > 0);
         for (const c of lines) state.outSet.add(normalizeCodeKey(c));
       }
+      async function loadHotSet() {
+        state.hotSet.clear();
+        const res = await fetchTextFirstAvailable(["hot-price.csv"], 60 * 1000);
+        if (!res) return;
+        const lines = String(res.text ?? "")
+          .split(/\r?\n/)
+          .map((l) => String(l ?? "").trim())
+          .filter((l) => l.length > 0);
+        for (const c of lines) state.hotSet.add(normalizeCodeKey(c));
+      }
       function normalizeCategoryKey(name) {
         return safeLower(String(name ?? "")).replace(/\s+/g, " ").trim();
       }
@@ -3017,7 +3102,7 @@
       function matchesKeywords(p, keywords) {
         const list = Array.isArray(keywords) ? keywords : [];
         if (!list.length) return false;
-        const hay = safeLower(String(p?.search ?? ""));
+        const hay = safeLower(String(p?.name ?? ""));
         for (const kw of list) {
           const k = safeLower(String(kw ?? "")).trim();
           if (!k) continue;
@@ -3068,9 +3153,90 @@
               <div class="prices">
                 <span class="price-now">$${escapeHtml(formatMoney(p.price))}</span>
               </div>
+              <div class="actions" style="margin-top:2px">
+                <button class="btn btn-ghost" type="button" data-product="${escapeHtmlAttr(p.code)}" style="flex:1">تفاصيل</button>
+              </div>
             </div>
           </article>
         `;
+      }
+      function normalizeQaKey(name) {
+        return safeLower(String(name ?? "")).replace(/\s+/g, " ").trim();
+      }
+      async function loadQaIndex() {
+        state.qaFiles = [];
+        const files = await listGithubFilesRecursive("QA", ["txt"], 2000);
+        const out = [];
+        for (const path of files) {
+          const p = String(path ?? "").trim().replace(/\\/g, "/");
+          const base = p.split("/").pop() || "";
+          if (!base) continue;
+          let name = "";
+          try {
+            name = decodeURIComponent(base);
+          } catch {
+            name = base;
+          }
+          name = name.replace(/\.txt$/i, "").trim();
+          if (!name) continue;
+          out.push({ name, key: normalizeQaKey(name), path: p });
+        }
+        out.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+        state.qaFiles = out;
+      }
+      function renderQaButtons() {
+        if (!(els.qaButtons instanceof HTMLElement)) return;
+        const list = Array.isArray(state.qaFiles) ? state.qaFiles : [];
+        if (!list.length) {
+          els.qaButtons.innerHTML = "";
+          return;
+        }
+        let html = "";
+        for (const it of list) {
+          const on = normalizeQaKey(state.qaSelected) === it.key;
+          html += `<button class="pill" type="button" data-qa-file="${escapeHtmlAttr(it.name)}" aria-pressed="${on ? "true" : "false"}">${escapeHtml(
+            it.name
+          )}</button>`;
+        }
+        els.qaButtons.innerHTML = html;
+      }
+      async function renderQa(selected) {
+        const want = String(selected ?? "").trim();
+        if (want) state.qaSelected = want;
+        setQaStatus("جاري تحميل أسئلة شائعة...", false);
+        if (!Array.isArray(state.qaFiles) || state.qaFiles.length === 0) {
+          try {
+            await loadQaIndex();
+          } catch {}
+        }
+        const list = Array.isArray(state.qaFiles) ? state.qaFiles : [];
+        if (!list.length) {
+          setQaStatus("لا يوجد ملفات داخل مجلد QA.", true);
+          if (els.qaText) els.qaText.textContent = "";
+          if (els.qaButtons) els.qaButtons.innerHTML = "";
+          return;
+        }
+        if (!state.qaSelected) state.qaSelected = list[0].name;
+        renderQaButtons();
+        const key = normalizeQaKey(state.qaSelected);
+        const found = list.find((x) => x && x.key === key) || list[0];
+        if (!found) {
+          setQaStatus("لم يتم العثور على الملف.", true);
+          if (els.qaText) els.qaText.textContent = "";
+          return;
+        }
+        try {
+          const res = await fetchTextCached(found.path, 10 * 60 * 1000);
+          if (!res) throw new Error("NO_FILE");
+          if (els.qaText) {
+            els.qaText.style.whiteSpace = "pre-wrap";
+            els.qaText.innerHTML = formatAboutText(res.text);
+          }
+          setQaStatus("", false);
+        } catch {
+          setQaStatus("تعذر قراءة ملف QA.", true);
+          if (els.qaText) els.qaText.textContent = "";
+        }
       }
       async function loadHomeCodes() {
         state.homeProducts = [];
@@ -3103,6 +3269,7 @@
         setBootProgress(20);
         try {
           await loadOutSet();
+          await loadHotSet();
           setBootProgress(35);
           const dataFiles = await resolveDataFiles();
           if (!Array.isArray(dataFiles) || dataFiles.length === 0) throw new Error("NO_DATA_FILES");
@@ -3291,7 +3458,7 @@
             state.page = 1;
             updatePills();
             if (cat === "HOME") setHash("home");
-            else setHash("shop");
+            else setShopHashWithCategory(state.category);
             applyFilters();
           });
         }
@@ -3313,7 +3480,7 @@
           if (state.sortMode === "FAVORITES") {
             state.category = "FAVORITES";
             updatePills();
-            setHash("shop");
+            setShopHashWithCategory(state.category);
           }
           applyFilters();
         });
@@ -3325,7 +3492,7 @@
               state.category = "ALL";
               updatePills();
             }
-            setHash("shop");
+            setShopHashWithCategory(state.category);
             applyFilters();
           });
         }
@@ -3381,11 +3548,10 @@
             if (code) addToCart(code);
             return;
           }
-          const shareAppBtn = t.closest("[data-share-app][data-share]");
-          if (shareAppBtn instanceof HTMLElement) {
-            const app = String(shareAppBtn.getAttribute("data-share-app") ?? "").trim();
-            const code = String(shareAppBtn.getAttribute("data-share") ?? "").trim();
-            if (app && code) openShareApp(app, code);
+          const prod = t.closest("[data-product]");
+          if (prod instanceof HTMLElement) {
+            const code = prod.getAttribute("data-product");
+            if (code) return setHash(`product=${encodeURIComponent(code)}`);
             return;
           }
           const shareBtn = t.closest("[data-share]");
@@ -3459,27 +3625,6 @@
                 showToast("تعذر الإرسال", 1800);
               }
               return;
-            }
-            if (kind === "wholesale") {
-              const fd = new FormData(form);
-              const wa = String(fd.get("whatsapp") ?? "").trim();
-              const qty = String(fd.get("qty") ?? "").trim();
-              const urgency = String(fd.get("urgency") ?? "").trim();
-              const notes = String(fd.get("notes") ?? "").trim();
-              if (wa.replace(/[^0-9]/g, "").length < 8) return showToast("رقم واتساب غير صحيح", 1800);
-              if (!qty || Number(qty) <= 0) return showToast("يرجى إدخال الكمية", 1800);
-              try {
-                await sendToTelegramKind(
-                  "orders",
-                  `طلب جملة\n\ncode: ${p.code}\nname: ${p.name}\nprice: $${formatMoney(p.price)}\nlink: ${link}\n\nواتساب: ${wa}\nالكمية: ${qty}\nالحالة: ${urgency || "—"}\nملاحظات: ${notes || "—"}`
-                );
-                showToast("تم إرسال الطلب", 1600);
-                try {
-                  form.reset();
-                } catch {}
-              } catch {
-                showToast("تعذر الإرسال", 1800);
-              }
             }
           },
           true
@@ -3571,20 +3716,38 @@
           if (!Number.isFinite(qty)) return renderCart();
           setCartQty(code, qty);
         });
-        els.goShopBtn.addEventListener("click", () => setHash("shop"));
+        els.goShopBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
         if (els.homeFavoritesBtn) els.homeFavoritesBtn.addEventListener("click", () => {
           state.category = "FAVORITES";
           updatePills();
-          setHash("shop");
+          setShopHashWithCategory(state.category);
           applyFilters();
         });
         els.openCheckoutBtn.addEventListener("click", () => setHash("checkout"));
-        els.backFromProductBtn.addEventListener("click", () => setHash("shop"));
-        els.backToShopBtn.addEventListener("click", () => setHash("shop"));
-        els.backFromInfoBtn.addEventListener("click", () => setHash("shop"));
+        els.backFromProductBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
+        if (els.backFromProductBtnBottom instanceof HTMLElement) els.backFromProductBtnBottom.addEventListener("click", () => els.backFromProductBtn.click());
+        els.backToShopBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
+        els.backFromInfoBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
+        if (els.qaTopBtn instanceof HTMLElement) els.qaTopBtn.addEventListener("click", () => setHash("qa"));
+        if (els.backFromQaBtn instanceof HTMLElement)
+          els.backFromQaBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
+        if (els.backFromQaBtnBottom instanceof HTMLElement)
+          els.backFromQaBtnBottom.addEventListener("click", () => (els.backFromQaBtn instanceof HTMLElement ? els.backFromQaBtn.click() : setShopHashWithCategory("ALL")));
+        if (els.qaButtons instanceof HTMLElement)
+          els.qaButtons.addEventListener("click", (e) => {
+            const t = e.target;
+            if (!(t instanceof HTMLElement)) return;
+            const b = t.closest("[data-qa-file]");
+            if (!(b instanceof HTMLElement)) return;
+            const name = String(b.getAttribute("data-qa-file") ?? "").trim();
+            if (!name) return;
+            setHash(`qa=${encodeURIComponent(name)}`);
+          });
         els.footerLinks.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
+          const qaBtn = t.closest("[data-qa]");
+          if (qaBtn instanceof HTMLElement) return setHash("qa");
           const key = t.getAttribute("data-info");
           if (!key) return;
           setHash(`info=${encodeURIComponent(key)}`);

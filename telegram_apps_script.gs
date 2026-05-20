@@ -16,8 +16,8 @@ function doPost(e) {
     var text = String(body && body.text ? body.text : "").trim();
     if (!text) return json_(400, { ok: false, error: "EMPTY" });
 
-    var ORDERS_TOKEN = "PUT_ORDERS_BOT_TOKEN_HERE";
-    var FEEDBACK_TOKEN = "PUT_FEEDBACK_BOT_TOKEN_HERE";
+    var ORDERS_TOKEN = "8675164937:AAF8UXeY1eiLoQB-Xz9D_DCA1UaxLJT0jIE";
+    var FEEDBACK_TOKEN = "8616081018:AAHqmN-X0IkBMfYKs8tcrQV1o_e7PS6U3VQ";
     var CHAT_ID = "2067991553";
 
     var token = path === "orders" ? ORDERS_TOKEN : FEEDBACK_TOKEN;

@@ -1,2 +1,2 @@
-orders=https://script.google.com/macros/s/AKfycbzTlweLbVoo-Abz-6IOO5ReFFpRXtqebkVW2uCZWSgAbsA6ALYT8rX_mQOMY_3PBliE/exec?kind=orders
-feedback=https://script.google.com/macros/s/AKfycbzTlweLbVoo-Abz-6IOO5ReFFpRXtqebkVW2uCZWSgAbsA6ALYT8rX_mQOMY_3PBliE/exec?kind=feedback
+orders=https://script.google.com/macros/s/AKfycbyZU5wVtz1dAb4jbWhTvLTjB7uhQ98h-lqNplEckqn1cc-SEcq42YRzxqKU05SYgBaU/exec?kind=orders
+feedback=https://script.google.com/macros/s/AKfycbyZU5wVtz1dAb4jbWhTvLTjB7uhQ98h-lqNplEckqn1cc-SEcq42YRzxqKU05SYgBaU/exec?kind=feedback

@@ -117,6 +117,13 @@
         border-radius: 999px;
         box-shadow: 0 8px 22px rgba(10, 36, 48, 0.06);
       }
+      .search-field {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+      }
       .search input {
         width: 100%;
         border: 0;
@@ -124,6 +131,7 @@
         font-size: 14px;
         background: transparent;
         color: var(--text);
+        padding-inline-end: 34px;
       }
       .select {
         border: 1px solid var(--border);
@@ -135,14 +143,21 @@
         outline: none;
       }
       .search-btn {
-        border: 1px solid rgba(25, 183, 255, 0.35);
-        background: rgba(25, 183, 255, 0.12);
-        color: var(--primary-3);
-        padding: 10px 14px;
+        position: absolute;
+        inset-inline-end: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        height: 28px;
         border-radius: 999px;
-        font-weight: 900;
+        border: 1px solid rgba(25, 183, 255, 0.28);
+        background: rgba(25, 183, 255, 0.1);
+        color: var(--primary-3);
+        display: grid;
+        place-items: center;
         cursor: pointer;
-        white-space: nowrap;
+        font-size: 14px;
+        padding: 0;
       }
       .select:focus {
         box-shadow: var(--ring);
@@ -161,8 +176,28 @@
         color: var(--primary-3);
       }
       #cartToggle {
-        position: static;
-        box-shadow: none;
+        position: fixed;
+        inset-inline-end: 14px;
+        inset-block-end: 14px;
+        z-index: 60;
+        box-shadow: var(--shadow);
+      }
+      #cartToggle.cart-pop {
+        animation: cartPop 600ms ease;
+      }
+      @keyframes cartPop {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+        35% {
+          transform: translateY(-6px) scale(1.06);
+        }
+        65% {
+          transform: translateY(0) scale(0.98);
+        }
+        100% {
+          transform: translateY(0) scale(1);
+        }
       }
       .badge {
         min-width: 22px;
@@ -222,7 +257,7 @@
         max-width: 1200px;
         width: 100%;
         margin: 0 auto;
-        padding: 14px 16px 18px;
+        padding: 14px 16px 90px;
       }
       .panel {
         border: 1px solid var(--border);
@@ -875,8 +910,9 @@
           font-size: 12px;
         }
         .search-btn {
-          padding: 9px 12px;
-          font-size: 12px;
+          width: 26px;
+          height: 26px;
+          font-size: 13px;
         }
         .grid {
           gap: 10px;
@@ -897,19 +933,6 @@
     </style>
   </head>
   <body>
-    <div id="bootOverlay" style="position:fixed;inset:0;display:grid;place-items:center;background:#fff;z-index:100">
-      <div style="display:grid;gap:12px;place-items:center;padding:16px;text-align:center">
-        <div style="width:72px;height:72px;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#fff;display:grid;place-items:center">
-          <img src="logo.webp" alt="" style="width:100%;height:100%;object-fit:contain;display:block" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
-        </div>
-        <div style="font-weight:900;letter-spacing:0.2px">
-          <span style="color:#0a2430">BY </span><span id="bootH" style="color:#0a2430">H</span><span id="bootJ" style="color:#0a2430">J</span><span id="bootY" style="color:#0a2430">Y</span><span style="color:#0a2430">.co</span>
-        </div>
-        <div style="width:min(320px,70vw);height:10px;border-radius:999px;background:rgba(10,36,48,0.08);overflow:hidden">
-          <div id="bootBar" style="height:100%;width:0%;background:linear-gradient(90deg,#d33,#19b7ff,#777);transition:width 220ms ease"></div>
-        </div>
-      </div>
-    </div>
     <div class="app" id="appRoot" data-route="home">
       <div class="promo-bar" id="promoBar">
         <div class="promo-bar-inner" id="promoText"></div>
@@ -920,13 +943,13 @@
             <div class="logo" aria-hidden="true">
               <img src="logo.webp" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
             </div>
-            <div>
-              <h1>HJY.co</h1>
-            </div>
           </div>
           <div class="controls">
             <div class="search" role="search">
-              <input id="searchInput" type="search" placeholder="شريط البحث" autocomplete="off" />
+              <div class="search-field">
+                <input id="searchInput" type="search" placeholder="شريط البحث" autocomplete="off" />
+                <button class="search-btn" id="searchBtn" type="button" aria-label="بحث">🔍</button>
+              </div>
               <select class="select" id="sortSelect" aria-label="ترتيب البحث">
                 <option value="DEFAULT">افتراضي</option>
                 <option value="PRICE_ASC">أرخص سعر</option>
@@ -934,7 +957,6 @@
                 <option value="FAVORITES">مفضلة</option>
               </select>
             </div>
-            <button class="search-btn" id="searchBtn" type="button">بحث</button>
             <select class="select" id="viewSelect" aria-label="طريقة العرض">
               <option value="grid">شبكي</option>
               <option value="compact">مضغوط</option>
@@ -966,7 +988,7 @@
         </div>
       </header>
       <main class="layout">
-        <section class="panel" id="homeView" style="display:none">
+        <section class="panel" id="homeView">
           <div class="panel-header">
             <div>
               <h2>الرئيسية</h2>
@@ -979,14 +1001,18 @@
           </div>
           <div class="status" id="homeStatus" aria-hidden="true"></div>
           <div class="grid" id="homeProductsGrid" data-view="compact" aria-live="polite"></div>
+          <div id="whatNewSection" style="padding:0 14px 14px;display:none">
+            <div style="border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,0.7)">
+              <div style="font-weight:900;margin-bottom:6px">ما الجديد , أخر الأخبار !؟</div>
+              <div class="panel-sub" id="whatNewText"></div>
+            </div>
+          </div>
         </section>
-        <section class="panel" id="shopView">
+        <section class="panel" id="shopView" style="display:none">
           <div class="panel-header">
             <div>
               <p class="panel-sub" style="margin:0">
-                <bdi id="rangeText" style="direction:ltr;unicode-bidi:plaintext;font-weight:800">—</bdi> /
-                <bdi id="totalText" style="direction:ltr;unicode-bidi:plaintext;font-weight:800">—</bdi>
-                <span id="resultsMeta" style="color:var(--muted)">—</span>
+                <bdi id="rangeText" style="direction:ltr;unicode-bidi:plaintext;font-weight:800">—</bdi>/<bdi id="totalText" style="direction:ltr;unicode-bidi:plaintext;font-weight:800">—</bdi><span id="resultsMeta" style="color:var(--muted)"></span>
               </p>
             </div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -1333,7 +1359,7 @@
       <footer class="footerbar">
         <div class="footerbar-inner">
           <span style="font-size:11px;font-weight:800">
-            <span style="color:var(--muted)">BY </span><span style="color:#d11">H</span><span style="color:#19b7ff">J</span><span style="color:#777">Y</span><span style="color:var(--muted)">.co</span>
+            <span style="color:#000">BY HJY.co</span>
           </span>
           <div class="footer-links" id="footerLinks">
             <button class="footer-link" type="button" data-info="من نحن">من نحن</button>
@@ -1373,6 +1399,7 @@
       const CONFIG = {
         BRAND: "HJY.co",
         PROMO_URLS: ["promo.txt"],
+        WHAT_NEW_URLS: ["what_new.txt"],
         DATA_SOURCE: "LOCAL",
         DATA_DIR: "data-csv",
         DATA_MANIFEST_URLS: ["data-csv/files.txt"],
@@ -1386,6 +1413,7 @@
         ABOUT_DIR: "about",
         TELEGRAM_ORDERS_PROXY_URL: "",
         TELEGRAM_FEEDBACK_PROXY_URL: "",
+        TELEGRAM_CONFIG_URLS: ["telegram_proxy.txt", "telegram.txt"],
         ITEMS_PER_PAGE: 20,
         SEARCH_MIN_CHARS: 2,
         MIN_ORDER_TOTAL: 8,
@@ -1507,6 +1535,8 @@
         qaText: document.getElementById("qaText"),
         backFromQaBtn: document.getElementById("backFromQaBtn"),
         backFromQaBtnBottom: document.getElementById("backFromQaBtnBottom"),
+        whatNewSection: document.getElementById("whatNewSection"),
+        whatNewText: document.getElementById("whatNewText"),
       };
       const state = {
         allProducts: [],
@@ -1527,6 +1557,7 @@
         hotSet: new Set(),
         qaFiles: [],
         qaSelected: "",
+        whatNewText: "",
       };
       function setBootProgress(pct) {
         const el = document.getElementById("bootBar");
@@ -2412,6 +2443,17 @@
         els.cartPanel.setAttribute("data-open", next);
         els.cartBackdrop.setAttribute("data-open", next);
       }
+      function animateCartToggle() {
+        const el = els.cartToggle;
+        if (!(el instanceof HTMLElement)) return;
+        el.classList.remove("cart-pop");
+        void el.offsetWidth;
+        el.classList.add("cart-pop");
+        setTimeout(() => el.classList.remove("cart-pop"), 650);
+        try {
+          if (navigator.vibrate) navigator.vibrate(25);
+        } catch {}
+      }
       function cartKey(p) {
         return normalizeCodeKey(p?.code);
       }
@@ -2462,6 +2504,7 @@
         state.cart.set(k, { product: p, qty: nextQty });
         saveCart();
         renderCart();
+        animateCartToggle();
         showToast("تمت الإضافة إلى السلة", 1700);
       }
       function setCartQty(code, qty) {
@@ -2637,7 +2680,7 @@
         els.nextPageBottom.disabled = nextDisabled;
         els.rangeText.textContent = list.length === 0 ? "0" : `${start + 1}-${end}`;
         els.totalText.textContent = String(list.length);
-        els.resultsMeta.textContent = pageCount > 1 ? `الصفحة ${state.page}/${pageCount}` : "";
+        els.resultsMeta.textContent = pageCount > 1 ? ` - الصفحة ${state.page}/${pageCount}` : "";
         return slice;
       }
       function applyFilters() {
@@ -2731,15 +2774,29 @@
         if (list.length === 0) setStatus(state.query && state.query.trim() ? "لا توجد نتائج." : "لا توجد منتجات للعرض.", false);
         else setStatus("", false);
       }
+      function renderWhatNew() {
+        if (!(els.whatNewSection instanceof HTMLElement) || !(els.whatNewText instanceof HTMLElement)) return;
+        const t = String(state.whatNewText ?? "").trim();
+        if (!t) {
+          els.whatNewText.textContent = "";
+          els.whatNewSection.style.display = "none";
+          return;
+        }
+        els.whatNewSection.style.display = "";
+        els.whatNewText.style.whiteSpace = "pre-wrap";
+        els.whatNewText.innerHTML = formatAboutText(t);
+      }
       function renderHome() {
         els.homeGrid.setAttribute("data-view", state.viewMode);
         if (!Array.isArray(state.homeProducts) || state.homeProducts.length === 0) {
           els.homeGrid.innerHTML = "";
+          renderWhatNew();
           return;
         }
         let html = "";
         for (const p of state.homeProducts) html += renderCard(p);
         els.homeGrid.innerHTML = html;
+        renderWhatNew();
       }
       function renderProductDetails(code) {
         const c = String(code ?? "").trim();
@@ -3263,9 +3320,13 @@
         setHomeStatus("", false);
       }
       async function loadProducts() {
-        const loadingText = "جاري تحميل المنتجات";
-        els.hint.textContent = loadingText;
-        setStatus(`${loadingText}...`);
+        const baseText = "جاري تحميل المنتجات , انتظر قليلاً";
+        setHomeStatus(baseText, false);
+        let stillLoading = true;
+        const slowTimer = setTimeout(() => {
+          if (!stillLoading) return;
+          setHomeStatus(`${baseText}. يبدو الانترنيت لديك بطيء , شارفت العملية على الانتهاء......`, false);
+        }, 3000);
         setBootProgress(20);
         try {
           await loadOutSet();
@@ -3333,11 +3394,13 @@
           state.allProducts = Array.from(productsByCode.values());
           await loadCategories();
           renderCategoryPills();
-          els.hint.textContent = "";
-          setStatus("");
+          stillLoading = false;
+          clearTimeout(slowTimer);
+          setHomeStatus("", false);
           setBootProgress(70);
           loadCart();
           renderCart();
+          loadWhatNew();
           await loadHomeCodes();
           renderHome();
           applyHashRoute();
@@ -3352,18 +3415,61 @@
           hideBootOverlay();
           if (!location.hash) setHash("home");
         } catch (e) {
-          els.hint.textContent = "فشل التحميل";
+          stillLoading = false;
+          clearTimeout(slowTimer);
           const reason = safeLower(String(e?.message ?? "").trim());
           const msg =
             reason === "no_data_files"
               ? "لا توجد ملفات CSV للتحميل. ضع ملفات CSV داخل مجلد data-csv في المستودع. إذا لم يتم اكتشافها تلقائياً، املأ data-csv/files.txt."
               : "فشل تحميل ملفات المنتجات. تأكد أن ملفات CSV موجودة داخل المستودع وبنفس الأسماء والمسارات.";
-          setStatus(msg, true);
+          setHomeStatus(msg, true);
           setBootProgress(100);
           hideBootOverlay();
           els.grid.innerHTML = "";
-          setHomeStatus("فشل تحميل المنتجات.", true);
         }
+      }
+      async function loadWhatNew() {
+        try {
+          const res = await fetchTextFirstAvailable(CONFIG.WHAT_NEW_URLS, 10 * 60 * 1000);
+          state.whatNewText = String(res?.text ?? "").trim();
+          renderWhatNew();
+        } catch {
+          state.whatNewText = "";
+          renderWhatNew();
+        }
+      }
+      async function loadTelegramProxyConfig() {
+        try {
+          const hasOrders = String(CONFIG.TELEGRAM_ORDERS_PROXY_URL || "").trim();
+          const hasFeedback = String(CONFIG.TELEGRAM_FEEDBACK_PROXY_URL || "").trim();
+          if (hasOrders && hasFeedback) return;
+          const res = await fetchTextFirstAvailable(CONFIG.TELEGRAM_CONFIG_URLS, 10 * 60 * 1000);
+          if (!res) return;
+          let orders = hasOrders;
+          let feedback = hasFeedback;
+          const lines = String(res.text ?? "").split(/\r?\n/);
+          for (const raw of lines) {
+            const line = String(raw ?? "").trim();
+            if (!line) continue;
+            if (line.startsWith("#")) continue;
+            if (line.startsWith("//")) continue;
+            const eq = line.indexOf("=");
+            if (eq === -1) {
+              if (!orders && /^https?:\/\//i.test(line)) orders = line;
+              else if (!feedback && /^https?:\/\//i.test(line)) feedback = line;
+              continue;
+            }
+            const k = safeLower(line.slice(0, eq).trim()).replace(/[\s_-]+/g, "_");
+            const v = line.slice(eq + 1).trim();
+            if (!v) continue;
+            if (!orders && (k === "orders" || k === "order" || k === "tg_orders_proxy" || k === "telegram_orders_proxy_url")) orders = v;
+            if (!feedback && (k === "feedback" || k === "fb" || k === "tg_feedback_proxy" || k === "telegram_feedback_proxy_url")) feedback = v;
+            if (!orders && k === "url") orders = v;
+            if (!feedback && k === "url") feedback = v;
+          }
+          if (orders) CONFIG.TELEGRAM_ORDERS_PROXY_URL = String(orders).trim();
+          if (feedback) CONFIG.TELEGRAM_FEEDBACK_PROXY_URL = String(feedback).trim();
+        } catch {}
       }
       async function renderInfo(key) {
         const k = String(key ?? "").trim();
@@ -3792,7 +3898,7 @@
             els.complaintInput.value = "";
             if (els.complaintContact) els.complaintContact.value = "";
           } catch {
-            setInfoStatus("تعذر الإرسال. لم يتم ضبط خدمة الإرسال.", true);
+            setInfoStatus("تعذر الإرسال. لضبط تيليغرام ضع روابط الإرسال داخل telegram_proxy.txt.", true);
           }
         });
         els.ratingForm.addEventListener("submit", async (e) => {
@@ -3810,7 +3916,7 @@
             els.ratingMsg.value = "";
             els.ratingDone.style.display = "";
           } catch {
-            setInfoStatus("تعذر الإرسال. لم يتم ضبط خدمة الإرسال.", true);
+            setInfoStatus("تعذر الإرسال. لضبط تيليغرام ضع روابط الإرسال داخل telegram_proxy.txt.", true);
           }
         });
         const syncShipBlocks = () => {
@@ -3940,7 +4046,7 @@
           } catch {
             els.confirmOrderBtn.disabled = false;
             els.confirmOrderBtn.textContent = "إعادة إرسال الطلب";
-            setCheckoutStatus("تعذر إرسال الطلب. لم يتم ضبط خدمة الإرسال.", true);
+            setCheckoutStatus("تعذر إرسال الطلب. لضبط تيليغرام ضع روابط الإرسال داخل telegram_proxy.txt.", true);
           }
           await copyText(invoice);
         });
@@ -4023,6 +4129,9 @@
       updatePills();
       window.addEventListener("hashchange", applyHashRoute);
       wireEvents();
+      loadTelegramProxyConfig();
+      if (!location.hash) setHash("home");
+      else applyHashRoute();
       loadPromoText().then(() => setPromoVisible(String(location.hash || "").replace(/^#/, "").trim() === "" || safeLower(String(location.hash || "")).includes("home")));
       loadProducts();
     </script>

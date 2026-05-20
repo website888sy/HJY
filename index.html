@@ -285,6 +285,8 @@
         font-weight: 700;
         line-height: 1.6;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       .about-em {
         font-weight: 900;
@@ -1557,6 +1559,7 @@
         hotSet: new Set(),
         qaFiles: [],
         qaSelected: "",
+        aboutFiles: [],
         whatNewText: "",
       };
       function setBootProgress(pct) {
@@ -1650,6 +1653,45 @@
           if (!url) return m;
           return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>${tail}`;
         });
+        return html;
+      }
+      function shortenUrlText(url) {
+        const u = String(url ?? "").trim();
+        if (!u) return "";
+        try {
+          const parsed = new URL(u);
+          const host = String(parsed.host || "");
+          let path = String(parsed.pathname || "");
+          if (path && path !== "/") {
+            if (path.length > 18) path = path.slice(0, 18) + "…";
+            return host + path;
+          }
+          return host;
+        } catch {
+          return u.length > 32 ? u.slice(0, 32) + "…" : u;
+        }
+      }
+      function formatWhatNewText(raw) {
+        let html = escapeHtml(String(raw ?? ""));
+        html = html.replace(/(https?:\/\/[^\s<]+)/g, (m) => {
+          let url = String(m);
+          let tail = "";
+          while (url.length) {
+            const last = url[url.length - 1];
+            if (!last) break;
+            if (".,;:!?)]}،؛؟!".includes(last)) {
+              tail = last + tail;
+              url = url.slice(0, -1);
+              continue;
+            }
+            break;
+          }
+          if (!url) return m;
+          const label = escapeHtml(shortenUrlText(url) || url);
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>${tail}`;
+        });
+        html = html.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
+        html = html.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
         return html;
       }
       function escapeHtml(s) {
@@ -2784,7 +2826,7 @@
         }
         els.whatNewSection.style.display = "";
         els.whatNewText.style.whiteSpace = "pre-wrap";
-        els.whatNewText.innerHTML = formatAboutText(t);
+        els.whatNewText.innerHTML = formatWhatNewText(t);
       }
       function renderHome() {
         els.homeGrid.setAttribute("data-view", state.viewMode);
@@ -3220,6 +3262,61 @@
       function normalizeQaKey(name) {
         return safeLower(String(name ?? "")).replace(/\s+/g, " ").trim();
       }
+      function normalizeAboutKey(name) {
+        return safeLower(String(name ?? "")).replace(/\s+/g, " ").trim();
+      }
+      async function loadAboutIndex() {
+        state.aboutFiles = [];
+        try {
+          const dir = String(CONFIG.ABOUT_DIR || "about").trim() || "about";
+          const files = await listGithubFilesRecursive(dir, ["txt"], 2000);
+          const out = [];
+          for (const path of files) {
+            const p = String(path ?? "").trim().replace(/\\/g, "/");
+            const base = p.split("/").pop() || "";
+            if (!base) continue;
+            let name = "";
+            try {
+              name = decodeURIComponent(base);
+            } catch {
+              name = base;
+            }
+            name = name.replace(/\.txt$/i, "").trim();
+            if (!name) continue;
+            out.push({ name, key: normalizeAboutKey(name), path: p });
+          }
+          out.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+          state.aboutFiles = out;
+        } catch {}
+      }
+      function renderFooterAboutExtras() {
+        if (!(els.footerLinks instanceof HTMLElement)) return;
+        const existing = new Set(
+          Array.from(els.footerLinks.querySelectorAll("[data-info]"))
+            .map((b) => normalizeAboutKey(String(b.getAttribute("data-info") ?? "")))
+            .filter(Boolean)
+        );
+        const list = Array.isArray(state.aboutFiles) ? state.aboutFiles : [];
+        for (const it of list) {
+          if (!it || !it.name || !it.key) continue;
+          if (existing.has(it.key)) continue;
+          const btn = document.createElement("button");
+          btn.className = "footer-link";
+          btn.type = "button";
+          btn.setAttribute("data-info", it.name);
+          btn.textContent = it.name;
+          els.footerLinks.appendChild(btn);
+          existing.add(it.key);
+        }
+      }
+      function resolveAboutPath(title) {
+        const key = normalizeAboutKey(title);
+        const list = Array.isArray(state.aboutFiles) ? state.aboutFiles : [];
+        const found = list.find((x) => x && x.key === key);
+        if (found && found.path) return String(found.path);
+        const k = String(title ?? "").trim();
+        return `${String(CONFIG.ABOUT_DIR || "about").trim() || "about"}/${encodeURIComponent(k)}.txt`;
+      }
       async function loadQaIndex() {
         state.qaFiles = [];
         const files = await listGithubFilesRecursive("QA", ["txt"], 2000);
@@ -3508,7 +3605,7 @@
           els.infoText.innerHTML = html;
           return;
         }
-        const fileUrl = `${CONFIG.ABOUT_DIR}/${encodeURIComponent(k)}.txt`;
+        const fileUrl = resolveAboutPath(k);
         setInfoStatus("جاري التحميل...", false);
         const res = await fetchTextCached(fileUrl, 10 * 60 * 1000);
         if (!res) {
@@ -4130,6 +4227,9 @@
       window.addEventListener("hashchange", applyHashRoute);
       wireEvents();
       loadTelegramProxyConfig();
+      loadAboutIndex()
+        .then(() => renderFooterAboutExtras())
+        .catch(() => {});
       if (!location.hash) setHash("home");
       else applyHashRoute();
       loadPromoText().then(() => setPromoVisible(String(location.hash || "").replace(/^#/, "").trim() === "" || safeLower(String(location.hash || "")).includes("home")));

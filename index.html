@@ -124,6 +124,20 @@
         display: flex;
         align-items: center;
       }
+      .search-logo {
+        position: absolute;
+        inset-inline-start: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid rgba(10, 36, 48, 0.1);
+        object-fit: contain;
+        padding: 2px;
+        pointer-events: none;
+      }
       .search input {
         width: 100%;
         border: 0;
@@ -132,6 +146,12 @@
         background: transparent;
         color: var(--text);
         padding-inline-end: 34px;
+        padding-inline-start: 38px;
+      }
+      .search input::placeholder {
+        color: rgba(77, 106, 118, 0.75);
+        font-weight: 700;
+        font-size: 13px;
       }
       .select {
         border: 1px solid var(--border);
@@ -576,19 +596,35 @@
         padding: 12px;
       }
       .field-row {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        align-items: stretch;
+        position: relative;
+        display: block;
+      }
+      .field-row > input,
+      .field-row > textarea,
+      .field-row > select {
+        width: 100%;
+        padding-inline-end: 48px !important;
       }
       .field-clear {
         border: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.65);
         border-radius: 12px;
-        padding: 10px 12px;
+        padding: 0;
         cursor: pointer;
         user-select: none;
-        align-self: flex-end;
+        position: absolute;
+        inset-inline-end: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        line-height: 1;
+      }
+      .field-row textarea ~ .field-clear {
+        top: 10px;
+        transform: none;
       }
       .checkrow {
         display: flex;
@@ -755,11 +791,10 @@
         overflow: hidden;
       }
       .cart-table {
-        display: flex;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
         gap: 10px;
         align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
       }
       .qty-controls {
         display: inline-flex;
@@ -792,6 +827,14 @@
         unicode-bidi: plaintext;
         font-weight: 900;
         color: var(--primary-3);
+      }
+      .cart-unit-price {
+        direction: ltr;
+        unicode-bidi: plaintext;
+        font-weight: 900;
+        color: rgba(77, 106, 118, 0.95);
+        font-size: 12px;
+        text-align: center;
       }
       .cart-summary {
         border-top: 1px solid var(--border);
@@ -925,6 +968,9 @@
         .topbar-inner {
           padding: 10px 12px;
         }
+        .brand {
+          display: none;
+        }
         .search {
           padding: 9px 10px;
         }
@@ -973,7 +1019,8 @@
           <div class="controls">
             <div class="search" role="search">
               <div class="search-field">
-                <input id="searchInput" type="search" placeholder="شريط البحث" autocomplete="off" />
+                <img class="search-logo" src="logo.webp" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
+                <input id="searchInput" type="search" placeholder="ابحث بكلمات مفتاحية" autocomplete="off" />
                 <button class="search-btn" id="searchBtn" type="button" aria-label="بحث">🔍</button>
               </div>
               <select class="select" id="sortSelect" aria-label="ترتيب البحث">
@@ -1004,6 +1051,7 @@
             <button class="pill" type="button" data-category="ALL" aria-pressed="false">الكل</button>
           </div>
           <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+            <button class="btn btn-ghost" id="homeTopBtn" type="button">قائمة رئيسية</button>
             <button class="btn btn-ghost" id="qaTopBtn" type="button">أشيع الأسئلة</button>
             <div class="pager" aria-label="التنقل بين الصفحات">
               <button id="prevPage" type="button" aria-label="السابق">▶</button>
@@ -1027,6 +1075,12 @@
           </div>
           <div class="status" id="homeStatus" aria-hidden="true"></div>
           <div class="grid" id="homeProductsGrid" data-view="compact" aria-live="polite"></div>
+          <div id="newOfferSection" style="padding:0 14px 14px;display:none">
+            <div style="border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,0.7)">
+              <div style="font-weight:900;margin-bottom:6px">عرض جديد</div>
+              <div class="panel-sub" id="newOfferText"></div>
+            </div>
+          </div>
           <div id="whatNewSection" style="padding:0 14px 14px;display:none">
             <div style="border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,0.7)">
               <div style="font-weight:900;margin-bottom:6px">ما الجديد , أخر الأخبار !؟</div>
@@ -1081,7 +1135,10 @@
           </div>
           <div style="padding:14px;display:grid;gap:14px">
             <div class="status" id="checkoutStatus" aria-hidden="true"></div>
-            <div class="panel-sub" style="max-width:520px;margin-inline:auto">بيانات العميل تحفظ للمرة قادمة تلقائياً</div>
+            <div style="max-width:520px;margin-inline:auto;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+              <div class="panel-sub" style="margin:0">بيانات العميل تحفظ للمرة قادمة تلقائياً</div>
+              <button class="btn btn-danger" id="clearCustomerBtn" type="button" style="padding:8px 10px;font-size:12px">حذف كامل البيانات</button>
+            </div>
             <form id="checkoutForm" style="display:grid;gap:10px;max-width:520px;margin-inline:auto">
               <label style="display:grid;gap:6px">
                 <span style="font-weight:800">رقم هاتف</span>
@@ -1100,34 +1157,26 @@
               <label style="display:grid;gap:6px">
                 <span style="font-weight:800">المحافظة</span>
                 <div class="field-row">
-                  <input
-                    id="govInput"
-                    type="text"
-                    autocomplete="address-level1"
-                    required
-                    placeholder="اختر المحافظة"
-                    list="govList"
-                    style="padding:12px;border:1px solid var(--border);border-radius:12px"
-                  />
-                  <datalist id="govList">
-                    <option value="دمشق"></option>
-                    <option value="حمص"></option>
-                    <option value="لاذقية"></option>
-                    <option value="حماة"></option>
-                    <option value="طرطوس"></option>
-                    <option value="حلب"></option>
-                    <option value="إدلب"></option>
-                    <option value="سويداء"></option>
-                    <option value="درعا"></option>
-                    <option value="ريف طرطوس"></option>
-                    <option value="ريف لاذقية"></option>
-                    <option value="ريف حمص"></option>
-                    <option value="ريف إدلب"></option>
-                    <option value="ريف حلب"></option>
-                    <option value="ريف دمشق"></option>
-                    <option value="ريف حماة"></option>
-                    <option value="أخرى"></option>
-                  </datalist>
+                  <select id="govInput" autocomplete="address-level1" required class="select" style="padding:12px;border-radius:12px">
+                    <option value="">اختر المحافظة</option>
+                    <option value="دمشق">دمشق</option>
+                    <option value="حمص">حمص</option>
+                    <option value="لاذقية">لاذقية</option>
+                    <option value="حماة">حماة</option>
+                    <option value="طرطوس">طرطوس</option>
+                    <option value="حلب">حلب</option>
+                    <option value="إدلب">إدلب</option>
+                    <option value="سويداء">سويداء</option>
+                    <option value="درعا">درعا</option>
+                    <option value="ريف طرطوس">ريف طرطوس</option>
+                    <option value="ريف لاذقية">ريف لاذقية</option>
+                    <option value="ريف حمص">ريف حمص</option>
+                    <option value="ريف إدلب">ريف إدلب</option>
+                    <option value="ريف حلب">ريف حلب</option>
+                    <option value="ريف دمشق">ريف دمشق</option>
+                    <option value="ريف حماة">ريف حماة</option>
+                    <option value="أخرى">أخرى</option>
+                  </select>
                   <button class="field-clear" type="button" data-clear="govInput" aria-label="حذف" title="حذف">🗑</button>
                 </div>
               </label>
@@ -1394,7 +1443,7 @@
             <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
             <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
             <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
-            <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
+            <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
             <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
             <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
             <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
@@ -1426,6 +1475,7 @@
         BRAND: "HJY.co",
         PROMO_URLS: ["promo.txt"],
         WHAT_NEW_URLS: ["what_new.txt"],
+        NEW_OFFER_URLS: ["new_offer.txt"],
         DATA_SOURCE: "LOCAL",
         DATA_DIR: "data-csv",
         DATA_MANIFEST_URLS: ["data-csv/files.txt"],
@@ -1470,6 +1520,7 @@
         nextPageBottom: document.getElementById("nextPageBottom"),
         hint: document.getElementById("hint"),
         qaTopBtn: document.getElementById("qaTopBtn"),
+        homeTopBtn: document.getElementById("homeTopBtn"),
         resultsMeta: document.getElementById("resultsMeta"),
         rangeText: document.getElementById("rangeText"),
         totalText: document.getElementById("totalText"),
@@ -1505,6 +1556,7 @@
         backToShopBtn: document.getElementById("backToShopBtn"),
         checkoutMeta: document.getElementById("checkoutMeta"),
         checkoutStatus: document.getElementById("checkoutStatus"),
+        clearCustomerBtn: document.getElementById("clearCustomerBtn"),
         checkoutCartSummary: document.getElementById("checkoutCartSummary"),
         checkoutForm: document.getElementById("checkoutForm"),
         phoneInput: document.getElementById("phoneInput"),
@@ -1563,6 +1615,8 @@
         backFromQaBtnBottom: document.getElementById("backFromQaBtnBottom"),
         whatNewSection: document.getElementById("whatNewSection"),
         whatNewText: document.getElementById("whatNewText"),
+        newOfferSection: document.getElementById("newOfferSection"),
+        newOfferText: document.getElementById("newOfferText"),
       };
       const state = {
         allProducts: [],
@@ -1588,7 +1642,10 @@
         aboutFiles: [],
         inlineQaSelected: "",
         whatNewText: "",
+        newOfferText: "",
       };
+      const USER_LOAD_ERROR_MSG =
+        "حدث غلط بسبب بطء الانترنيت لديك يرجى إيقاف vpn وإعادة تحميل الصفحة او تغيير بلد ال vpn , يرجى إعلامنا بالمشكلة\n0940471199";
       function setBootProgress(pct) {
         const el = document.getElementById("bootBar");
         if (!(el instanceof HTMLElement)) return;
@@ -1664,9 +1721,9 @@
       } catch {}
       function linkifyOnly(raw) {
         let html = escapeHtml(String(raw ?? ""));
+        html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = html.replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g, (m) => {
           let url = String(m);
-          const href = url.startsWith("www.") ? `https://${url}` : url;
           let tail = "";
           while (url.length) {
             const last = url[url.length - 1];
@@ -1679,6 +1736,7 @@
             break;
           }
           if (!url) return m;
+          const href = url.startsWith("www.") ? `https://${url}` : url;
           const label = escapeHtml(shortenUrlText(href) || href);
           return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>${tail}`;
         });
@@ -1705,9 +1763,9 @@
         cleaned = cleaned.replace(/"\s*target="_blank"[^>]*>/g, " ");
         cleaned = cleaned.replace(/'\s*target='_blank'[^>]*>/g, " ");
         let html = escapeHtml(cleaned);
+        html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = html.replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g, (m) => {
           let url = String(m);
-          const href = url.startsWith("www.") ? `https://${url}` : url;
           let tail = "";
           while (url.length) {
             const last = url[url.length - 1];
@@ -1720,6 +1778,7 @@
             break;
           }
           if (!url) return m;
+          const href = url.startsWith("www.") ? `https://${url}` : url;
           const label = escapeHtml(shortenUrlText(href) || href);
           return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>${tail}`;
         });
@@ -1740,9 +1799,9 @@
         cleaned = cleaned.replace(/"\s*target="_blank"[^>]*>/g, " ");
         cleaned = cleaned.replace(/'\s*target='_blank'[^>]*>/g, " ");
         let html = escapeHtml(cleaned);
+        html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = html.replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g, (m) => {
           let url = String(m);
-          const href = url.startsWith("www.") ? `https://${url}` : url;
           let tail = "";
           while (url.length) {
             const last = url[url.length - 1];
@@ -1755,6 +1814,7 @@
             break;
           }
           if (!url) return m;
+          const href = url.startsWith("www.") ? `https://${url}` : url;
           const label = escapeHtml(shortenUrlText(href) || href);
           return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>${tail}`;
         });
@@ -2294,6 +2354,8 @@
         return { unit: base, applied: null };
       }
       function disTextForProduct(product) {
+        const note = String(product?.disNote ?? "").trim();
+        if (note) return note;
         const rules = Array.isArray(product?.disRules) ? product.disRules : [];
         if (rules.length === 0) return "";
         const base = Number(product?.price) || 0;
@@ -2379,10 +2441,14 @@
         setPromoVisible(false);
         setStatus("");
         setInfoStatus("");
+        updateCheckoutMeta();
+        renderCheckoutCartSummary();
+      }
+      function updateCheckoutMeta() {
+        if (!(els.checkoutMeta instanceof HTMLElement)) return;
         const count = cartCountTotal();
         const total = cartTotals();
         els.checkoutMeta.textContent = count === 0 ? "السلة فارغة" : `${count} قطعة — $${formatMoney(total)}`;
-        renderCheckoutCartSummary();
       }
       function showInfoView(key) {
         setRoute("info");
@@ -2614,6 +2680,8 @@
           els.cartContent.innerHTML = `<div class="cart-empty">السلة فارغة. أضف منتجات لعرضها هنا.</div>`;
           els.cartSummary.innerHTML = "";
           els.cartActions.innerHTML = "";
+          updateCheckoutMeta();
+          renderCheckoutCartSummary();
           return;
         }
         let html = "";
@@ -2667,6 +2735,7 @@
                       <input inputmode="numeric" pattern="[0-9]*" value="${escapeHtmlAttr(String(qty))}" data-qty="${escapeHtmlAttr(p.code)}" />
                       <button type="button" data-inc="${escapeHtmlAttr(p.code)}">+</button>
                     </div>
+                    <div class="cart-unit-price">$${escapeHtml(formatMoney(unit))}/قطعة</div>
                     <div class="cart-line-total">$${escapeHtml(formatMoney(line))}</div>
                   </div>
                 </div>
@@ -2678,20 +2747,26 @@
         els.cartContent.innerHTML = html;
         els.cartSummary.innerHTML = `
           <div class="sum-row">
-            <span>الإجمالي</span>
-            <strong style="direction:ltr;unicode-bidi:plaintext">$${escapeHtml(formatMoney(total))}</strong>
+            <span style="font-size:14px">عدد القطع</span>
+            <strong style="direction:ltr;unicode-bidi:plaintext;font-size:18px">${escapeHtml(String(count))}</strong>
+          </div>
+          <div class="sum-row">
+            <span style="font-size:14px">الإجمالي</span>
+            <strong style="direction:ltr;unicode-bidi:plaintext;font-size:20px">$${escapeHtml(formatMoney(total))}</strong>
           </div>
         `;
         els.cartActions.innerHTML = `
           <button class="btn btn-danger" type="button" id="clearCartBtn">تفريغ</button>
           <button class="btn btn-primary" type="button" id="checkoutBtn">إتمام الطلب</button>
         `;
+        updateCheckoutMeta();
         renderCheckoutCartSummary();
       }
       function renderCheckoutCartSummary() {
         if (!(els.checkoutCartSummary instanceof HTMLElement)) return;
         if (state.cart.size === 0) {
           els.checkoutCartSummary.innerHTML = `<div class="cart-empty">السلة فارغة.</div>`;
+          updateCheckoutMeta();
           return;
         }
         let html = "";
@@ -2724,15 +2799,13 @@
                     <button class="cart-remove" type="button" data-remove="${escapeHtmlAttr(p.code)}">حذف</button>
                   </div>
                   <p class="cart-name">${escapeHtml(p.name)}</p>
-                  <div class="mini-note" style="direction:ltr;unicode-bidi:plaintext">${escapeHtml(p.code)} — عدد: ${escapeHtml(String(qty))} — $${escapeHtml(
-            formatMoney(unit)
-          )}/قطعة</div>
                   <div class="cart-table">
                     <div class="qty-controls">
                       <button type="button" data-dec="${escapeHtmlAttr(p.code)}">-</button>
                       <input inputmode="numeric" pattern="[0-9]*" value="${escapeHtmlAttr(String(qty))}" data-qty="${escapeHtmlAttr(p.code)}" />
                       <button type="button" data-inc="${escapeHtmlAttr(p.code)}">+</button>
                     </div>
+                    <div class="cart-unit-price">$${escapeHtml(formatMoney(unit))}/قطعة</div>
                     <div class="cart-line-total">$${escapeHtml(formatMoney(line))}</div>
                   </div>
                 </div>
@@ -2741,11 +2814,17 @@
           `;
         }
         const total = cartTotals();
+        const count = cartCountTotal();
         html += `<div class="sum-row" style="padding:6px 2px">
-            <span>الإجمالي</span>
-            <strong style="direction:ltr;unicode-bidi:plaintext">$${escapeHtml(formatMoney(total))}</strong>
+            <span style="font-size:14px">عدد القطع</span>
+            <strong style="direction:ltr;unicode-bidi:plaintext;font-size:18px">${escapeHtml(String(count))}</strong>
+          </div>
+          <div class="sum-row" style="padding:2px 2px">
+            <span style="font-size:14px">الإجمالي</span>
+            <strong style="direction:ltr;unicode-bidi:plaintext;font-size:20px">$${escapeHtml(formatMoney(total))}</strong>
           </div>`;
         els.checkoutCartSummary.innerHTML = html;
+        updateCheckoutMeta();
       }
       function buildSearchTokens(q) {
         const s = safeLower(q).trim();
@@ -2901,12 +2980,14 @@
         els.homeGrid.setAttribute("data-view", state.viewMode);
         if (!Array.isArray(state.homeProducts) || state.homeProducts.length === 0) {
           els.homeGrid.innerHTML = "";
+          renderNewOffer();
           renderWhatNew();
           return;
         }
         let html = "";
         for (const p of state.homeProducts) html += renderCard(p);
         els.homeGrid.innerHTML = html;
+        renderNewOffer();
         renderWhatNew();
       }
       function renderProductDetails(code) {
@@ -3493,7 +3574,7 @@
         setHomeStatus("جاري تجهيز الصفحة الرئيسية...", false);
         const res = await fetchTextFirstAvailable(CONFIG.HOME_CODES_URLS, 10 * 60 * 1000);
         if (!res) {
-          setHomeStatus("تعذر العثور على home.txt بجانب index.html.", false);
+          setHomeStatus(USER_LOAD_ERROR_MSG, true);
           return;
         }
         const codes = String(res.text ?? "")
@@ -3565,7 +3646,14 @@
               const price = parsePriceNumber(idxPrice >= 0 ? row[idxPrice] : "");
               const photoRaw = idxPhoto >= 0 ? String(row[idxPhoto] ?? "").trim() : "";
               const disRaw = idxDis >= 0 ? String(row[idxDis] ?? "").trim() : "";
-              const disRules = parseDisRules(disRaw);
+              let disNote = "";
+              let disRules = [];
+              const m = disRaw.match(/^"([\s\S]*)"$/);
+              if (m) {
+                disNote = String(m[1] ?? "").trim();
+              } else {
+                disRules = parseDisRules(disRaw);
+              }
               const photoList = parsePhotoList(photoRaw);
               const key = normalizeCodeKey(code);
               const isOut = state.outSet.has(key);
@@ -3578,6 +3666,7 @@
                 photoList,
                 disRules,
                 disRaw,
+                disNote,
                 isOut,
                 search: `${code} ${name} ${about1} ${about2}`.trim(),
               };
@@ -3593,6 +3682,7 @@
           setBootProgress(70);
           loadCart();
           renderCart();
+          loadNewOffer();
           loadWhatNew();
           await loadHomeCodes();
           renderHome();
@@ -3610,12 +3700,7 @@
         } catch (e) {
           stillLoading = false;
           clearTimeout(slowTimer);
-          const reason = safeLower(String(e?.message ?? "").trim());
-          const msg =
-            reason === "no_data_files"
-              ? "لا توجد ملفات CSV للتحميل. ضع ملفات CSV داخل مجلد data-csv في المستودع. إذا لم يتم اكتشافها تلقائياً، املأ data-csv/files.txt."
-              : "فشل تحميل ملفات المنتجات. تأكد أن ملفات CSV موجودة داخل المستودع وبنفس الأسماء والمسارات.";
-          setHomeStatus(msg, true);
+          setHomeStatus(USER_LOAD_ERROR_MSG, true);
           setBootProgress(100);
           hideBootOverlay();
           els.grid.innerHTML = "";
@@ -3629,6 +3714,29 @@
         } catch {
           state.whatNewText = "";
           renderWhatNew();
+        }
+      }
+      function renderNewOffer() {
+        if (!(els.newOfferSection instanceof HTMLElement) || !(els.newOfferText instanceof HTMLElement)) return;
+        const t = String(state.newOfferText ?? "").trim();
+        if (!t) {
+          els.newOfferText.textContent = "";
+          els.newOfferSection.style.display = "none";
+          return;
+        }
+        els.newOfferSection.style.display = "";
+        els.newOfferText.style.whiteSpace = "pre-wrap";
+        els.newOfferText.innerHTML = formatWhatNewText(t);
+      }
+      async function loadNewOffer() {
+        try {
+          const urls = Array.isArray(CONFIG.NEW_OFFER_URLS) ? CONFIG.NEW_OFFER_URLS : [];
+          const res = await fetchTextFirstAvailable(urls, 10 * 60 * 1000);
+          state.newOfferText = String(res?.text ?? "").trim();
+          renderNewOffer();
+        } catch {
+          state.newOfferText = "";
+          renderNewOffer();
         }
       }
       async function loadTelegramProxyConfig() {
@@ -4242,6 +4350,7 @@
         if (els.backFromProductBtnBottom instanceof HTMLElement) els.backFromProductBtnBottom.addEventListener("click", () => els.backFromProductBtn.click());
         els.backToShopBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
         els.backFromInfoBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
+        if (els.homeTopBtn instanceof HTMLElement) els.homeTopBtn.addEventListener("click", () => setHash("home"));
         if (els.qaTopBtn instanceof HTMLElement) els.qaTopBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("أشيع الأسئلة")}`));
         if (els.backFromQaBtn instanceof HTMLElement)
           els.backFromQaBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
@@ -4262,6 +4371,8 @@
           if (!(t instanceof HTMLElement)) return;
           const qaBtn = t.closest("[data-qa]");
           if (qaBtn instanceof HTMLElement) return setHash("qa");
+          const go = t.getAttribute("data-go");
+          if (safeLower(go) === "home") return setHash("home");
           const key = t.getAttribute("data-info");
           if (!key) return;
           setHash(`info=${encodeURIComponent(key)}`);
@@ -4313,7 +4424,7 @@
             els.complaintInput.value = "";
             if (els.complaintContact) els.complaintContact.value = "";
           } catch {
-            setInfoStatus("تعذر الإرسال. لضبط تيليغرام ضع روابط الإرسال داخل telegram_proxy.txt.", true);
+            setInfoStatus(USER_LOAD_ERROR_MSG, true);
           }
         });
         els.ratingForm.addEventListener("submit", async (e) => {
@@ -4331,7 +4442,7 @@
             els.ratingMsg.value = "";
             els.ratingDone.style.display = "";
           } catch {
-            setInfoStatus("تعذر الإرسال. لضبط تيليغرام ضع روابط الإرسال داخل telegram_proxy.txt.", true);
+            setInfoStatus(USER_LOAD_ERROR_MSG, true);
           }
         });
         const syncShipBlocks = () => {
@@ -4365,6 +4476,21 @@
         els.qadmousBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع قدموس")}`));
         els.openShippingBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("تفاصيل الشحن")}`));
         els.openPolicyBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("سياسية الاستخدام")}`));
+        if (els.clearCustomerBtn instanceof HTMLElement)
+          els.clearCustomerBtn.addEventListener("click", () => {
+            const ok = confirm("هل تريد حذف كامل بيانات العميل المحفوظة؟");
+            if (!ok) return;
+            try {
+              localStorage.removeItem("hjy_customer_v1");
+            } catch {}
+            if (els.phoneInput) els.phoneInput.value = "";
+            if (els.govInput) els.govInput.value = "";
+            if (els.govOtherInput) els.govOtherInput.value = "";
+            if (els.fullNameDamascusInput) els.fullNameDamascusInput.value = "";
+            if (els.fullNameGovInput) els.fullNameGovInput.value = "";
+            syncGovOther();
+            showToast("تم حذف كامل البيانات", 1800);
+          });
         els.checkoutForm.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
@@ -4373,7 +4499,7 @@
           const id = String(btn.getAttribute("data-clear") ?? "").trim();
           if (!id) return;
           const el = document.getElementById(id);
-          if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+          if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
             el.value = "";
             el.focus();
             el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -4461,7 +4587,10 @@
           } catch {
             els.confirmOrderBtn.disabled = false;
             els.confirmOrderBtn.textContent = "إعادة إرسال الطلب";
-            setCheckoutStatus("تعذر إرسال الطلب. لضبط تيليغرام ضع روابط الإرسال داخل telegram_proxy.txt.", true);
+            setCheckoutStatus(
+              "تعذر إرسال الطلب بسبب مشكلة اتصال.\nتم نسخ الفاتورة تلقائياً، أرسلها لنا على واتساب:\n0940471199\n\nيرجى إيقاف vpn وإعادة تحميل الصفحة او تغيير بلد ال vpn , يرجى إعلامنا بالمشكلة",
+              true
+            );
           }
           await copyText(invoice);
         });
@@ -4503,8 +4632,21 @@
           const obj = JSON.parse(raw);
           if (!obj || typeof obj !== "object") return;
           if (els.phoneInput) els.phoneInput.value = String(obj.phone || "");
-          if (els.govInput) els.govInput.value = String(obj.gov || "");
-          if (els.govOtherInput) els.govOtherInput.value = String(obj.govOther || "");
+          const savedGov = String(obj.gov || "").trim();
+          const savedGovOther = String(obj.govOther || "").trim();
+          if (els.govInput instanceof HTMLSelectElement) {
+            const has = Array.from(els.govInput.options).some((o) => String(o?.value ?? "") === savedGov);
+            if (savedGov && !has) {
+              els.govInput.value = "أخرى";
+              if (els.govOtherInput) els.govOtherInput.value = savedGov;
+            } else {
+              els.govInput.value = savedGov;
+              if (els.govOtherInput) els.govOtherInput.value = savedGovOther;
+            }
+          } else {
+            if (els.govInput) els.govInput.value = savedGov;
+            if (els.govOtherInput) els.govOtherInput.value = savedGovOther;
+          }
           if (els.fullNameDamascusInput) els.fullNameDamascusInput.value = String(obj.fullNameDamascus || "");
           if (els.fullNameGovInput) els.fullNameGovInput.value = String(obj.fullNameGov || "");
         } catch {}

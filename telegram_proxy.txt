@@ -1,3 +1,2 @@
 orders=https://script.google.com/macros/s/AKfycbzQ01qd9Bw5LVx2r4RuWtQQP4y9_07CKz5gzsA7pU8c-3A6gXxuL8fgS6bCR2wRPuRF/exec?kind=orders
-
 feedback=https://script.google.com/macros/s/AKfycbzQ01qd9Bw5LVx2r4RuWtQQP4y9_07CKz5gzsA7pU8c-3A6gXxuL8fgS6bCR2wRPuRF/exec?kind=feedback

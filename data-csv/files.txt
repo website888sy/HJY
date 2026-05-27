@@ -23,4 +23,8 @@ smart-home-wifi
 
 solar-batt
 
+add
+
+aurd-elec
+
 wifi-qiachip

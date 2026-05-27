@@ -196,9 +196,8 @@
         color: var(--primary-3);
       }
       #cartToggle {
-        position: fixed;
-        right: 14px;
-        bottom: 14px;
+        position: fixed !important;
+        inset: auto 14px calc(14px + env(safe-area-inset-bottom)) auto !important;
         z-index: 60;
         box-shadow: var(--shadow);
         padding: 10px 12px;
@@ -629,7 +628,7 @@
       .checkrow {
         display: flex;
         gap: 10px;
-        align-items: flex-start;
+        align-items: center;
         padding: 10px;
         border: 1px solid var(--border);
         border-radius: 12px;
@@ -639,7 +638,7 @@
         width: 100%;
       }
       .checkrow input {
-        margin-top: 3px;
+        margin: 0;
       }
       .mini-note {
         color: var(--muted);
@@ -890,9 +889,9 @@
       }
       .toast {
         position: fixed;
-        inset-inline-start: 12px;
-        inset-block-end: 12px;
-        z-index: 60;
+        right: 14px;
+        inset-block-end: calc(64px + env(safe-area-inset-bottom));
+        z-index: 70;
         pointer-events: none;
         opacity: 0;
         transform: translateY(10px);
@@ -944,13 +943,13 @@
         }
         .cart-drawer {
           inset: auto;
-          left: 0;
-          right: 0;
-          bottom: 0;
+          right: 12px;
+          left: auto;
+          bottom: 74px;
           top: auto;
-          width: 100%;
+          width: min(420px, calc(100vw - 24px));
           max-height: 82vh;
-          border-radius: 18px 18px 0 0;
+          border-radius: 18px;
           opacity: 0;
           pointer-events: none;
           transform: translateY(16px);
@@ -963,6 +962,98 @@
         .cart-backdrop {
           background: rgba(10, 36, 48, 0.5);
         }
+      }
+      .customer-gallery {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      @media (max-width: 980px) {
+        .customer-gallery {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 700px) {
+        .customer-gallery {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .customer-photo {
+        width: 100%;
+        aspect-ratio: 1/1;
+        object-fit: cover;
+        border-radius: 18px;
+        border: 1px solid rgba(25, 183, 255, 0.22);
+        box-shadow: 0 10px 28px rgba(10, 36, 48, 0.12);
+        background: #fff;
+        cursor: zoom-in;
+        transition: transform 180ms ease, box-shadow 260ms ease, border-color 260ms ease;
+      }
+      .customer-photo:hover {
+        transform: translateY(-2px) scale(1.01);
+        border-color: rgba(25, 183, 255, 0.45);
+        box-shadow: 0 14px 36px rgba(10, 36, 48, 0.16);
+      }
+      .img-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        opacity: 0;
+        pointer-events: none;
+        transition: 200ms ease;
+        background: rgba(10, 36, 48, 0.6);
+        backdrop-filter: blur(10px);
+      }
+      .img-modal[data-open="true"] {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .img-modal-card {
+        width: min(980px, calc(100vw - 32px));
+        max-height: calc(100vh - 32px);
+        border-radius: 22px;
+        border: 1px solid rgba(25, 183, 255, 0.35);
+        background: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+        padding: 10px;
+        position: relative;
+      }
+      .img-modal-card::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        border-radius: 24px;
+        background: linear-gradient(120deg, rgba(25, 183, 255, 0.0), rgba(25, 183, 255, 0.45), rgba(10, 160, 234, 0.0));
+        filter: blur(10px);
+        opacity: 0.65;
+        animation: glowSweep 2.4s ease-in-out infinite;
+        pointer-events: none;
+      }
+      @keyframes glowSweep {
+        0% {
+          transform: translateX(-10%) translateY(-6%);
+          opacity: 0.45;
+        }
+        50% {
+          transform: translateX(10%) translateY(6%);
+          opacity: 0.85;
+        }
+        100% {
+          transform: translateX(-10%) translateY(-6%);
+          opacity: 0.45;
+        }
+      }
+      .img-modal-img {
+        width: 100%;
+        height: auto;
+        max-height: calc(100vh - 72px);
+        display: block;
+        border-radius: 18px;
+        object-fit: contain;
+        background: rgba(255, 255, 255, 0.9);
       }
       @media (max-width: 420px) {
         .topbar-inner {
@@ -1011,11 +1102,6 @@
       </div>
       <header class="topbar">
         <div class="topbar-inner">
-          <div class="brand">
-            <div class="logo" aria-hidden="true">
-              <img src="logo.webp" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
-            </div>
-          </div>
           <div class="controls">
             <div class="search" role="search">
               <div class="search-field">
@@ -1037,10 +1123,6 @@
               <option value="list">قائمة</option>
             </select>
           </div>
-          <button class="cart-button" id="cartToggle" type="button" aria-label="سلة المشتريات">
-            <span aria-hidden="true">🛒</span>
-            <span class="badge" id="cartCount">0</span>
-          </button>
         </div>
         <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px">
           <div class="pillbar" role="group" aria-label="التصنيفات">
@@ -1052,7 +1134,7 @@
           </div>
           <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
             <button class="btn btn-ghost" id="homeTopBtn" type="button">قائمة رئيسية</button>
-            <button class="btn btn-ghost" id="qaTopBtn" type="button">أشيع الأسئلة</button>
+            <button class="btn btn-ghost" id="productsQaTopBtn" type="button">أسئلة شائعة للمنتجات</button>
             <div class="pager" aria-label="التنقل بين الصفحات">
               <button id="prevPage" type="button" aria-label="السابق">▶</button>
               <button id="nextPage" type="button" aria-label="التالي">◀</button>
@@ -1148,6 +1230,7 @@
                     type="tel"
                     inputmode="tel"
                     autocomplete="tel"
+                    minlength="1"
                     required
                     style="padding:12px;border:1px solid var(--border);border-radius:12px;direction:ltr;unicode-bidi:plaintext"
                   />
@@ -1157,7 +1240,7 @@
               <label style="display:grid;gap:6px">
                 <span style="font-weight:800">المحافظة</span>
                 <div class="field-row">
-                  <select id="govInput" autocomplete="address-level1" required class="select" style="padding:12px;border-radius:12px">
+                  <select id="govInput" autocomplete="address-level1" class="select" style="padding:12px;border-radius:12px">
                     <option value="">اختر المحافظة</option>
                     <option value="دمشق">دمشق</option>
                     <option value="حمص">حمص</option>
@@ -1206,9 +1289,9 @@
               </div>
               <div id="shipGovBlock" style="display:none;gap:10px">
                 <label style="display:grid;gap:6px">
-                  <span style="font-weight:800">اسم ثلاثي <span class="mini-note">مراكز شحن تطلب الاسم ثلاثي</span></span>
+                  <span style="font-weight:800">اسم ثلاثي <span class="mini-note">اختياري</span></span>
                   <div class="field-row">
-                    <input id="fullNameGovInput" type="text" autocomplete="name" required style="padding:12px;border:1px solid var(--border);border-radius:12px" />
+                    <input id="fullNameGovInput" type="text" autocomplete="name" style="padding:12px;border:1px solid var(--border);border-radius:12px" />
                     <button class="field-clear" type="button" data-clear="fullNameGovInput" aria-label="حذف" title="حذف">🗑</button>
                   </div>
                 </label>
@@ -1218,8 +1301,8 @@
                     <input
                       id="shipCenterInput"
                       type="text"
+                      placeholder="يرجى اختيار فرع من قسم فروع مسارات او قدموس"
                       autocomplete="street-address"
-                      required
                       style="padding:12px;border:1px solid var(--border);border-radius:12px"
                     />
                     <button class="field-clear" type="button" data-clear="shipCenterInput" aria-label="حذف" title="حذف">🗑</button>
@@ -1236,6 +1319,13 @@
                       <input id="carrierQadmous" type="radio" name="carrier" value="QADMOUS" />
                       <div style="font-weight:900">قدموس</div>
                     </label>
+                    <label class="checkrow" style="flex:1;align-items:center">
+                      <input id="carrierOther" type="radio" name="carrier" value="OTHER" />
+                      <div style="display:grid;gap:2px">
+                        <div style="font-weight:900">آخر</div>
+                        <div class="mini-note">شوفير أو شحن بغير شركة ..الخ</div>
+                      </div>
+                    </label>
                   </div>
                   <div style="display:flex;gap:10px;flex-wrap:wrap">
                     <button class="btn btn-ghost" id="masaratBranchesBtn" type="button" style="flex:1">فروع مسارات</button>
@@ -1243,7 +1333,7 @@
                   </div>
                 </div>
                 <div class="checkrow">
-                  <input id="readShippingAgree" type="checkbox" required />
+                  <input id="readShippingAgree" type="checkbox" />
                   <div style="display:grid;gap:4px">
                     <div style="font-weight:900">انا قرأت جميع تفاصيل الشحن وعلى دراية تامة كيف يتم</div>
                     <button class="btn btn-ghost" id="openShippingBtn" type="button" style="width:fit-content">تفاصيل الشحن</button>
@@ -1254,6 +1344,7 @@
                   <div style="display:grid;gap:2px">
                     <div style="font-weight:900">سوف أدفع مسبقاً</div>
                     <div class="mini-note">الشحن مجاني في حال دفع مسبق كـ هدية لثقتكم بنا</div>
+                    <div class="mini-note">أجور الشحن فقط وليس الحوالة</div>
                   </div>
                 </div>
               </div>
@@ -1355,19 +1446,12 @@
                   <button class="field-clear" type="button" data-clear="orderNotesInput" aria-label="حذف" title="حذف">🗑</button>
                 </div>
               </label>
-              <div style="display:grid;gap:8px;border:1px solid rgba(10,160,234,0.25);border-radius:12px;padding:10px;background:rgba(255,255,255,0.75)">
-                <div class="checkrow" style="margin:0">
-                  <input id="termsAgreeInput" type="checkbox" required />
-                  <div style="display:grid;gap:4px">
-                    <div style="font-weight:900">انا مطلع على كافة تفاصيل المنتج وموافق على سياسة متجركم</div>
-                    <div class="mini-note">يصلِكم كما في الصور والمواصفات تماماً ونتحمل أي مشكلة أو غلط</div>
-                    <button class="btn btn-ghost" id="openPolicyBtn" type="button" style="width:fit-content">سياسة الاستخدام</button>
-                  </div>
-                </div>
-              </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap">
                 <button class="btn btn-primary" id="confirmOrderBtn" type="submit" style="flex:1">إتمام الطلب</button>
                 <button class="btn btn-ghost" id="copyInvoiceBtn" type="button" style="flex:1;display:none">نسخ الفاتورة</button>
+              </div>
+              <div class="mini-note" style="font-size:12px">
+                سيتم تواصل معاكم على الواتساب قبل إرسال الطلب للتأكيد عليكم — لن يتم إرسال الطلب بدون تأكيد من قبلكم
               </div>
               <div class="panel-sub" id="invoiceNote" style="display:none">يمكنك نسخ الفاتورة وإرسالها إلينا. الفاتورة تحتوي كل التفاصيل بشكل مرتب.</div>
             </form>
@@ -1387,6 +1471,10 @@
           <div style="padding:14px;display:grid;gap:10px">
             <div class="status" id="infoStatus" aria-hidden="true"></div>
             <div id="infoText" class="panel-sub"></div>
+            <div id="customerGalleryWrap" style="display:none;gap:10px">
+              <div class="panel-sub" style="font-weight:900;color:var(--text)">صور تقييمات العملاء</div>
+              <div id="customerGallery" class="customer-gallery"></div>
+            </div>
             <form id="complaintForm" style="display:none;gap:10px;max-width:520px;margin-inline:auto">
               <input id="complaintContact" type="text" placeholder="رقم الواتس او معرف التيلغرام (اختياري)" style="padding:12px;border:1px solid var(--border);border-radius:12px" />
               <textarea id="complaintInput" required placeholder="لكي نحسن من خدماتنا يرجى كتابة المشكلة هنا :" style="padding:12px;border:1px solid var(--border);border-radius:12px;min-height:120px;resize:vertical"></textarea>
@@ -1413,8 +1501,10 @@
           <div class="panel-header">
             <div>
               <h2 id="qaTitle">أسئلة شائعة للمنتجات</h2>
-              <p class="panel-sub" id="qaMeta">
-                قسم هام جداً يشرح الفروقات والمواصفات وسبب اختلاف الاسعار - سعر رخيص ليس عمل خير بل مواصفات أقل
+              <p class="panel-sub" id="qaMeta" style="white-space:pre-wrap">
+هنا قسم هام لأن:
+أكثر من 95% من الأسئلة هي مكررة ومجاب عنها مسبقاً - تكرار جميع الأجوبة بشكل يدوي يشكل إرهاق لنا , يمكنكم هنا معرفة إجابة لجميع أسئلتكم
+هنا ستعرف سبب اختلاف الاسعار والمواصفات والفروقات بشكل كامل
               </p>
             </div>
             <div style="display:flex;gap:10px;align-items:center">
@@ -1428,6 +1518,23 @@
             <div style="display:flex;justify-content:center">
               <button class="btn btn-ghost" id="backFromQaBtnBottom" type="button">رجوع</button>
             </div>
+          </div>
+        </section>
+        <section class="panel" id="ordersView" style="display:none">
+          <div class="panel-header">
+            <div>
+              <h2>طلباتي السابقة</h2>
+              <p class="panel-sub" id="ordersMeta">—</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-ghost" id="ordersClearAllBtn" type="button">حذف الكل</button>
+              <button class="btn btn-ghost" id="backFromOrdersBtn" type="button">رجوع</button>
+            </div>
+          </div>
+          <div style="padding:14px;display:grid;gap:12px;max-width:820px;margin-inline:auto">
+            <div class="status" id="ordersStatus" aria-hidden="true"></div>
+            <div id="ordersList" style="display:grid;gap:10px"></div>
+            <div id="ordersDetails" style="display:none;gap:10px"></div>
           </div>
         </section>
       </main>
@@ -1444,6 +1551,7 @@
             <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
             <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
             <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
+            <button class="footer-link" type="button" data-go="orders">طلباتي السابقة</button>
             <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
             <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
             <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
@@ -1454,6 +1562,10 @@
         </div>
       </footer>
     </div>
+    <button class="cart-button" id="cartToggle" type="button" aria-label="سلة المشتريات">
+      <span aria-hidden="true">🛒</span>
+      <span class="badge" id="cartCount">0</span>
+    </button>
     <div class="cart-backdrop" id="cartBackdrop" data-open="false"></div>
     <aside class="cart-drawer" id="cartPanel" data-open="false" aria-label="سلة المشتريات">
       <div class="cart-header">
@@ -1469,6 +1581,11 @@
     </aside>
     <div class="toast" id="toast" data-open="false" aria-live="polite" aria-atomic="true">
       <div class="toast-bubble" id="toastBubble"></div>
+    </div>
+    <div class="img-modal" id="imgModal" data-open="false" aria-hidden="true">
+      <div class="img-modal-card" role="dialog" aria-label="عرض الصورة">
+        <img class="img-modal-img" id="imgModalImg" alt="" />
+      </div>
     </div>
     <script>
       const CONFIG = {
@@ -1487,8 +1604,10 @@
         HOME_CODES_URLS: ["home.txt", "home.csv", "home"],
         OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
         ABOUT_DIR: "about",
-        TELEGRAM_ORDERS_PROXY_URL: "",
-        TELEGRAM_FEEDBACK_PROXY_URL: "",
+        TELEGRAM_ORDERS_PROXY_URL:
+          "https://script.google.com/macros/s/AKfycbwkDlpU2a8LR96fvLSoEhBduxQBKID96cG-hpVoseTAh9nRCXHrHlsoYACQAYksvPnk/exec?kind=orders",
+        TELEGRAM_FEEDBACK_PROXY_URL:
+          "https://script.google.com/macros/s/AKfycbwkDlpU2a8LR96fvLSoEhBduxQBKID96cG-hpVoseTAh9nRCXHrHlsoYACQAYksvPnk/exec?kind=feedback",
         TELEGRAM_CONFIG_URLS: ["telegram_proxy.txt", "telegram.txt"],
         ITEMS_PER_PAGE: 20,
         SEARCH_MIN_CHARS: 2,
@@ -1519,7 +1638,7 @@
         prevPageBottom: document.getElementById("prevPageBottom"),
         nextPageBottom: document.getElementById("nextPageBottom"),
         hint: document.getElementById("hint"),
-        qaTopBtn: document.getElementById("qaTopBtn"),
+        productsQaTopBtn: document.getElementById("productsQaTopBtn"),
         homeTopBtn: document.getElementById("homeTopBtn"),
         resultsMeta: document.getElementById("resultsMeta"),
         rangeText: document.getElementById("rangeText"),
@@ -1534,6 +1653,7 @@
         checkoutView: document.getElementById("checkoutView"),
         infoView: document.getElementById("infoView"),
         qaView: document.getElementById("qaView"),
+        ordersView: document.getElementById("ordersView"),
         productTitle: document.getElementById("productTitle"),
         productMeta: document.getElementById("productMeta"),
         productDetails: document.getElementById("productDetails"),
@@ -1571,6 +1691,7 @@
         shipCenterInput: document.getElementById("shipCenterInput"),
         carrierMasarat: document.getElementById("carrierMasarat"),
         carrierQadmous: document.getElementById("carrierQadmous"),
+        carrierOther: document.getElementById("carrierOther"),
         masaratBranchesBtn: document.getElementById("masaratBranchesBtn"),
         qadmousBranchesBtn: document.getElementById("qadmousBranchesBtn"),
         readShippingAgree: document.getElementById("readShippingAgree"),
@@ -1596,6 +1717,8 @@
         infoMeta: document.getElementById("infoMeta"),
         infoStatus: document.getElementById("infoStatus"),
         infoText: document.getElementById("infoText"),
+        customerGalleryWrap: document.getElementById("customerGalleryWrap"),
+        customerGallery: document.getElementById("customerGallery"),
         backFromInfoBtn: document.getElementById("backFromInfoBtn"),
         complaintForm: document.getElementById("complaintForm"),
         complaintContact: document.getElementById("complaintContact"),
@@ -1613,10 +1736,18 @@
         qaText: document.getElementById("qaText"),
         backFromQaBtn: document.getElementById("backFromQaBtn"),
         backFromQaBtnBottom: document.getElementById("backFromQaBtnBottom"),
+        ordersMeta: document.getElementById("ordersMeta"),
+        ordersStatus: document.getElementById("ordersStatus"),
+        ordersList: document.getElementById("ordersList"),
+        ordersDetails: document.getElementById("ordersDetails"),
+        ordersClearAllBtn: document.getElementById("ordersClearAllBtn"),
+        backFromOrdersBtn: document.getElementById("backFromOrdersBtn"),
         whatNewSection: document.getElementById("whatNewSection"),
         whatNewText: document.getElementById("whatNewText"),
         newOfferSection: document.getElementById("newOfferSection"),
         newOfferText: document.getElementById("newOfferText"),
+        imgModal: document.getElementById("imgModal"),
+        imgModalImg: document.getElementById("imgModalImg"),
       };
       const state = {
         allProducts: [],
@@ -1641,6 +1772,7 @@
         qaSelected: "",
         aboutFiles: [],
         inlineQaSelected: "",
+        ordersSelectedId: "",
         whatNewText: "",
         newOfferText: "",
       };
@@ -1678,6 +1810,15 @@
         els.toast.setAttribute("data-open", "true");
         if (toastTimer) clearTimeout(toastTimer);
         toastTimer = setTimeout(() => els.toast.setAttribute("data-open", "false"), Math.max(300, Number(durationMs) || 2000));
+      }
+      function animateIn(el) {
+        if (!(el instanceof HTMLElement)) return;
+        try {
+          el.animate([{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "translateY(0)" }], {
+            duration: 220,
+            easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          });
+        } catch {}
       }
       function safeLower(v) {
         return String(v ?? "").toLowerCase();
@@ -2397,10 +2538,12 @@
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
+        els.ordersView.style.display = "none";
         setPromoVisible(true);
         setStatus("");
         setCheckoutStatus("");
         setInfoStatus("");
+        animateIn(els.homeView);
       }
       function showShopView() {
         setRoute("shop");
@@ -2410,9 +2553,11 @@
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
+        els.ordersView.style.display = "none";
         setPromoVisible(false);
         setCheckoutStatus("");
         setInfoStatus("");
+        animateIn(els.shopView);
       }
       function showProductView(code) {
         setRoute("shop");
@@ -2423,11 +2568,13 @@
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
+        els.ordersView.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
         setInfoStatus("");
         renderProductDetails(code);
+        animateIn(els.productView);
       }
       function showCheckoutView() {
         setRoute("checkout");
@@ -2438,11 +2585,13 @@
         els.checkoutView.style.display = "";
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
+        els.ordersView.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setInfoStatus("");
         updateCheckoutMeta();
         renderCheckoutCartSummary();
+        animateIn(els.checkoutView);
       }
       function updateCheckoutMeta() {
         if (!(els.checkoutMeta instanceof HTMLElement)) return;
@@ -2458,6 +2607,7 @@
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "";
         els.qaView.style.display = "none";
+        els.ordersView.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -2467,6 +2617,7 @@
         els.complaintNote.style.display = "none";
         els.ratingDone.style.display = "none";
         renderInfo(key);
+        animateIn(els.infoView);
       }
       function showQaView(selected) {
         setRoute("qa");
@@ -2476,11 +2627,29 @@
         els.checkoutView.style.display = "none";
         els.infoView.style.display = "none";
         els.qaView.style.display = "";
+        els.ordersView.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
         setInfoStatus("");
         renderQa(selected);
+        animateIn(els.qaView);
+      }
+      function showOrdersView() {
+        setRoute("orders");
+        els.homeView.style.display = "none";
+        els.shopView.style.display = "none";
+        els.productView.style.display = "none";
+        els.checkoutView.style.display = "none";
+        els.infoView.style.display = "none";
+        els.qaView.style.display = "none";
+        els.ordersView.style.display = "";
+        setPromoVisible(false);
+        setStatus("");
+        setCheckoutStatus("");
+        setInfoStatus("");
+        renderOrdersView();
+        animateIn(els.ordersView);
       }
       function setHash(hash) {
         const h = String(hash ?? "").trim();
@@ -2505,6 +2674,12 @@
         const route = parsed.route;
         const params = parsed.params;
         const catParam = String(params.get("cat") || "").trim();
+        try {
+          window.scrollTo(0, 0);
+        } catch {}
+        try {
+          openCart(false);
+        } catch {}
         if (!route) {
           state.category = "HOME";
           updatePills();
@@ -2547,6 +2722,10 @@
         if (route.startsWith("qa=")) {
           const key = decodeURIComponent(route.slice("qa=".length));
           showQaView(key);
+          return;
+        }
+        if (route === "orders") {
+          showOrdersView();
           return;
         }
         setHash("home");
@@ -2626,6 +2805,97 @@
           }
         } catch {}
       }
+      function orderId() {
+        return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+      function loadOrdersHistory() {
+        try {
+          const raw = localStorage.getItem("hjy_orders_v1");
+          const parsed = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter((x) => x && typeof x === "object");
+        } catch {
+          return [];
+        }
+      }
+      function saveOrdersHistory(list) {
+        try {
+          const arr = Array.isArray(list) ? list : [];
+          localStorage.setItem("hjy_orders_v1", JSON.stringify(arr.slice(0, 300)));
+        } catch {}
+      }
+      function addOrderToHistory(entry) {
+        const list = loadOrdersHistory();
+        list.unshift(entry);
+        saveOrdersHistory(list);
+      }
+      function fmtDateTime(ts) {
+        const d = new Date(Number(ts) || Date.now());
+        try {
+          return d.toLocaleString("ar", { hour12: true });
+        } catch {
+          return String(d);
+        }
+      }
+      function renderOrdersView() {
+        if (!(els.ordersList instanceof HTMLElement) || !(els.ordersDetails instanceof HTMLElement) || !(els.ordersMeta instanceof HTMLElement))
+          return;
+        const list = loadOrdersHistory();
+        els.ordersMeta.textContent = list.length ? `${list.length} طلب محفوظ` : "لا يوجد طلبات محفوظة";
+        if (els.ordersClearAllBtn instanceof HTMLButtonElement) els.ordersClearAllBtn.disabled = list.length === 0;
+        if (els.ordersStatus instanceof HTMLElement) {
+          els.ordersStatus.setAttribute("aria-hidden", "true");
+          els.ordersStatus.textContent = "";
+        }
+        let html = "";
+        for (const it of list) {
+          const id = String(it?.id ?? "");
+          const count = Number(it?.count ?? 0) || 0;
+          const total = Number(it?.total ?? 0) || 0;
+          const phone = String(it?.phone ?? "").trim();
+          const when = fmtDateTime(it?.ts);
+          html += `
+            <div class="checkrow" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="display:grid;gap:4px;min-width:0">
+                <div style="font-weight:900">طلب ${escapeHtml(id ? `#${id.slice(0, 8)}` : "")}</div>
+                <div class="mini-note" style="font-size:12px">${escapeHtml(when)} — ${escapeHtml(String(count))} قطعة — $${escapeHtml(formatMoney(total))}${phone ? ` — ${escapeHtml(phone)}` : ""}</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-ghost" type="button" data-order-view="${escapeHtmlAttr(id)}">عرض التفاصيل</button>
+                <button class="btn btn-danger" type="button" data-order-del="${escapeHtmlAttr(id)}">حذف</button>
+              </div>
+            </div>
+          `;
+        }
+        els.ordersList.innerHTML = html || `<div class="panel-sub">لا يوجد طلبات محفوظة داخل المتصفح حالياً.</div>`;
+        const sel = String(state.ordersSelectedId ?? "").trim();
+        if (!sel) {
+          els.ordersDetails.style.display = "none";
+          els.ordersDetails.innerHTML = "";
+          return;
+        }
+        const found = list.find((x) => String(x?.id ?? "") === sel);
+        if (!found) {
+          state.ordersSelectedId = "";
+          els.ordersDetails.style.display = "none";
+          els.ordersDetails.innerHTML = "";
+          return;
+        }
+        const invoice = String(found.invoice ?? "").trim();
+        els.ordersDetails.style.display = "grid";
+        els.ordersDetails.innerHTML = `
+          <div class="checkrow" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="font-weight:900">تفاصيل الطلب</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost" type="button" data-order-copy="${escapeHtmlAttr(found.id)}">نسخ</button>
+              <button class="btn btn-ghost" type="button" data-order-close>إغلاق</button>
+            </div>
+          </div>
+          <div class="panel-sub" style="white-space:pre-wrap;direction:ltr;unicode-bidi:plaintext;border:1px solid var(--border);border-radius:14px;padding:12px;background:rgba(255,255,255,0.7)">${escapeHtml(
+            invoice || "—"
+          )}</div>
+        `;
+      }
       state.cart = new Map();
       function cartCountTotal() {
         let total = 0;
@@ -2651,7 +2921,7 @@
         saveCart();
         renderCart();
         animateCartToggle();
-        showToast("تمت الإضافة إلى السلة", 1700);
+        showToast("تم اضافة الطلب", 1700);
       }
       function setCartQty(code, qty) {
         const k = normalizeCodeKey(code);
@@ -3211,11 +3481,12 @@
       }
       async function sendToTelegramKind(kind, text) {
         const k = safeLower(kind);
-        const url =
+        let url =
           k === "orders"
             ? String(CONFIG.TELEGRAM_ORDERS_PROXY_URL || "").trim()
             : String(CONFIG.TELEGRAM_FEEDBACK_PROXY_URL || "").trim();
         if (!url) throw new Error("TELEGRAM_NOT_CONFIGURED");
+        if (!/[\?&]kind=/i.test(url)) url += `${url.includes("?") ? "&" : "?"}kind=${encodeURIComponent(k)}`;
         const cleaned = String(text ?? "").replace(/[\u200B-\u200F\uFEFF]/g, "").trim();
         if (!cleaned) throw new Error("Empty");
         const chunks = splitText(cleaned, 3500).filter((c) => String(c ?? "").trim().length > 0);
@@ -3224,21 +3495,29 @@
           if (!part) continue;
           const prefix = chunks.length > 1 ? `(${i + 1}/${chunks.length})\n` : "";
           const payloadText = prefix + part;
+          const body = new URLSearchParams({ text: payloadText }).toString();
           try {
             const res = await fetch(url, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text: payloadText }),
+              headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+              body,
               cache: "no-store",
             });
-            if (!res.ok) throw new Error("SEND_FAILED");
+            if (!res.ok) {
+              let body = "";
+              try {
+                body = String(await res.text());
+              } catch {}
+              const snippet = String(body ?? "").trim().slice(0, 280);
+              throw new Error(`SEND_FAILED ${res.status}${snippet ? `: ${snippet}` : ""}`);
+            }
           } catch (err) {
             if (!(err instanceof TypeError)) throw err;
             await fetch(url, {
               method: "POST",
               mode: "no-cors",
-              headers: { "Content-Type": "text/plain;charset=UTF-8" },
-              body: JSON.stringify({ text: payloadText }),
+              headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+              body,
               cache: "no-store",
             });
           }
@@ -3847,11 +4126,84 @@
           if (text instanceof HTMLElement) text.textContent = "";
         }
       }
+      function customerPhotoFallbackList() {
+        return [
+          "customer_photo/WhatsApp%20Image%202026-05-27%20at%204.36.22%20AM.webp",
+          "customer_photo/WhatsApp%20Image%202026-05-27%20at%204.36.22%20AM%20(1).webp",
+          "customer_photo/WhatsApp%20Image%202026-05-27%20at%204.36.23%20AM.webp",
+          "customer_photo/WhatsApp%20Image%202026-05-27%20at%204.36.23%20AM%20(1).webp",
+          "customer_photo/WhatsApp%20Image%202026-05-27%20at%204.51.17%20AM.webp",
+          "customer_photo/WhatsApp%20Image%202026-05-27%20at%204.51.17%20AM%20(1).webp",
+          "customer_photo/WhatsApp%20Image%202026-05-27%20at%204.55.46%20AM.webp",
+          "customer_photo/WhatsApp%20Image%202026-05-27%20at%204.55.46%20AM%20(1).webp",
+        ];
+      }
+      async function loadCustomerPhotos() {
+        const exts = ["webp", "png", "jpg", "jpeg", "gif"];
+        let list = [];
+        try {
+          list = await listGithubFilesRecursive("customer_photo", exts, 400);
+        } catch {}
+        if (!Array.isArray(list) || list.length === 0) list = customerPhotoFallbackList();
+        const out = [];
+        const seen = new Set();
+        for (const raw of list) {
+          const p = String(raw ?? "").trim().replace(/\\/g, "/").replace(/^\/+/, "");
+          if (!p) continue;
+          if (seen.has(p)) continue;
+          seen.add(p);
+          out.push(p);
+        }
+        return out;
+      }
+      function renderCustomerGallery(urls) {
+        if (!(els.customerGalleryWrap instanceof HTMLElement) || !(els.customerGallery instanceof HTMLElement)) return;
+        const list = Array.isArray(urls) ? urls : [];
+        if (!list.length) {
+          els.customerGalleryWrap.style.display = "none";
+          els.customerGallery.innerHTML = "";
+          return;
+        }
+        els.customerGalleryWrap.style.display = "grid";
+        els.customerGallery.innerHTML = list
+          .map(
+            (u) => `
+              <img
+                class="customer-photo"
+                src="${escapeHtmlAttr(u)}"
+                alt="تقييم عميل"
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+                data-cust-photo="${escapeHtmlAttr(u)}"
+              />
+            `
+          )
+          .join("");
+      }
+      function openImgModal(src) {
+        const url = String(src ?? "").trim();
+        if (!url) return;
+        if (!(els.imgModal instanceof HTMLElement) || !(els.imgModalImg instanceof HTMLImageElement)) return;
+        els.imgModalImg.src = url;
+        els.imgModal.setAttribute("data-open", "true");
+        els.imgModal.setAttribute("aria-hidden", "false");
+      }
+      function closeImgModal() {
+        if (!(els.imgModal instanceof HTMLElement) || !(els.imgModalImg instanceof HTMLImageElement)) return;
+        els.imgModal.setAttribute("data-open", "false");
+        els.imgModal.setAttribute("aria-hidden", "true");
+        try {
+          els.imgModalImg.removeAttribute("src");
+        } catch {}
+      }
       async function renderInfo(key) {
         const k = String(key ?? "").trim();
         els.infoTitle.textContent = k || "—";
         els.infoMeta.textContent = "";
         els.infoText.textContent = "";
+        if (els.customerGalleryWrap instanceof HTMLElement) els.customerGalleryWrap.style.display = "none";
+        if (els.customerGallery instanceof HTMLElement) els.customerGallery.innerHTML = "";
         if (k === "الشكاوي") {
           els.infoMeta.textContent =
             "يمكنك إرسال شكوى أو مشكلة بالتفصيل : أخطاء برمجية بالموقع - موقع يعرض على شاشة هاتفي بطريقة سيئة - حجم خطوط كبيرة وغير متناسبة مع هاتفي - لقيت أرخص : مقارنة بمن؟ + دليل مادي مباشر عن المواصفات كاملة!! ";
@@ -3905,19 +4257,13 @@
           els.infoText.innerHTML = `${formatAboutText(content)}${buttons}`;
           return;
         }
-        if (normalizeAboutKey(k) === normalizeAboutKey("أشيع الأسئلة")) {
-          els.infoText.innerHTML = `
-            <div>${formatAboutText(content)}</div>
-            <div style="height:12px"></div>
-            <div class="panel-sub" style="font-weight:900;color:var(--text)">أسئلة شائعة للمنتجات</div>
-            <div class="status" id="inlineQaStatus" aria-hidden="true"></div>
-            <div id="inlineQaButtons" class="pillbar" role="group" aria-label="أسئلة شائعة"></div>
-            <div id="inlineQaText" class="panel-sub"></div>
-          `;
-          renderInlineQa();
-          return;
-        }
         els.infoText.innerHTML = formatAboutText(content);
+        if (normalizeAboutKey(k) === normalizeAboutKey("تقييمات عملاء")) {
+          try {
+            const urls = await loadCustomerPhotos();
+            renderCustomerGallery(urls);
+          } catch {}
+        }
       }
       function debounce(fn, ms) {
         let t = null;
@@ -4351,7 +4697,7 @@
         els.backToShopBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
         els.backFromInfoBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
         if (els.homeTopBtn instanceof HTMLElement) els.homeTopBtn.addEventListener("click", () => setHash("home"));
-        if (els.qaTopBtn instanceof HTMLElement) els.qaTopBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("أشيع الأسئلة")}`));
+        if (els.productsQaTopBtn instanceof HTMLElement) els.productsQaTopBtn.addEventListener("click", () => setHash("qa"));
         if (els.backFromQaBtn instanceof HTMLElement)
           els.backFromQaBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
         if (els.backFromQaBtnBottom instanceof HTMLElement)
@@ -4366,6 +4712,61 @@
             if (!name) return;
             setHash(`qa=${encodeURIComponent(name)}`);
           });
+        if (els.backFromOrdersBtn instanceof HTMLElement)
+          els.backFromOrdersBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
+        if (els.ordersClearAllBtn instanceof HTMLElement)
+          els.ordersClearAllBtn.addEventListener("click", () => {
+            const ok = confirm("هل تريد حذف جميع الطلبات المحفوظة من هذا المتصفح؟");
+            if (!ok) return;
+            try {
+              localStorage.removeItem("hjy_orders_v1");
+            } catch {}
+            state.ordersSelectedId = "";
+            renderOrdersView();
+            showToast("تم الحذف", 1600);
+          });
+        if (els.ordersView instanceof HTMLElement)
+          els.ordersView.addEventListener("click", async (e) => {
+            const t = e.target;
+            if (!(t instanceof HTMLElement)) return;
+            const view = t.closest("[data-order-view]");
+            if (view instanceof HTMLElement) {
+              const id = String(view.getAttribute("data-order-view") ?? "").trim();
+              if (!id) return;
+              state.ordersSelectedId = id;
+              renderOrdersView();
+              return;
+            }
+            const del = t.closest("[data-order-del]");
+            if (del instanceof HTMLElement) {
+              const id = String(del.getAttribute("data-order-del") ?? "").trim();
+              if (!id) return;
+              const ok = confirm("هل تريد حذف هذا الطلب؟");
+              if (!ok) return;
+              const list = loadOrdersHistory().filter((x) => String(x?.id ?? "") !== id);
+              saveOrdersHistory(list);
+              if (state.ordersSelectedId === id) state.ordersSelectedId = "";
+              renderOrdersView();
+              showToast("تم الحذف", 1600);
+              return;
+            }
+            const close = t.closest("[data-order-close]");
+            if (close instanceof HTMLElement) {
+              state.ordersSelectedId = "";
+              renderOrdersView();
+              return;
+            }
+            const copy = t.closest("[data-order-copy]");
+            if (copy instanceof HTMLElement) {
+              const id = String(copy.getAttribute("data-order-copy") ?? "").trim();
+              if (!id) return;
+              const found = loadOrdersHistory().find((x) => String(x?.id ?? "") === id);
+              const invoice = String(found?.invoice ?? "").trim();
+              if (!invoice) return showToast("لا يوجد نص لنسخه", 1600);
+              await copyText(invoice);
+              showToast("تم النسخ", 1400);
+            }
+          });
         els.footerLinks.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
@@ -4373,6 +4774,7 @@
           if (qaBtn instanceof HTMLElement) return setHash("qa");
           const go = t.getAttribute("data-go");
           if (safeLower(go) === "home") return setHash("home");
+          if (safeLower(go) === "orders") return setHash("orders");
           const key = t.getAttribute("data-info");
           if (!key) return;
           setHash(`info=${encodeURIComponent(key)}`);
@@ -4384,6 +4786,12 @@
           if (infoBtn instanceof HTMLElement) {
             const key = infoBtn.getAttribute("data-info-btn");
             if (key) return setHash(`info=${encodeURIComponent(key)}`);
+          }
+          const cust = t.closest("[data-cust-photo]");
+          if (cust instanceof HTMLElement) {
+            const src = cust.getAttribute("data-cust-photo");
+            if (src) openImgModal(src);
+            return;
           }
           const inlineQaBtn = t.closest("[data-inline-qa-file]");
           if (inlineQaBtn instanceof HTMLElement) {
@@ -4410,6 +4818,14 @@
             if (code) return setHash(`product=${encodeURIComponent(code)}`);
           }
         });
+        if (els.imgModal instanceof HTMLElement) {
+          els.imgModal.addEventListener("click", (e) => {
+            if (e.target === els.imgModal) closeImgModal();
+          });
+        }
+        document.addEventListener("keydown", (e) => {
+          if (String(e?.key ?? "") === "Escape") closeImgModal();
+        });
         els.complaintForm.addEventListener("submit", async (e) => {
           e.preventDefault();
           const msg = String(els.complaintInput.value ?? "").trim();
@@ -4418,6 +4834,7 @@
           els.complaintNote.style.display = "none";
           setInfoStatus("جارٍ إرسال الشكوى...", false);
           try {
+          await loadTelegramProxyConfig();
             await sendToTelegramKind("feedback", `شكوى جديدة\n\nالتواصل (اختياري): ${contact || "—"}\n\n${msg}`);
             setInfoStatus("تم إرسال الشكوى.", false);
             els.complaintNote.style.display = "";
@@ -4437,6 +4854,7 @@
           const rating = Math.max(0, Math.min(5, idx >= 0 ? idx : 0));
           setInfoStatus("جارٍ إرسال التقييم...", false);
           try {
+          await loadTelegramProxyConfig();
             await sendToTelegramKind("feedback", `تقييم جديد\nالتقييم: ${rating}/5 — ${rank}\n\n${msg}`);
             setInfoStatus("تم إرسال التقييم.", false);
             els.ratingMsg.value = "";
@@ -4465,7 +4883,6 @@
           const on = v === "أخرى";
           if (els.govOtherWrap) els.govOtherWrap.style.display = on ? "grid" : "none";
           if (els.govOtherInput) {
-            els.govOtherInput.required = on;
             if (!on) els.govOtherInput.value = "";
           }
         };
@@ -4475,7 +4892,7 @@
         els.masaratBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع مسارات")}`));
         els.qadmousBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع قدموس")}`));
         els.openShippingBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("تفاصيل الشحن")}`));
-        els.openPolicyBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("سياسية الاستخدام")}`));
+        if (els.openPolicyBtn instanceof HTMLElement) els.openPolicyBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("سياسية الاستخدام")}`));
         if (els.clearCustomerBtn instanceof HTMLElement)
           els.clearCustomerBtn.addEventListener("click", () => {
             const ok = confirm("هل تريد حذف كامل بيانات العميل المحفوظة؟");
@@ -4513,9 +4930,8 @@
           if (Number(CONFIG.MIN_ORDER_TOTAL) > 0 && totalNow < Number(CONFIG.MIN_ORDER_TOTAL)) {
             return setCheckoutStatus(`أقل فاتورة للطلب هي $${formatMoney(CONFIG.MIN_ORDER_TOTAL)}.`, true);
           }
-          if (els.termsAgreeInput && !els.termsAgreeInput.checked) return setCheckoutStatus("يرجى الموافقة على سياسة الاستخدام.", true);
           const phone = String(els.phoneInput.value ?? "").trim();
-          if (phone.replace(/[^0-9]/g, "").length < 9) return setCheckoutStatus("يرجى إدخال رقم هاتف صحيح.", true);
+          if (phone.length < 1) return setCheckoutStatus("يرجى إدخال الرقم.", true);
           const shipType = els.shipGovRadio.checked ? "GOV" : "DAMASCUS";
           let fullName = "";
           let shipCenter = "";
@@ -4527,27 +4943,23 @@
           let locDetail = "";
           let timeRange = "";
           let gov = String(els.govInput.value ?? "").trim();
-          if (gov === "أخرى") gov = String(els.govOtherInput?.value ?? "").trim();
+          if (gov === "أخرى") {
+            const other = String(els.govOtherInput?.value ?? "").trim();
+            gov = other || "أخرى";
+          }
           if (shipType === "GOV") {
             fullName = String(els.fullNameGovInput.value ?? "").trim();
             shipCenter = String(els.shipCenterInput.value ?? "").trim();
-            carrier = els.carrierMasarat.checked ? "مسارات" : "قدموس";
+            carrier = els.carrierOther?.checked ? "آخر" : els.carrierMasarat.checked ? "مسارات" : "قدموس";
             payAdvance = Boolean(els.payAdvanceInput.checked);
-            if (gov.length < 2) return setCheckoutStatus("يرجى إدخال المحافظة.", true);
-            if (fullName.length < 6) return setCheckoutStatus("يرجى إدخال الاسم الثلاثي بشكل صحيح.", true);
-            if (shipCenter.length < 4) return setCheckoutStatus("يرجى إدخال عنوان مركز الشحن.", true);
-            if (!els.readShippingAgree.checked) return setCheckoutStatus("يرجى التأكيد أنك قرأت تفاصيل الشحن.", true);
           } else {
             fullName = String(els.fullNameDamascusInput.value ?? "").trim();
             damascusType = els.damascusFreeDelivery.checked ? "توصيل مجاني" : "استلام ضمن موقعنا";
             if (!gov) gov = "دمشق";
-            if (fullName.length < 6) return setCheckoutStatus("يرجى إدخال الاسم الثلاثي بشكل صحيح.", true);
             if (els.damascusFreeDelivery.checked) {
               locGeneral = String(els.locGeneralInput.value ?? "").trim();
               locDetail = String(els.locDetailInput.value ?? "").trim();
               timeRange = String(els.timeRangeInput.value ?? "").trim();
-              if (locGeneral.length < 3) return setCheckoutStatus("يرجى إدخال الموقع العام.", true);
-              if (locDetail.length < 3) return setCheckoutStatus("يرجى إدخال الموقع التفصيلي.", true);
             }
           }
           const payCurrency = els.paySypInput.checked ? "سوري" : "الدولار";
@@ -4575,20 +4987,32 @@
           els.confirmOrderBtn.disabled = true;
           els.confirmOrderBtn.textContent = "جارٍ الإرسال...";
           setCheckoutStatus("جارٍ إرسال الطلب...", false);
+          const historyEntry = {
+            id: orderId(),
+            ts: Date.now(),
+            phone,
+            count: cartCountTotal(),
+            total: totalNow,
+            invoice,
+            details: invoiceDetails,
+          };
           try {
+            await loadTelegramProxyConfig();
             await sendToTelegramKind("orders", invoice);
             setCheckoutStatus("تم إرسال الطلب. سيتم التواصل معك قريباً.", false);
             els.confirmOrderBtn.textContent = "تم إرسال الطلب";
             els.confirmOrderBtn.disabled = false;
             els.confirmOrderBtn.textContent = "إرسال طلب جديد";
+            addOrderToHistory(historyEntry);
             state.cart.clear();
             saveCart();
             renderCart();
-          } catch {
+          } catch (err) {
             els.confirmOrderBtn.disabled = false;
             els.confirmOrderBtn.textContent = "إعادة إرسال الطلب";
+            const detail = String(err?.message ?? "").trim();
             setCheckoutStatus(
-              "تعذر إرسال الطلب بسبب مشكلة اتصال.\nتم نسخ الفاتورة تلقائياً، أرسلها لنا على واتساب:\n0940471199\n\nيرجى إيقاف vpn وإعادة تحميل الصفحة او تغيير بلد ال vpn , يرجى إعلامنا بالمشكلة",
+              `تعذر إرسال الطلب بسبب مشكلة اتصال.${detail ? `\nتفاصيل: ${detail}` : ""}\nتم نسخ الفاتورة تلقائياً، أرسلها لنا على واتساب:\n0940471199\n\nيرجى إيقاف vpn وإعادة تحميل الصفحة او تغيير بلد ال vpn , يرجى إعلامنا بالمشكلة`,
               true
             );
           }

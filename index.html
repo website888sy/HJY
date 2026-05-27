@@ -1652,9 +1652,9 @@
         OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
         ABOUT_DIR: "about",
         TELEGRAM_ORDERS_PROXY_URL:
-          "https://script.google.com/macros/s/AKfycbwkDlpU2a8LR96fvLSoEhBduxQBKID96cG-hpVoseTAh9nRCXHrHlsoYACQAYksvPnk/exec?kind=orders",
+          "https://script.google.com/macros/s/AKfycbzQ01qd9Bw5LVx2r4RuWtQQP4y9_07CKz5gzsA7pU8c-3A6gXxuL8fgS6bCR2wRPuRF/exec?kind=orders",
         TELEGRAM_FEEDBACK_PROXY_URL:
-          "https://script.google.com/macros/s/AKfycbwkDlpU2a8LR96fvLSoEhBduxQBKID96cG-hpVoseTAh9nRCXHrHlsoYACQAYksvPnk/exec?kind=feedback",
+          "https://script.google.com/macros/s/AKfycbzQ01qd9Bw5LVx2r4RuWtQQP4y9_07CKz5gzsA7pU8c-3A6gXxuL8fgS6bCR2wRPuRF/exec?kind=feedback",
         TELEGRAM_CONFIG_URLS: ["telegram_proxy.txt", "telegram.txt"],
         ITEMS_PER_PAGE: 20,
         SEARCH_MIN_CHARS: 2,
@@ -4161,13 +4161,12 @@
       }
       async function loadTelegramProxyConfig() {
         try {
-          const hasOrders = String(CONFIG.TELEGRAM_ORDERS_PROXY_URL || "").trim();
-          const hasFeedback = String(CONFIG.TELEGRAM_FEEDBACK_PROXY_URL || "").trim();
-          if (hasOrders && hasFeedback) return;
+          if (state.tgProxyLoaded) return;
+          state.tgProxyLoaded = true;
           const res = await fetchTextFirstAvailable(CONFIG.TELEGRAM_CONFIG_URLS, 10 * 60 * 1000);
           if (!res) return;
-          let orders = hasOrders;
-          let feedback = hasFeedback;
+          let orders = String(CONFIG.TELEGRAM_ORDERS_PROXY_URL || "").trim();
+          let feedback = String(CONFIG.TELEGRAM_FEEDBACK_PROXY_URL || "").trim();
           const lines = String(res.text ?? "").split(/\r?\n/);
           for (const raw of lines) {
             const line = String(raw ?? "").trim();
@@ -4176,17 +4175,21 @@
             if (line.startsWith("//")) continue;
             const eq = line.indexOf("=");
             if (eq === -1) {
-              if (!orders && /^https?:\/\//i.test(line)) orders = line;
-              else if (!feedback && /^https?:\/\//i.test(line)) feedback = line;
+              if (/^https?:\/\//i.test(line)) {
+                if (!orders) orders = line;
+                else if (!feedback) feedback = line;
+              }
               continue;
             }
             const k = safeLower(line.slice(0, eq).trim()).replace(/[\s_-]+/g, "_");
             const v = line.slice(eq + 1).trim();
             if (!v) continue;
-            if (!orders && (k === "orders" || k === "order" || k === "tg_orders_proxy" || k === "telegram_orders_proxy_url")) orders = v;
-            if (!feedback && (k === "feedback" || k === "fb" || k === "tg_feedback_proxy" || k === "telegram_feedback_proxy_url")) feedback = v;
-            if (!orders && k === "url") orders = v;
-            if (!feedback && k === "url") feedback = v;
+            if (k === "orders" || k === "order" || k === "tg_orders_proxy" || k === "telegram_orders_proxy_url") orders = v;
+            if (k === "feedback" || k === "fb" || k === "tg_feedback_proxy" || k === "telegram_feedback_proxy_url") feedback = v;
+            if (k === "url") {
+              if (!orders) orders = v;
+              else if (!feedback) feedback = v;
+            }
           }
           if (orders) CONFIG.TELEGRAM_ORDERS_PROXY_URL = String(orders).trim();
           if (feedback) CONFIG.TELEGRAM_FEEDBACK_PROXY_URL = String(feedback).trim();

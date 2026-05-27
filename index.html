@@ -136,7 +136,39 @@
         border: 1px solid rgba(10, 36, 48, 0.1);
         object-fit: contain;
         padding: 2px;
-        pointer-events: none;
+        pointer-events: auto;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(209, 17, 17, 0.25), 0 0 12px rgba(25, 183, 255, 0.25), 0 0 10px rgba(130, 130, 130, 0.22);
+        animation: hjyLogoGlow 1400ms ease-in-out infinite;
+      }
+      @keyframes hjyLogoGlow {
+        0% {
+          box-shadow: 0 0 6px rgba(209, 17, 17, 0.25), 0 0 10px rgba(25, 183, 255, 0.18), 0 0 8px rgba(130, 130, 130, 0.16);
+          transform: translateY(-50%) scale(1);
+        }
+        50% {
+          box-shadow: 0 0 12px rgba(209, 17, 17, 0.45), 0 0 16px rgba(25, 183, 255, 0.42), 0 0 12px rgba(130, 130, 130, 0.28);
+          transform: translateY(-50%) scale(1.06);
+        }
+        100% {
+          box-shadow: 0 0 6px rgba(209, 17, 17, 0.25), 0 0 10px rgba(25, 183, 255, 0.18), 0 0 8px rgba(130, 130, 130, 0.16);
+          transform: translateY(-50%) scale(1);
+        }
+      }
+      .img-modal[data-kind="logo"] .img-modal-card {
+        box-shadow: 0 0 22px rgba(209, 17, 17, 0.4), 0 0 26px rgba(25, 183, 255, 0.35), 0 0 18px rgba(130, 130, 130, 0.25);
+        animation: hjyLogoModalGlow 1400ms ease-in-out infinite;
+      }
+      @keyframes hjyLogoModalGlow {
+        0% {
+          box-shadow: 0 0 18px rgba(209, 17, 17, 0.26), 0 0 22px rgba(25, 183, 255, 0.22), 0 0 14px rgba(130, 130, 130, 0.18);
+        }
+        50% {
+          box-shadow: 0 0 30px rgba(209, 17, 17, 0.5), 0 0 34px rgba(25, 183, 255, 0.45), 0 0 22px rgba(130, 130, 130, 0.26);
+        }
+        100% {
+          box-shadow: 0 0 18px rgba(209, 17, 17, 0.26), 0 0 22px rgba(25, 183, 255, 0.22), 0 0 14px rgba(130, 130, 130, 0.18);
+        }
       }
       .search input {
         width: 100%;
@@ -307,6 +339,7 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         word-break: break-word;
+        unicode-bidi: plaintext;
       }
       .about-em {
         font-weight: 900;
@@ -453,6 +486,42 @@
       }
       .gallery-nav[data-dir="next"] {
         right: 10px;
+      }
+      .thumb,
+      .cart-thumb,
+      .gallery-thumb,
+      .img-modal-card {
+        position: relative;
+      }
+      [data-img-state="loading"]::after {
+        content: "⬇";
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: 26px;
+        font-weight: 900;
+        color: #d11;
+        text-shadow: 0 0 8px rgba(209, 17, 17, 0.55), 0 0 12px rgba(25, 183, 255, 0.55), 0 0 10px rgba(130, 130, 130, 0.5);
+        pointer-events: none;
+        animation: hjyLoaderPulse 900ms ease-in-out infinite;
+      }
+      @keyframes hjyLoaderPulse {
+        0% {
+          opacity: 0.15;
+          transform: translateY(-2px);
+          filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+        }
+        50% {
+          opacity: 0.95;
+          transform: translateY(2px);
+          filter: drop-shadow(0 0 10px rgba(25, 183, 255, 0.55));
+        }
+        100% {
+          opacity: 0.15;
+          transform: translateY(-2px);
+          filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+        }
       }
       @media (max-width: 640px) {
         .gallery-wrap {
@@ -634,6 +703,22 @@
       .grid[data-view="list"] .card-body {
         padding: 12px;
       }
+      .card.is-hot {
+        border: 2px solid rgba(209, 17, 17, 0.25);
+        box-shadow: 0 0 16px rgba(209, 17, 17, 0.25), 0 0 18px rgba(255, 193, 7, 0.22);
+        animation: hjyHotGlow 1400ms ease-in-out infinite;
+      }
+      @keyframes hjyHotGlow {
+        0% {
+          box-shadow: 0 0 12px rgba(209, 17, 17, 0.22), 0 0 14px rgba(255, 193, 7, 0.18);
+        }
+        50% {
+          box-shadow: 0 0 22px rgba(209, 17, 17, 0.42), 0 0 24px rgba(255, 193, 7, 0.35);
+        }
+        100% {
+          box-shadow: 0 0 12px rgba(209, 17, 17, 0.22), 0 0 14px rgba(255, 193, 7, 0.18);
+        }
+      }
       .field-row {
         position: relative;
         display: block;
@@ -750,6 +835,41 @@
         padding: 12px;
         display: grid;
         gap: 10px;
+      }
+      .cart-scroll-nav {
+        position: absolute;
+        inset-inline-end: 12px;
+        inset-block-end: 122px;
+        display: grid;
+        gap: 10px;
+        z-index: 3;
+        pointer-events: none;
+      }
+      .cart-scroll-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        border: 1px solid rgba(25, 183, 255, 0.35);
+        background: rgba(255, 255, 255, 0.9);
+        color: #057bb8;
+        font-weight: 900;
+        cursor: pointer;
+        pointer-events: auto;
+        box-shadow: 0 10px 24px rgba(2, 22, 30, 0.16);
+        text-shadow: 0 0 6px rgba(209, 17, 17, 0.35), 0 0 10px rgba(25, 183, 255, 0.35), 0 0 8px rgba(130, 130, 130, 0.28);
+      }
+      .cart-scroll-btn:active {
+        transform: translateY(1px);
+      }
+      @media (max-width: 520px) {
+        .cart-drawer {
+          width: min(420px, calc(100vw - 22px));
+          right: 11px;
+          bottom: 70px;
+        }
+        .cart-scroll-nav {
+          inset-block-end: 116px;
+        }
       }
       .cart-empty {
         border: 1px dashed var(--border);
@@ -1591,7 +1711,6 @@
             <span style="color:#000">BY HJY.co</span>
           </span>
           <div class="footer-links" id="footerLinks">
-            <button class="footer-link" type="button" data-info="من نحن">من نحن</button>
             <button class="footer-link" type="button" data-info="المطور">المطور</button>
             <button class="footer-link" type="button" data-info="موقعنا">موقعنا</button>
             <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
@@ -1623,6 +1742,10 @@
         <button class="cart-close" id="cartCloseBtn" type="button">إغلاق</button>
       </div>
       <div class="cart-scroll" id="cartContent"></div>
+      <div class="cart-scroll-nav" aria-hidden="true">
+        <button class="cart-scroll-btn" type="button" data-cart-scroll="-1" aria-label="تمرير للأعلى">▲</button>
+        <button class="cart-scroll-btn" type="button" data-cart-scroll="1" aria-label="تمرير للأسفل">▼</button>
+      </div>
       <div class="cart-summary" id="cartSummary"></div>
       <div class="cart-actions" id="cartActions"></div>
     </aside>
@@ -1664,7 +1787,7 @@
       const PLACEHOLDER_IMG =
         "data:image/svg+xml;charset=utf-8," +
         encodeURIComponent(
-          `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9f2ff"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><g fill="#19b7ff" opacity="0.7"><circle cx="130" cy="110" r="18"/><circle cx="190" cy="110" r="10"/><circle cx="170" cy="150" r="12"/></g><text x="50%" y="52%" font-size="26" text-anchor="middle" fill="#057bb8" font-family="Arial">HJY.co</text><text x="50%" y="58%" font-size="14" text-anchor="middle" fill="#4d6a76" font-family="Arial">Loading...</text></svg>`
+          `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9f2ff"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><g fill="#19b7ff" opacity="0.7"><circle cx="130" cy="110" r="18"/><circle cx="190" cy="110" r="10"/><circle cx="170" cy="150" r="12"/></g><text x="50%" y="50%" font-size="24" text-anchor="middle" fill="#057bb8" font-family="Arial">لا يتوفر صورة لهذا المنتج</text><text x="50%" y="56%" font-size="18" text-anchor="middle" fill="#4d6a76" font-family="Arial">سيتم إضافة قريباً</text></svg>`
         );
       const els = {
         appRoot: document.getElementById("appRoot"),
@@ -1810,6 +1933,7 @@
         suggestExpandedCode: "",
         suggestLimit: 10,
         hotSet: new Set(),
+        hotPrefixes: [],
         qaFiles: [],
         qaSelected: "",
         aboutFiles: [],
@@ -1899,7 +2023,7 @@
       function linkifyOnly(raw) {
         let html = escapeHtml(String(raw ?? ""));
         html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
-        html = html.replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g, (m) => {
+        html = html.replace(/(https?:\/\/[^\s<]+)/g, (m) => {
           let url = String(m);
           let tail = "";
           while (url.length) {
@@ -1913,7 +2037,7 @@
             break;
           }
           if (!url) return m;
-          const href = url.startsWith("www.") ? `https://${url}` : url;
+          const href = url;
           const label = escapeHtml(shortenUrlText(href) || href);
           return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>${tail}`;
         });
@@ -1943,7 +2067,7 @@
       }
       function linkifyText(escapedText) {
         let html = String(escapedText ?? "");
-        html = html.replace(/(\bhttps?:\/\/[^\s<]+|\bwww\.[^\s<]+|\b[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9-]+)+[^\s<]*)/gi, (m) => {
+        html = html.replace(/(\bhttps?:\/\/[^\s<]+)/gi, (m) => {
           let url = String(m);
           let tail = "";
           while (url.length) {
@@ -1957,7 +2081,7 @@
             break;
           }
           if (!url) return m;
-          const href = normalizeHref(url.startsWith("www.") ? url : url);
+          const href = url;
           const label = escapeHtml(shortenUrlText(href) || href);
           return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>${tail}`;
         });
@@ -1969,6 +2093,8 @@
         cleaned = cleaned.replace(/'\s*target='_blank'[^>]*>/g, " ");
         let html = escapeHtml(cleaned);
         html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
+        html = html.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
+        html = html.replace(/\b[0-9a-f]{12,}\b/gi, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = linkifyText(html);
         html = html.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
         html = html.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
@@ -1980,6 +2106,8 @@
         cleaned = cleaned.replace(/'\s*target='_blank'[^>]*>/g, " ");
         let html = escapeHtml(cleaned);
         html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
+        html = html.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
+        html = html.replace(/\b[0-9a-f]{12,}\b/gi, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = linkifyText(html);
         html = html.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
         html = html.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
@@ -1996,44 +2124,72 @@
       function formatAboutText(raw) {
         const src = String(raw ?? "");
         const lines = src.replace(/\r/g, "").split("\n");
-        const sections = [];
-        let curTitle = "";
-        let curBody = [];
+        const parts = [];
+        let free = [];
+        let inSection = false;
+        let secTitle = "";
+        let secBody = [];
         let saw = false;
-        const push = () => {
-          const t = String(curTitle || "").trim();
-          if (t) sections.push({ title: t, body: String(curBody.join("\n") || "").trim() });
-          curTitle = "";
-          curBody = [];
+
+        const flushFree = () => {
+          if (free.length === 0) return;
+          parts.push({ type: "text", text: free.join("\n") });
+          free = [];
         };
+        const flushSection = () => {
+          const t = String(secTitle ?? "");
+          if (t.trim().length > 0) parts.push({ type: "section", title: t, body: secBody.join("\n") });
+          inSection = false;
+          secTitle = "";
+          secBody = [];
+        };
+
         for (const ln of lines) {
-          const m = String(ln ?? "")
-            .trim()
-            .match(/^\^\^\s*([\s\S]*?)\s*\^\^$/);
-          if (m) {
-            const title = String(m[1] ?? "").trim();
-            saw = true;
-            if (!title) {
-              push();
-              continue;
-            }
-            push();
-            curTitle = title.replace(/^--\s*/g, "").trim();
+          const rawLine = String(ln ?? "");
+          const m = rawLine.trim().match(/^\^\^\s*([\s\S]*?)\s*\^\^$/);
+          if (!m) {
+            if (inSection) secBody.push(rawLine);
+            else free.push(rawLine);
             continue;
           }
-          curBody.push(String(ln ?? ""));
+
+          saw = true;
+          const title = String(m[1] ?? "");
+
+          if (inSection) flushSection();
+
+          if (title.trim().length === 0) {
+            if (!inSection) free.push(rawLine);
+            continue;
+          }
+
+          flushFree();
+          inSection = true;
+          secTitle = title;
+          secBody = [];
         }
-        push();
-        if (saw && sections.length) {
+
+        if (inSection) flushSection();
+        flushFree();
+
+        if (saw && parts.some((p) => p && p.type === "section")) {
           let html = `<div class="about-acc-list">`;
-          for (const s of sections) {
-            const titleHtml = formatAboutTextPlain(s.title);
-            const bodyHtml = formatAboutTextPlain(s.body);
+          for (const p of parts) {
+            if (!p) continue;
+            if (p.type === "text") {
+              const t = String(p.text ?? "");
+              if (t.trim().length === 0) continue;
+              html += `<div class="panel-sub">${formatAboutTextPlain(t)}</div>`;
+              continue;
+            }
+            const titleHtml = formatAboutTextPlain(String(p.title ?? ""));
+            const bodyHtml = formatAboutTextPlain(String(p.body ?? ""));
             html += `<details class="about-acc"><summary class="about-acc-sum">${titleHtml}</summary><div class="about-acc-body panel-sub">${bodyHtml}</div></details>`;
           }
           html += `</div>`;
           return html;
         }
+
         return formatAboutTextPlain(src);
       }
       function escapeHtmlAttr(s) {
@@ -3263,12 +3419,23 @@
         els.resultsMeta.textContent = pageCount > 1 ? ` - الصفحة ${state.page}/${pageCount}` : "";
         return slice;
       }
+      function isHotCode(code) {
+        const c = normalizeCodeKey(code);
+        if (!c) return false;
+        if (state.hotSet && state.hotSet.has(c)) return true;
+        const prefs = Array.isArray(state.hotPrefixes) ? state.hotPrefixes : [];
+        for (const p of prefs) {
+          const pref = String(p ?? "").trim();
+          if (pref && c.startsWith(pref)) return true;
+        }
+        return false;
+      }
       function applyFilters() {
         const q = String(state.query ?? "").trim();
         const tokens = buildSearchTokens(q);
         let list = state.allProducts.slice();
         if (state.category === "FAVORITES") list = list.filter((p) => isFavorite(p.code));
-        if (state.category === "HOT") list = list.filter((p) => state.hotSet && state.hotSet.has(normalizeCodeKey(p.code)));
+        if (state.category === "HOT") list = list.filter((p) => isHotCode(p.code));
         if (state.category === "OUT") list = list.filter((p) => p.isOut);
         if (String(state.category || "").startsWith("CAT:")) {
           const key = normalizeCategoryKey(String(state.category || "").slice("CAT:".length));
@@ -3298,7 +3465,7 @@
       function renderCard(p) {
         const view = state.viewMode;
         const favOn = isFavorite(p.code);
-        const isHot = state.hotSet && state.hotSet.has(normalizeCodeKey(p.code));
+        const isHot = isHotCode(p.code);
         const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
         const src = cand[0] || PLACEHOLDER_IMG;
         const disText = disTextForProduct(p);
@@ -3310,7 +3477,7 @@
             ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
             : `<button class="btn btn-primary" type="button" data-add="${escapeHtmlAttr(p.code)}">إضافة</button>`;
         return `
-          <article class="card" data-code="${escapeHtmlAttr(p.code)}" data-hot="${isHot ? "true" : "false"}">
+          <article class="card${isHot ? " is-hot" : ""}" data-code="${escapeHtmlAttr(p.code)}" data-hot="${isHot ? "true" : "false"}">
             <button class="fav-btn" type="button" data-fav="${escapeHtmlAttr(p.code)}" aria-pressed="${favOn ? "true" : "false"}" aria-label="المفضلة">${
           favOn ? "♥" : "♡"
         }</button>
@@ -3602,48 +3769,22 @@
       async function sendToTelegramKind(kind, text) {
         const cleaned = String(text ?? "").replace(/[\u200B-\u200F\uFEFF]/g, "").trim();
         if (!cleaned) throw new Error("Empty");
-        
-        // --- كود تعليمي تجريبي فقط ---
-        const k = safeLower(kind);
-        
-        // تحديد التوكن حسب نوع الرسالة (طلبات أو شكاوي/تقييم)
-        // يتم تقسيم التوكن لتجاوز أنظمة فحص GitHub التلقائية التي تحذف التوكنات المكشوفة
-        let fullToken = "";
-        if (k === "orders") {
-          fullToken = "894014" + "9345:AA" + "FxgIlpk2KCiB" + "075RB0-9sV7pNfOn6taZY";
-        } else {
-          fullToken = "871703" + "9577:AA" + "FFRoWfi0Aepjn" + "C7P1_dPbUKC7TD5xe8Ms";
-        }
-
-        // معرف الشات ضروري جداً لكي يعرف البوت إلى أي محادثة يرسل الرسالة
-        const chatId = "2067991553"; 
-
-        const url = `https://api.telegram.org/bot${fullToken}/sendMessage`;
-        
-        // نقوم بتقسيم الرسائل الطويلة حتى لا يتجاوز حد التيلغرام (حوالي 4096 حرف)
-        const chunks = splitText(cleaned, 3500).filter((c) => String(c ?? "").trim().length > 0);
-        
-        for (let i = 0; i < chunks.length; i++) {
-          const part = String(chunks[i] ?? "").trim();
-          if (!part) continue;
-          const prefix = chunks.length > 1 ? `(${i + 1}/${chunks.length})\n` : "";
-          const payloadText = prefix + part;
-          
-          const body = new URLSearchParams({ chat_id: chatId, text: payloadText, disable_web_page_preview: "true" }).toString();
-
+        state.lastInvoiceText = cleaned;
+        try {
+          await copyText(cleaned);
+        } catch {}
+        const parts = splitText(cleaned, 3500).filter((c) => String(c ?? "").trim().length > 0);
+        const first = String(parts[0] ?? "").trim();
+        const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(first || cleaned.slice(0, 3500))}`;
+        try {
+          window.open(shareUrl, "_blank", "noopener,noreferrer");
+        } catch {
           try {
-            // إرسال مباشر بوضع no-cors لتجاوز حظر المتصفحات (الطلب سيصل لكن لن نتمكن من قراءة الرد)
-            await fetch(url, {
-              method: "POST",
-              mode: "no-cors",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: body
-            });
-          } catch (e) {
-            throw new Error("فشل الإرسال: " + e.message);
-          }
-          await new Promise((r) => setTimeout(r, 200));
+            location.href = shareUrl;
+          } catch {}
         }
+        showToast("تم نسخ الرسالة. افتح تلغرام والصقها أو شاركها.", 2500);
+        if (parts.length > 1) showToast("تنبيه: تم نسخ النص كامل، رابط المشاركة قد يحتوي جزءاً فقط.", 2800);
       }
       function buildInvoiceText(details) {
         const lines = [];
@@ -3709,13 +3850,30 @@
       }
       async function loadHotSet() {
         state.hotSet.clear();
+        state.hotPrefixes = [];
         const res = await fetchTextFirstAvailable(["hot-price.csv"], 60 * 1000);
         if (!res) return;
         const lines = String(res.text ?? "")
           .split(/\r?\n/)
           .map((l) => String(l ?? "").trim())
           .filter((l) => l.length > 0);
-        for (const c of lines) state.hotSet.add(normalizeCodeKey(c));
+        const prefSet = new Set();
+        for (const c of lines) {
+          const raw = String(c ?? "").trim();
+          if (!raw) continue;
+          const norm = normalizeCodeKey(raw);
+          if (!norm) continue;
+          state.hotSet.add(norm);
+          if (/^(kt|k)\d+$/i.test(norm)) {
+            prefSet.add(norm);
+            const digits = norm.replace(/^(kt|k)/i, "");
+            if (digits) {
+              prefSet.add(`kt${digits}`);
+              prefSet.add(`k${digits}`);
+            }
+          }
+        }
+        state.hotPrefixes = Array.from(prefSet);
       }
       function normalizeCategoryKey(name) {
         return safeLower(String(name ?? "")).replace(/\s+/g, " ").trim();
@@ -4286,12 +4444,18 @@
         els.imgModalImg.src = url;
         els.imgModal.setAttribute("data-open", "true");
         els.imgModal.setAttribute("aria-hidden", "false");
+        try {
+          const isLogo = /(^|\/)logo\.(webp|png|jpg|jpeg|gif|svg)(\?|#|$)/i.test(url);
+          if (isLogo) els.imgModal.setAttribute("data-kind", "logo");
+          else els.imgModal.removeAttribute("data-kind");
+        } catch {}
       }
       function closeImgModal() {
         if (!(els.imgModal instanceof HTMLElement) || !(els.imgModalImg instanceof HTMLImageElement)) return;
         els.imgModal.setAttribute("data-open", "false");
         els.imgModal.setAttribute("aria-hidden", "true");
         try {
+          els.imgModal.removeAttribute("data-kind");
           els.imgModalImg.removeAttribute("src");
         } catch {}
       }
@@ -4466,6 +4630,21 @@
         els.cartToggle.addEventListener("click", () => openCart());
         els.cartCloseBtn.addEventListener("click", () => openCart(false));
         els.cartBackdrop.addEventListener("click", () => openCart(false));
+        els.cartPanel.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          const b = t.closest("[data-cart-scroll]");
+          if (!(b instanceof HTMLElement)) return;
+          const dir = Number(b.getAttribute("data-cart-scroll") || "0");
+          if (!Number.isFinite(dir) || dir === 0) return;
+          const box = els.cartContent;
+          if (!(box instanceof HTMLElement)) return;
+          try {
+            box.scrollBy({ top: dir * 260, behavior: "smooth" });
+          } catch {
+            box.scrollTop += dir * 260;
+          }
+        });
         els.prevPage.addEventListener("click", () => {
           state.page = Math.max(1, Number(state.page) - 1);
           render();
@@ -4534,6 +4713,10 @@
             applyFilters();
           }, 180)
         );
+        const searchLogo = document.querySelector(".search-logo");
+        if (searchLogo instanceof HTMLImageElement) {
+          searchLogo.addEventListener("click", () => openImgModal(searchLogo.currentSrc || searchLogo.src || "logo.webp"));
+        }
         const handleCardsClick = (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
@@ -5191,6 +5374,60 @@
           localStorage.setItem("hjy_customer_v1", JSON.stringify(obj));
         } catch {}
       }
+      function setupImgLoadFx() {
+        const hostFor = (img) => {
+          if (!(img instanceof HTMLImageElement)) return null;
+          return (
+            img.closest(".thumb") ||
+            img.closest(".cart-thumb") ||
+            img.closest(".gallery-thumb") ||
+            img.closest(".img-modal-card") ||
+            img.parentElement
+          );
+        };
+        const mark = (img, state) => {
+          const host = hostFor(img);
+          if (!(host instanceof HTMLElement)) return;
+          host.setAttribute("data-img-state", state);
+        };
+        const attach = (img) => {
+          if (!(img instanceof HTMLImageElement)) return;
+          if (img.getAttribute("data-hjy-img") === "1") return;
+          img.setAttribute("data-hjy-img", "1");
+          mark(img, img.complete ? "done" : "loading");
+          img.addEventListener(
+            "load",
+            () => {
+              mark(img, "done");
+            },
+            { passive: true }
+          );
+          img.addEventListener(
+            "error",
+            () => {
+              mark(img, "done");
+            },
+            { passive: true }
+          );
+        };
+        const scan = (root) => {
+          if (!(root instanceof HTMLElement) && root !== document) return;
+          const list = root === document ? Array.from(document.querySelectorAll("img")) : Array.from(root.querySelectorAll("img"));
+          for (const img of list) attach(img);
+        };
+        scan(document);
+        try {
+          const mo = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+              for (const n of Array.from(m.addedNodes || [])) {
+                if (n instanceof HTMLImageElement) attach(n);
+                else if (n instanceof HTMLElement) scan(n);
+              }
+            }
+          });
+          mo.observe(document.body, { childList: true, subtree: true });
+        } catch {}
+      }
       loadSavedCustomer();
       ["input", "change"].forEach((ev) => {
         els.phoneInput?.addEventListener(ev, saveCustomer);
@@ -5214,6 +5451,7 @@
       updatePills();
       window.addEventListener("hashchange", applyHashRoute);
       wireEvents();
+      setupImgLoadFx();
       loadAboutIndex()
         .then(() => renderFooterAboutExtras())
         .catch(() => {});

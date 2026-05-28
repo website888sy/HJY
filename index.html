@@ -333,6 +333,10 @@
         margin: 0;
         font-size: 18px;
       }
+      .panel-sub a {
+        color: #19b7ff;
+        text-decoration: underline;
+      }
       .panel-sub {
         margin: 0;
         color: var(--muted);
@@ -381,6 +385,10 @@
       .about-acc-body {
         padding: 12px 14px 14px;
         border-top: 1px solid var(--border);
+      }
+      .about-acc-body a {
+        color: #19b7ff;
+        text-decoration: underline;
       }
       .status {
         padding: 12px 14px;
@@ -525,11 +533,12 @@
       [data-img-state="loading"]::before {
         content: "";
         position: absolute;
-        inset: 50% auto auto 50%;
+        top: 50%;
+        left: 50%;
         width: 34px;
         height: 34px;
-        margin-inline-start: -17px;
-        margin-block-start: -22px;
+        margin-left: -17px;
+        margin-top: -24px;
         border-radius: 999px;
         border: 4px solid rgba(130, 130, 130, 0.35);
         border-top-color: rgba(209, 17, 17, 0.75);
@@ -542,10 +551,12 @@
       [data-img-state="loading"]::after {
         content: "LOADING";
         position: absolute;
-        inset: 50% 0 auto 0;
-        margin-block-start: 18px;
+        top: 50%;
+        left: 0;
+        right: 0;
+        margin-top: 14px;
         text-align: center;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 900;
         letter-spacing: 0.12em;
         color: rgba(10, 36, 48, 0.65);
@@ -758,38 +769,39 @@
       }
       .field-row {
         position: relative;
-        display: block;
+        display: flex;
+        gap: 10px;
+        align-items: center;
       }
       .field-row > input,
       .field-row > textarea,
       .field-row > select {
+        flex: 1;
         width: 100%;
-        padding-inline-end: 48px !important;
+        padding-inline-end: 12px !important;
       }
       .field-clear {
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(198, 40, 40, 0.25);
+        background: rgba(198, 40, 40, 0.08);
+        color: #c62828;
         border-radius: 12px;
         padding: 0;
         cursor: pointer;
         user-select: none;
-        position: absolute;
-        inset-inline-end: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 36px;
-        height: 36px;
+        width: 44px;
+        height: 44px;
         display: grid;
         place-items: center;
         line-height: 1;
+        flex: 0 0 auto;
       }
       .field-row textarea ~ .field-clear {
-        top: 10px;
-        transform: none;
+        align-self: flex-start;
       }
       .field-clear-out {
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(198, 40, 40, 0.25);
+        background: rgba(198, 40, 40, 0.08);
+        color: #c62828;
         border-radius: 12px;
         width: 44px;
         height: 44px;
@@ -1121,17 +1133,17 @@
       }
       .toast {
         position: fixed;
-        right: 14px;
-        inset-block-end: calc(64px + env(safe-area-inset-bottom));
-        z-index: 70;
+        left: 50%;
+        top: 24px;
+        z-index: 9999;
         pointer-events: none;
         opacity: 0;
-        transform: translateY(10px);
-        transition: 200ms ease;
+        transform: translate(-50%, -20px);
+        transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms ease;
       }
       .toast[data-open="true"] {
         opacity: 1;
-        transform: translateY(0);
+        transform: translate(-50%, 0);
       }
       .toast-bubble {
         pointer-events: none;
@@ -1259,36 +1271,10 @@
         width: min(980px, calc(100vw - 32px));
         max-height: calc(100vh - 32px);
         border-radius: 22px;
-        border: 1px solid rgba(25, 183, 255, 0.35);
-        background: rgba(255, 255, 255, 0.06);
+        background: #fff;
         box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
         padding: 10px;
         position: relative;
-      }
-      .img-modal-card::before {
-        content: "";
-        position: absolute;
-        inset: -2px;
-        border-radius: 24px;
-        background: linear-gradient(120deg, rgba(25, 183, 255, 0.0), rgba(25, 183, 255, 0.45), rgba(10, 160, 234, 0.0));
-        filter: blur(10px);
-        opacity: 0.65;
-        animation: glowSweep 2.4s ease-in-out infinite;
-        pointer-events: none;
-      }
-      @keyframes glowSweep {
-        0% {
-          transform: translateX(-10%) translateY(-6%);
-          opacity: 0.45;
-        }
-        50% {
-          transform: translateX(10%) translateY(6%);
-          opacity: 0.85;
-        }
-        100% {
-          transform: translateX(-10%) translateY(-6%);
-          opacity: 0.45;
-        }
       }
       .img-modal-img {
         width: 100%;
@@ -1692,6 +1678,20 @@
                     ></textarea>
                   </div>
                   <button class="field-clear-out" type="button" data-clear="orderNotesInput" aria-label="حذف" title="حذف">🗑</button>
+                </div>
+              </label>
+              <label style="display:grid;gap:6px">
+                <span style="font-weight:800">كود الخصم <span class="mini-note">اختياري</span></span>
+                <div style="display:flex;gap:10px;align-items:center">
+                  <div class="field-row" style="flex:1">
+                    <input
+                      id="discountCodeInput"
+                      type="text"
+                      placeholder="ضع هنا كود الخصم إن كنت تمتلكه"
+                      style="padding:12px;border:1px solid var(--border);border-radius:12px"
+                    />
+                  </div>
+                  <button class="field-clear-out" type="button" data-clear="discountCodeInput" aria-label="حذف" title="حذف">🗑</button>
                 </div>
               </label>
               <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -2153,7 +2153,7 @@
       }
       function linkifyText(escapedText) {
         let html = String(escapedText ?? "");
-        html = html.replace(/(\bhttps?:\/\/[^\s<]+)/gi, (m) => {
+        html = html.replace(/(\b(?:https?:\/\/|www\.)[^\s<]+)/gi, (m) => {
           let url = String(m);
           let tail = "";
           while (url.length) {
@@ -2167,20 +2167,20 @@
             break;
           }
           if (!url) return m;
-          const href = url;
+          const href = url.toLowerCase().startsWith("www.") ? "https://" + url : url;
           const label = escapeHtml(shortenUrlText(href) || href);
-          return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>${tail}`;
+          return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-3);text-decoration:underline">${label}</a>${tail}`;
         });
         return html;
       }
       function formatAboutTextPlain(raw) {
         let cleaned = String(raw ?? "");
-        cleaned = cleaned.replace(/"\s*target="_blank"[^>]*>/g, " ");
-        cleaned = cleaned.replace(/'\s*target='_blank'[^>]*>/g, " ");
-        cleaned = cleaned.replace(/\s*target="_blank"\s*/g, " ");
-        cleaned = cleaned.replace(/\s*rel="noopener noreferrer"\s*/g, " ");
-        cleaned = cleaned.replace(/\s*rel="noopener"\s*/g, " ");
-        cleaned = cleaned.replace(/\s*noreferrer\s*/g, " ");
+        cleaned = cleaned.replace(/<[^>]+>/g, " ");
+        cleaned = cleaned.replace(/target="_blank"/gi, "");
+        cleaned = cleaned.replace(/rel="noopener noreferrer"/gi, "");
+        cleaned = cleaned.replace(/rel="noopener"/gi, "");
+        cleaned = cleaned.replace(/noreferrer/gi, "");
+        cleaned = cleaned.replace(/href="/gi, "");
         let html = escapeHtml(cleaned);
         html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = html.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
@@ -2192,12 +2192,12 @@
       }
       function formatWhatNewText(raw) {
         let cleaned = String(raw ?? "");
-        cleaned = cleaned.replace(/"\s*target="_blank"[^>]*>/g, " ");
-        cleaned = cleaned.replace(/'\s*target='_blank'[^>]*>/g, " ");
-        cleaned = cleaned.replace(/\s*target="_blank"\s*/g, " ");
-        cleaned = cleaned.replace(/\s*rel="noopener noreferrer"\s*/g, " ");
-        cleaned = cleaned.replace(/\s*rel="noopener"\s*/g, " ");
-        cleaned = cleaned.replace(/\s*noreferrer\s*/g, " ");
+        cleaned = cleaned.replace(/<[^>]+>/g, " ");
+        cleaned = cleaned.replace(/target="_blank"/gi, "");
+        cleaned = cleaned.replace(/rel="noopener noreferrer"/gi, "");
+        cleaned = cleaned.replace(/rel="noopener"/gi, "");
+        cleaned = cleaned.replace(/noreferrer/gi, "");
+        cleaned = cleaned.replace(/href="/gi, "");
         let html = escapeHtml(cleaned);
         html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = html.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
@@ -3480,15 +3480,15 @@
             baseTotal > 0 && Math.abs(baseTotal - total) > 0.0001
               ? `<div class="sum-row" style="padding:2px 2px">
                    <span style="font-size:14px">قبل الخصم</span>
-                   <strong style="direction:ltr;unicode-bidi:plaintext;font-size:18px;color:rgba(77,106,118,0.85)">$${escapeHtml(formatMoney(baseTotal))}</strong>
+                   <strong style="direction:ltr;unicode-bidi:plaintext;font-size:18px;color:red;text-decoration:line-through">$${escapeHtml(formatMoney(baseTotal))}</strong>
                  </div>
                  <div class="sum-row" style="padding:2px 2px">
-                   <span style="font-size:14px">بعد الخصم</span>
-                   <strong style="direction:ltr;unicode-bidi:plaintext;font-size:20px">$${escapeHtml(formatMoney(total))}</strong>
+                   <span style="font-size:14px">الإجمالي</span>
+                   <strong style="direction:ltr;unicode-bidi:plaintext;font-size:20px;color:darkgreen">$${escapeHtml(formatMoney(total))}</strong>
                  </div>`
               : `<div class="sum-row" style="padding:2px 2px">
                    <span style="font-size:14px">الإجمالي</span>
-                   <strong style="direction:ltr;unicode-bidi:plaintext;font-size:20px">$${escapeHtml(formatMoney(total))}</strong>
+                   <strong style="direction:ltr;unicode-bidi:plaintext;font-size:20px;color:darkgreen">$${escapeHtml(formatMoney(total))}</strong>
                  </div>`
           }`;
         els.checkoutCartSummary.innerHTML = html;
@@ -3962,6 +3962,9 @@
         }
         lines.push(`الدفع: ${String(details.payCurrency || "—")}`);
         lines.push(`ملاحظات: ${String(details.notes || "—")}`);
+        if (details.discountCode) {
+          lines.push(`كود الخصم: ${details.discountCode}`);
+        }
         lines.push(``);
         lines.push(`----------------`);
         lines.push(`المشتريات:`);
@@ -4081,15 +4084,42 @@
             old.remove();
           } catch {}
         }
+        try {
+          const moreBtn = bar.querySelector('.pill-more-btn');
+          if (moreBtn) moreBtn.remove();
+        } catch {}
+        
         const cats = Array.isArray(state.categories) ? state.categories : [];
-        for (const c of cats) {
+        const limit = 5;
+        cats.forEach((c, index) => {
           const btn = document.createElement("button");
           btn.className = "pill";
           btn.type = "button";
           btn.setAttribute("data-category", `CAT:${c.key}`);
           btn.setAttribute("aria-pressed", "false");
           btn.textContent = c.name;
+          if (index >= limit) {
+            btn.style.display = "none";
+            btn.classList.add("hidden-category-pill");
+          }
           bar.appendChild(btn);
+        });
+        
+        if (cats.length > limit) {
+          const moreBtn = document.createElement("button");
+          moreBtn.className = "pill pill-more-btn";
+          moreBtn.type = "button";
+          moreBtn.textContent = "المزيد";
+          moreBtn.style.background = "rgba(25, 183, 255, 0.12)";
+          moreBtn.style.color = "var(--primary-3)";
+          moreBtn.style.fontWeight = "900";
+          moreBtn.addEventListener("click", () => {
+            moreBtn.style.display = "none";
+            Array.from(bar.querySelectorAll('.hidden-category-pill')).forEach(btn => {
+              btn.style.display = "";
+            });
+          });
+          bar.appendChild(moreBtn);
         }
         updatePills();
       }
@@ -4685,7 +4715,7 @@
           return;
         }
         els.infoText.innerHTML = formatAboutText(content);
-        if (normalizeAboutKey(k) === normalizeAboutKey("تقييمات عملاء")) {
+        if (normalizeAboutKey(k) === normalizeAboutKey("تقييمات عملاء") || normalizeAboutKey(k) === normalizeAboutKey("تقييمات العملاء")) {
           try {
             const urls = await loadCustomerPhotos();
             renderCustomerGallery(urls);
@@ -5401,6 +5431,7 @@
           }
           const payCurrency = els.paySypInput.checked ? "سوري" : "الدولار";
           const notes = String(els.orderNotesInput.value ?? "").trim();
+          const discountCode = String(document.getElementById("discountCodeInput")?.value ?? "").trim();
           const invoiceDetails = {
             phone,
             gov,
@@ -5416,6 +5447,7 @@
             timeRange,
             payCurrency,
             notes,
+            discountCode,
           };
           const invoice = buildInvoiceText(invoiceDetails);
           state.lastInvoiceText = invoice;
@@ -5436,8 +5468,8 @@
           };
           try {
             await sendToTelegramKind("orders", invoice);
-            setCheckoutStatus("تم تجهيز الطلب بنجاح. تم نسخ الفاتورة وفتح تلغرام للإرسال.", false);
-            els.confirmOrderBtn.textContent = "تم إرسال الطلب";
+            setCheckoutStatus("", false);
+            showToast("تم ارسال الطلب", 3000);
             els.confirmOrderBtn.disabled = false;
             els.confirmOrderBtn.textContent = "إرسال طلب جديد";
             if (els.afterOrderLinks instanceof HTMLElement) els.afterOrderLinks.style.display = "grid";

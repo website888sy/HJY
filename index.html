@@ -892,10 +892,13 @@
         font-weight: 900;
       }
       .cart-scroll {
-        overflow: auto;
+        overflow-y: auto;
+        overflow-x: hidden;
         padding: 12px;
-        display: grid;
+        display: flex;
+        flex-direction: column;
         gap: 10px;
+        min-height: 0;
         scrollbar-width: thin;
         scrollbar-color: rgba(25, 183, 255, 0.75) rgba(10, 36, 48, 0.08);
         overscroll-behavior: contain;
@@ -930,6 +933,7 @@
         border-radius: 14px;
         overflow: hidden;
         background: rgba(255, 255, 255, 0.9);
+        flex: 0 0 auto;
       }
       .cart-row {
         display: grid;
@@ -2153,7 +2157,7 @@
       }
       function linkifyText(escapedText) {
         let html = String(escapedText ?? "");
-        html = html.replace(/(\b(?:https?:\/\/|www\.)[^\s<]+)/gi, (m) => {
+        html = html.replace(/(\b(?:https?:\/\/|www\.)[^\s<"']+)/gi, (m) => {
           let url = String(m);
           let tail = "";
           while (url.length) {

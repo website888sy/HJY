@@ -1861,9 +1861,6 @@
         <img class="img-modal-img" id="imgModalImg" alt="" />
       </div>
     </div>
-    <button id="floatingTopBtn" type="button" aria-label="أعلى الصفحة" style="position:fixed; bottom:80px; right:14px; width:44px; height:44px; border-radius:999px; background:var(--primary-3); color:#fff; border:none; box-shadow:var(--shadow); z-index:45; font-size:20px; cursor:pointer; display:none; place-items:center;">▲</button>
-    <button id="floatingBottomBtn" type="button" aria-label="أسفل الصفحة" style="position:fixed; bottom:24px; right:14px; width:44px; height:44px; border-radius:999px; background:var(--primary-3); color:#fff; border:none; box-shadow:var(--shadow); z-index:45; font-size:20px; cursor:pointer; display:none; place-items:center;">▼</button>
-    <button id="floatingBackBtn" type="button" aria-label="رجوع" style="position:fixed; bottom:136px; right:14px; width:44px; height:44px; border-radius:999px; background:rgba(255,255,255,0.9); color:var(--text); border:1px solid var(--border); box-shadow:var(--shadow); z-index:45; font-size:20px; cursor:pointer; display:none; place-items:center;">↩</button>
     
     <script>
       function debounce(fn, ms) {
@@ -2033,9 +2030,6 @@
         newOfferText: document.getElementById("newOfferText"),
         imgModal: document.getElementById("imgModal"),
         imgModalImg: document.getElementById("imgModalImg"),
-        floatingTopBtn: document.getElementById("floatingTopBtn"),
-        floatingBottomBtn: document.getElementById("floatingBottomBtn"),
-        floatingBackBtn: document.getElementById("floatingBackBtn"),
       };
       const state = {
         allProducts: [],
@@ -2066,29 +2060,9 @@
         newOfferText: "",
       };
 
-      function updateFloatingButtons() {
-        if (els.floatingTopBtn) {
-          els.floatingTopBtn.style.display = window.scrollY > 300 ? "grid" : "none";
-        }
-        if (els.floatingBottomBtn) {
-          const isAtBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300;
-          els.floatingBottomBtn.style.display = isAtBottom ? "none" : "grid";
-        }
-        if (els.floatingBackBtn) {
-          els.floatingBackBtn.style.display = (state.route === "shop" || state.route === "product" || state.route === "info" || state.route === "qa") ? "grid" : "none";
-        }
-      }
-      window.addEventListener("scroll", debounce(updateFloatingButtons, 100));
-      window.addEventListener("resize", debounce(updateFloatingButtons, 100));
-      if (els.floatingTopBtn) els.floatingTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-      if (els.floatingBottomBtn) els.floatingBottomBtn.addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
-      if (els.floatingBackBtn) els.floatingBackBtn.addEventListener("click", () => history.back());
-
       const USER_LOAD_ERROR_MSG =
         "حدث غلط بسبب بطء الانترنيت لديك يرجى إيقاف vpn وإعادة تحميل الصفحة او تغيير بلد ال vpn , يرجى إعلامنا بالمشكلة\n0940471199";
       function setBootProgress(pct) {
-        const el = document.getElementById("bootBar");
-        if (!(el instanceof HTMLElement)) return;
         const v = Math.max(0, Math.min(100, Number(pct) || 0));
         el.style.width = `${v}%`;
         const h = document.getElementById("bootH");
@@ -2215,7 +2189,7 @@
           while (url.length) {
             const last = url[url.length - 1];
             if (!last) break;
-            if (".,;:!?)]}،؛؟!\"'›»”>".includes(last)) {
+            if (".,;:!?)]}،؛؟!\"'›»”>*_~-".includes(last)) {
               tail = last + tail;
               url = url.slice(0, -1);
               continue;
@@ -2225,7 +2199,7 @@
           if (!url) return m;
           const href = url.toLowerCase().startsWith("www.") ? "https://" + url : url;
           const label = escapeHtml(shortenUrlText(href) || href);
-          return `\x01\x02\x03\x04${href}\x05${label}\x06`;
+          return `\x01\x02\x03\x04${href}\x05${label}\x06${tail}`;
         });
         
         html = html.replace(/\x01\x02\x03\x04([^\x05]+)\x05([^\x06]+)\x06/g, (m, href, label) => {
@@ -5726,8 +5700,3 @@
     </script>
   </body>
 </html>
-
-
-
-
-

@@ -291,6 +291,19 @@
         background: rgba(25, 183, 255, 0.14);
         box-shadow: var(--ring);
       }
+      
+      #catsWrapper.drawer-mode {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+      #catsWrapper.drawer-mode .pillbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+      #catsWrapper.drawer-mode .pill {
+        text-align: right;
+      }
+      
       .pager {
         display: inline-flex;
         gap: 8px;
@@ -1359,8 +1372,8 @@
           </div>
         </div>
         <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px">
-          <div style="display:flex; gap:10px; align-items:center; width:100%; overflow-x:auto;">
-            <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px;">
+          <div id="catsWrapper" style="display:flex; gap:10px; align-items:flex-start; width:100%; overflow-x:auto; transition: 0.3s ease;">
+            <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px; height: 35px;">
               <span style="font-size: 16px;">☰</span> الفئات
             </button>
             <div class="pillbar" id="topPillbar" role="group" aria-label="التصنيفات" style="flex:1;">
@@ -1886,28 +1899,7 @@
         PHOTO_INDEX_CACHE_MS: 30 * 60 * 1000,
         PHOTO_MAX_FILES: 4000,
         PHOTO_DIRS: ["photo"],
-        floatingTopBtn: document.getElementById("floatingTopBtn"),
-        floatingBottomBtn: document.getElementById("floatingBottomBtn"),
-        floatingBackBtn: document.getElementById("floatingBackBtn"),
       };
-      
-      function updateFloatingButtons() {
-        if (els.floatingTopBtn) {
-          els.floatingTopBtn.style.display = window.scrollY > 300 ? "grid" : "none";
-        }
-        if (els.floatingBottomBtn) {
-          const isAtBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300;
-          els.floatingBottomBtn.style.display = isAtBottom ? "none" : "grid";
-        }
-        if (els.floatingBackBtn) {
-          els.floatingBackBtn.style.display = (window.state && (window.state.route === "shop" || window.state.route === "product" || window.state.route === "info" || window.state.route === "qa")) ? "grid" : "none";
-        }
-      }
-      window.addEventListener("scroll", debounce(updateFloatingButtons, 100));
-      window.addEventListener("resize", debounce(updateFloatingButtons, 100));
-      if (els.floatingTopBtn) els.floatingTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-      if (els.floatingBottomBtn) els.floatingBottomBtn.addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
-      if (els.floatingBackBtn) els.floatingBackBtn.addEventListener("click", () => history.back());
       const PLACEHOLDER_IMG =
         "data:image/svg+xml;charset=utf-8," +
         encodeURIComponent(
@@ -2041,6 +2033,9 @@
         newOfferText: document.getElementById("newOfferText"),
         imgModal: document.getElementById("imgModal"),
         imgModalImg: document.getElementById("imgModalImg"),
+        floatingTopBtn: document.getElementById("floatingTopBtn"),
+        floatingBottomBtn: document.getElementById("floatingBottomBtn"),
+        floatingBackBtn: document.getElementById("floatingBackBtn"),
       };
       const state = {
         allProducts: [],
@@ -2070,6 +2065,25 @@
         whatNewText: "",
         newOfferText: "",
       };
+
+      function updateFloatingButtons() {
+        if (els.floatingTopBtn) {
+          els.floatingTopBtn.style.display = window.scrollY > 300 ? "grid" : "none";
+        }
+        if (els.floatingBottomBtn) {
+          const isAtBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300;
+          els.floatingBottomBtn.style.display = isAtBottom ? "none" : "grid";
+        }
+        if (els.floatingBackBtn) {
+          els.floatingBackBtn.style.display = (state.route === "shop" || state.route === "product" || state.route === "info" || state.route === "qa") ? "grid" : "none";
+        }
+      }
+      window.addEventListener("scroll", debounce(updateFloatingButtons, 100));
+      window.addEventListener("resize", debounce(updateFloatingButtons, 100));
+      if (els.floatingTopBtn) els.floatingTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+      if (els.floatingBottomBtn) els.floatingBottomBtn.addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+      if (els.floatingBackBtn) els.floatingBackBtn.addEventListener("click", () => history.back());
+
       const USER_LOAD_ERROR_MSG =
         "حدث غلط بسبب بطء الانترنيت لديك يرجى إيقاف vpn وإعادة تحميل الصفحة او تغيير بلد ال vpn , يرجى إعلامنا بالمشكلة\n0940471199";
       function setBootProgress(pct) {
@@ -4924,6 +4938,13 @@
           }
           applyFilters();
         });
+        const catsDrawerBtn = document.getElementById("catsDrawerBtn");
+        if (catsDrawerBtn instanceof HTMLElement) {
+          catsDrawerBtn.addEventListener("click", () => {
+            const wrapper = document.getElementById("catsWrapper");
+            if (wrapper) wrapper.classList.toggle("drawer-mode");
+          });
+        }
         if (els.searchBtn instanceof HTMLElement) {
           els.searchBtn.addEventListener("click", () => {
             state.query = String(els.search.value ?? "");

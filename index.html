@@ -1359,12 +1359,17 @@
           </div>
         </div>
         <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px">
-          <div class="pillbar" role="group" aria-label="التصنيفات">
-            <button class="pill" type="button" data-category="HOME" aria-pressed="true">قائمة رئيسية</button>
-            <button class="pill" type="button" data-category="HOT" aria-pressed="false">عروض مغرية</button>
-            <button class="pill" type="button" data-category="OUT" aria-pressed="false">منتهي كمية</button>
-            <button class="pill" type="button" data-category="FAVORITES" aria-pressed="false">مفضلة</button>
-            <button class="pill" type="button" data-category="ALL" aria-pressed="false">الكل</button>
+          <div style="display:flex; gap:10px; align-items:center; width:100%; overflow-x:auto;">
+            <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px;">
+              <span style="font-size: 16px;">☰</span> الفئات
+            </button>
+            <div class="pillbar" id="topPillbar" role="group" aria-label="التصنيفات" style="flex:1;">
+              <button class="pill" type="button" data-category="HOME" aria-pressed="true">قائمة رئيسية</button>
+              <button class="pill" type="button" data-category="HOT" aria-pressed="false">عروض مغرية</button>
+              <button class="pill" type="button" data-category="OUT" aria-pressed="false">منتهي كمية</button>
+              <button class="pill" type="button" data-category="FAVORITES" aria-pressed="false">مفضلة</button>
+              <button class="pill" type="button" data-category="ALL" aria-pressed="false">الكل</button>
+            </div>
           </div>
           <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
             <button class="btn btn-ghost" id="homeTopBtn" type="button">قائمة رئيسية</button>
@@ -1843,7 +1848,19 @@
         <img class="img-modal-img" id="imgModalImg" alt="" />
       </div>
     </div>
+    <button id="floatingTopBtn" type="button" aria-label="أعلى الصفحة" style="position:fixed; bottom:80px; right:14px; width:44px; height:44px; border-radius:999px; background:var(--primary-3); color:#fff; border:none; box-shadow:var(--shadow); z-index:45; font-size:20px; cursor:pointer; display:none; place-items:center;">▲</button>
+    <button id="floatingBottomBtn" type="button" aria-label="أسفل الصفحة" style="position:fixed; bottom:24px; right:14px; width:44px; height:44px; border-radius:999px; background:var(--primary-3); color:#fff; border:none; box-shadow:var(--shadow); z-index:45; font-size:20px; cursor:pointer; display:none; place-items:center;">▼</button>
+    <button id="floatingBackBtn" type="button" aria-label="رجوع" style="position:fixed; bottom:136px; right:14px; width:44px; height:44px; border-radius:999px; background:rgba(255,255,255,0.9); color:var(--text); border:1px solid var(--border); box-shadow:var(--shadow); z-index:45; font-size:20px; cursor:pointer; display:none; place-items:center;">↩</button>
+    
     <script>
+      function debounce(fn, ms) {
+        let t = null;
+        return (...args) => {
+          if (t) clearTimeout(t);
+          t = setTimeout(() => fn(...args), Math.max(0, Number(ms) || 0));
+        };
+      }
+      
       const CONFIG = {
         BRAND: "HJY.co",
         PROMO_URLS: ["promo.txt"],
@@ -1869,11 +1886,32 @@
         PHOTO_INDEX_CACHE_MS: 30 * 60 * 1000,
         PHOTO_MAX_FILES: 4000,
         PHOTO_DIRS: ["photo"],
+        floatingTopBtn: document.getElementById("floatingTopBtn"),
+        floatingBottomBtn: document.getElementById("floatingBottomBtn"),
+        floatingBackBtn: document.getElementById("floatingBackBtn"),
       };
+      
+      function updateFloatingButtons() {
+        if (els.floatingTopBtn) {
+          els.floatingTopBtn.style.display = window.scrollY > 300 ? "grid" : "none";
+        }
+        if (els.floatingBottomBtn) {
+          const isAtBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300;
+          els.floatingBottomBtn.style.display = isAtBottom ? "none" : "grid";
+        }
+        if (els.floatingBackBtn) {
+          els.floatingBackBtn.style.display = (window.state && (window.state.route === "shop" || window.state.route === "product" || window.state.route === "info" || window.state.route === "qa")) ? "grid" : "none";
+        }
+      }
+      window.addEventListener("scroll", debounce(updateFloatingButtons, 100));
+      window.addEventListener("resize", debounce(updateFloatingButtons, 100));
+      if (els.floatingTopBtn) els.floatingTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+      if (els.floatingBottomBtn) els.floatingBottomBtn.addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+      if (els.floatingBackBtn) els.floatingBackBtn.addEventListener("click", () => history.back());
       const PLACEHOLDER_IMG =
         "data:image/svg+xml;charset=utf-8," +
         encodeURIComponent(
-          `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9f2ff"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><g fill="#19b7ff" opacity="0.7"><circle cx="130" cy="110" r="18"/><circle cx="190" cy="110" r="10"/><circle cx="170" cy="150" r="12"/></g><text x="50%" y="50%" font-size="24" text-anchor="middle" fill="#057bb8" font-family="Arial">لا يتوفر صورة لهذا المنتج</text><text x="50%" y="56%" font-size="18" text-anchor="middle" fill="#4d6a76" font-family="Arial">سيتم إضافة قريباً</text></svg>`
+          `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="100%" height="100%" fill="transparent"/><text x="50%" y="50%" font-size="24" text-anchor="middle" fill="#057bb8" font-family="Arial" opacity="0.3">HJY</text></svg>`
         );
       const els = {
         appRoot: document.getElementById("appRoot"),
@@ -2173,18 +2211,17 @@
           if (!url) return m;
           const href = url.toLowerCase().startsWith("www.") ? "https://" + url : url;
           const label = escapeHtml(shortenUrlText(href) || href);
-          return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-3);text-decoration:underline">${label}</a>${tail}`;
+          return `\x01\x02\x03\x04${href}\x05${label}\x06`;
         });
+        
+        html = html.replace(/\x01\x02\x03\x04([^\x05]+)\x05([^\x06]+)\x06/g, (m, href, label) => {
+          return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-3);text-decoration:underline">${label}</a>`;
+        });
+        
         return html;
       }
       function formatAboutTextPlain(raw) {
         let cleaned = String(raw ?? "");
-        cleaned = cleaned.replace(/<[^>]+>/g, " ");
-        cleaned = cleaned.replace(/target="_blank"/gi, "");
-        cleaned = cleaned.replace(/rel="noopener noreferrer"/gi, "");
-        cleaned = cleaned.replace(/rel="noopener"/gi, "");
-        cleaned = cleaned.replace(/noreferrer/gi, "");
-        cleaned = cleaned.replace(/href="/gi, "");
         let html = escapeHtml(cleaned);
         html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = html.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
@@ -2196,12 +2233,6 @@
       }
       function formatWhatNewText(raw) {
         let cleaned = String(raw ?? "");
-        cleaned = cleaned.replace(/<[^>]+>/g, " ");
-        cleaned = cleaned.replace(/target="_blank"/gi, "");
-        cleaned = cleaned.replace(/rel="noopener noreferrer"/gi, "");
-        cleaned = cleaned.replace(/rel="noopener"/gi, "");
-        cleaned = cleaned.replace(/noreferrer/gi, "");
-        cleaned = cleaned.replace(/href="/gi, "");
         let html = escapeHtml(cleaned);
         html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
         html = html.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
@@ -2677,7 +2708,7 @@
             const dot = lower.lastIndexOf(".");
             const ext = dot >= 0 ? lower.slice(dot + 1) : "";
             if (exts.length && !exts.includes(ext)) continue;
-            out.push(`${encodePathSegments(cur)}/${encodeURIComponent(name)}`);
+            out.push(`${cur}/${name}`);
             if (out.length >= max) break;
           }
         }
@@ -3691,11 +3722,13 @@
         const mainSrc = photoList[0] || PLACEHOLDER_IMG;
         let thumbs = "";
         const thumbUrls = photoList.slice(0, 12);
-        for (let i = 0; i < thumbUrls.length; i++) {
-          const u = thumbUrls[i];
-          thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
-            u
-          )}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" /></button>`;
+        if (thumbUrls.length > 1) {
+          for (let i = 0; i < thumbUrls.length; i++) {
+            const u = thumbUrls[i];
+            thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
+              u
+            )}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" /></button>`;
+          }
         }
         const hasNav = photoList.length > 1;
         const btn =
@@ -4117,11 +4150,22 @@
           moreBtn.style.background = "rgba(25, 183, 255, 0.12)";
           moreBtn.style.color = "var(--primary-3)";
           moreBtn.style.fontWeight = "900";
+          moreBtn.dataset.expanded = "false";
           moreBtn.addEventListener("click", () => {
-            moreBtn.style.display = "none";
-            Array.from(bar.querySelectorAll('.hidden-category-pill')).forEach(btn => {
-              btn.style.display = "";
-            });
+            const isExpanded = moreBtn.dataset.expanded === "true";
+            if (isExpanded) {
+              moreBtn.textContent = "المزيد";
+              moreBtn.dataset.expanded = "false";
+              Array.from(bar.querySelectorAll('.hidden-category-pill')).forEach(btn => {
+                btn.style.display = "none";
+              });
+            } else {
+              moreBtn.textContent = "عرض أقل";
+              moreBtn.dataset.expanded = "true";
+              Array.from(bar.querySelectorAll('.hidden-category-pill')).forEach(btn => {
+                btn.style.display = "";
+              });
+            }
           });
           bar.appendChild(moreBtn);
         }
@@ -4257,7 +4301,10 @@
         const key = normalizeAboutKey(title);
         const list = Array.isArray(state.aboutFiles) ? state.aboutFiles : [];
         const found = list.find((x) => x && x.key === key);
-        if (found && found.path) return String(found.path);
+        if (found && found.path) {
+          const parts = String(found.path).split("/");
+          return parts.map(encodeURIComponent).join("/");
+        }
         const k = String(title ?? "").trim();
         return `${String(CONFIG.ABOUT_DIR || "about").trim() || "about"}/${encodeURIComponent(k)}.txt`;
       }

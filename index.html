@@ -4291,6 +4291,27 @@
       async function loadAboutIndex() {
         state.aboutFiles = [];
         try {
+          // محاولة قراءة قائمة الملفات من about_files.txt أولاً لتجنب قيود GitHub API
+          try {
+            const res = await fetchTextCached("about_files.txt", 10 * 60 * 1000);
+            if (res && res.text) {
+              const files = res.text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith("#"));
+              if (files.length > 0) {
+                const out = [];
+                for (const path of files) {
+                  const p = `about/${path}`;
+                  const name = path.replace(/\.txt$/i, "").trim();
+                  if (name) out.push({ name, key: normalizeAboutKey(name), path: p });
+                }
+                out.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+                state.aboutFiles = out;
+                return;
+              }
+            }
+          } catch (e) {
+            // تجاهل الخطأ واللجوء للطريقة القديمة
+          }
+
           const dir = String(CONFIG.ABOUT_DIR || "about").trim() || "about";
           const files = await listGithubFilesRecursive(dir, ["txt"], 2000);
           const out = [];
@@ -4345,6 +4366,28 @@
       }
       async function loadQaIndex() {
         state.qaFiles = [];
+        
+        // محاولة قراءة قائمة الملفات من qa_files.txt أولاً إذا كان موجوداً
+        try {
+          const res = await fetchTextCached("qa_files.txt", 10 * 60 * 1000);
+          if (res && res.text) {
+            const files = res.text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith("#"));
+            if (files.length > 0) {
+              const out = [];
+              for (const path of files) {
+                const p = `QA/${path}`;
+                const name = path.replace(/\.txt$/i, "").trim();
+                if (name) out.push({ name, key: normalizeQaKey(name), path: p });
+              }
+              out.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+              state.qaFiles = out;
+              return;
+            }
+          }
+        } catch (e) {
+          // تجاهل الخطأ واللجوء للطريقة القديمة
+        }
+
         const files = await listGithubFilesRecursive("QA", ["txt"], 2000);
         const out = [];
         for (const path of files) {

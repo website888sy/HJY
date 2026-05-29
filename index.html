@@ -3646,6 +3646,11 @@
         }
         if (state.sortMode === "PRICE_ASC") list = [...list].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
         if (state.sortMode === "PRICE_DESC") list = [...list].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+        
+        const available = list.filter(p => !p.isOut);
+        const outOfStock = list.filter(p => p.isOut);
+        list = [...available, ...outOfStock];
+        
         state.filteredProducts = list;
         render();
       }
@@ -4434,7 +4439,11 @@
           const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === k);
           if (p) picked.push(p);
         }
-        state.homeProducts = picked;
+        
+        const available = picked.filter(p => !p.isOut);
+        const outOfStock = picked.filter(p => p.isOut);
+        
+        state.homeProducts = [...available, ...outOfStock];
         setHomeStatus("", false);
       }
       async function loadProducts() {
@@ -4971,6 +4980,11 @@
           debounce(() => {
             state.query = String(els.search.value ?? "");
             state.page = 1;
+            if (state.query.trim().length > 0 && state.category !== "ALL") {
+              state.category = "ALL";
+              updatePills();
+              setShopHashWithCategory("ALL");
+            }
             applyFilters();
           }, 180)
         );

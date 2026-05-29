@@ -2063,6 +2063,8 @@
       const USER_LOAD_ERROR_MSG =
         "حدث غلط بسبب بطء الانترنيت لديك يرجى إيقاف vpn وإعادة تحميل الصفحة او تغيير بلد ال vpn , يرجى إعلامنا بالمشكلة\n0940471199";
       function setBootProgress(pct) {
+        const el = document.getElementById("bootBar");
+        if (!(el instanceof HTMLElement)) return;
         const v = Math.max(0, Math.min(100, Number(pct) || 0));
         el.style.width = `${v}%`;
         const h = document.getElementById("bootH");

@@ -2212,25 +2212,65 @@
       }
       function formatAboutTextPlain(raw) {
         let cleaned = String(raw ?? "");
-        let html = escapeHtml(cleaned);
-        html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
-        html = html.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
-        html = html.replace(/\b[0-9a-f]{12,}\b/gi, (m) => `<bdi dir="ltr">${m}</bdi>`);
-        html = linkifyText(html);
-        html = html.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
-        html = html.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
-        return html;
+        let lines = cleaned.split(/\r?\n/);
+        let htmlParts = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i];
+          if (line.trim().length === 0) {
+            htmlParts.push('<div style="height: 8px;"></div>');
+            continue;
+          }
+          
+          let hasUrl = /(?:https?:\/\/|www\.)[^\s<"']+/.test(line);
+          let escapedLine = escapeHtml(line);
+          
+          escapedLine = escapedLine.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
+          escapedLine = escapedLine.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
+          escapedLine = escapedLine.replace(/\b[0-9a-f]{12,}\b/gi, (m) => `<bdi dir="ltr">${m}</bdi>`);
+          escapedLine = linkifyText(escapedLine);
+          escapedLine = escapedLine.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
+          escapedLine = escapedLine.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
+          
+          if (hasUrl) {
+            htmlParts.push(`<div style="direction: ltr; text-align: left; overflow-wrap: break-word; word-wrap: break-word; text-overflow: ellipsis; white-space: pre-wrap;">${escapedLine}</div>`);
+          } else {
+            htmlParts.push(`<div style="direction: rtl; text-align: right; overflow-wrap: break-word; word-wrap: break-word;">${escapedLine}</div>`);
+          }
+        }
+        
+        return `<div style="display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 100%; overflow: hidden;">${htmlParts.join("")}</div>`;
       }
       function formatWhatNewText(raw) {
         let cleaned = String(raw ?? "");
-        let html = escapeHtml(cleaned);
-        html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
-        html = html.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
-        html = html.replace(/\b[0-9a-f]{12,}\b/gi, (m) => `<bdi dir="ltr">${m}</bdi>`);
-        html = linkifyText(html);
-        html = html.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
-        html = html.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
-        return html;
+        let lines = cleaned.split(/\r?\n/);
+        let htmlParts = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i];
+          if (line.trim().length === 0) {
+            htmlParts.push('<div style="height: 8px;"></div>');
+            continue;
+          }
+          
+          let hasUrl = /(?:https?:\/\/|www\.)[^\s<"']+/.test(line);
+          let escapedLine = escapeHtml(line);
+          
+          escapedLine = escapedLine.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
+          escapedLine = escapedLine.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
+          escapedLine = escapedLine.replace(/\b[0-9a-f]{12,}\b/gi, (m) => `<bdi dir="ltr">${m}</bdi>`);
+          escapedLine = linkifyText(escapedLine);
+          escapedLine = escapedLine.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
+          escapedLine = escapedLine.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
+          
+          if (hasUrl) {
+            htmlParts.push(`<div style="direction: ltr; text-align: left; overflow-wrap: break-word; word-wrap: break-word; text-overflow: ellipsis; white-space: pre-wrap;">${escapedLine}</div>`);
+          } else {
+            htmlParts.push(`<div style="direction: rtl; text-align: right; overflow-wrap: break-word; word-wrap: break-word;">${escapedLine}</div>`);
+          }
+        }
+        
+        return `<div style="display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 100%; overflow: hidden;">${htmlParts.join("")}</div>`;
       }
       function escapeHtml(s) {
         return String(s ?? "")

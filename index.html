@@ -662,7 +662,6 @@
         font-weight: 800;
         color: rgba(77, 106, 118, 0.9);
         font-size: 12px;
-        text-decoration: line-through;
       }
       .dis-badge {
         border: 1px dashed rgba(25, 183, 255, 0.55);
@@ -3600,7 +3599,7 @@
               if (cat && cat.key && cat.name) html += buildPill(`CAT:${cat.key}`, cat.name);
             }
           }
-          html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="less" style="background:var(--primary-2);color:var(--primary)">عرض أقل</button>`;
+          html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="less" style="background:var(--primary-2);color:#fff">عرض أقل</button>`;
         } else {
           html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="more" style="background:var(--primary-2);color:var(--primary)">المزيد</button>`;
         }
@@ -3748,7 +3747,13 @@
         let html = "";
         for (const p of slice) html += renderCard(p);
         els.grid.innerHTML = html;
-        if (list.length === 0) setStatus(state.query && state.query.trim() ? "لا توجد نتائج." : "لا توجد منتجات للعرض.", false);
+        if (list.length === 0) {
+          if (Array.isArray(state.allProducts) && state.allProducts.length === 0) {
+            setStatus("جاري تحميل المنتجات...", false);
+          } else {
+            setStatus(state.query && state.query.trim() ? "لا توجد نتائج." : "لا توجد منتجات للعرض.", false);
+          }
+        }
         else setStatus("", false);
       }
       function renderWhatNew() {
@@ -3904,13 +3909,14 @@
               ${thumbs ? `<div class="gallery-rail">${thumbs}</div>` : ""}
             </div>
             <div class="card-body" style="gap:10px">
+              ${p.about1 ? `<div class="desc" style="font-size:14px;line-height:1.75;color:var(--primary-3);font-weight:900;">${formatAboutTextPlain(p.about1)}</div>` : ""}
+              ${p.about2 ? `<div class="desc" style="font-size:14px;line-height:1.75;">${formatAboutTextPlain(p.about2)}</div>` : ""}
               ${disText ? `<div class="dis-badge">${escapeHtml(disText)}</div>` : ""}
               <div class="prices">
                 <span class="price-now">$${escapeHtml(formatMoney(p.price))}</span>
                 <span class="price-old">$${escapeHtml(formatMoney(marketingOldPrice(p.price)))}</span>
               </div>
               <div class="code">${escapeHtml(p.code)}</div>
-              <div class="desc" style="font-size:14px;line-height:1.75">${formatAboutTextPlain(p.about2 || p.about1 || "")}</div>
               <div class="actions" style="margin-top:4px">${btn}</div>
               <div class="actions" style="margin-top:0">
                 <button class="btn btn-ghost" type="button" data-share="${escapeHtmlAttr(p.code)}">مشاركة المنتج</button>
@@ -5693,17 +5699,9 @@
           if (!(img instanceof HTMLImageElement)) return;
           const raw = img.getAttribute("data-src-list");
           const idx = Number(img.getAttribute("data-src-idx") || "0");
-          const tryN = Number(img.getAttribute("data-src-try") || "0");
           const list = raw ? JSON.parse(raw) : [];
           if (!Array.isArray(list) || list.length === 0) {
             img.src = PLACEHOLDER_IMG;
-            return;
-          }
-          const curSrc = String(list[Math.max(0, idx)] ?? "").trim();
-          if (curSrc && tryN < 2) {
-            img.setAttribute("data-src-try", String(tryN + 1));
-            const sep = curSrc.includes("?") ? "&" : "?";
-            img.src = `${curSrc}${sep}retry=${tryN + 1}&ts=${Date.now()}`;
             return;
           }
           const next = Math.max(0, idx + 1);
@@ -5712,7 +5710,6 @@
             return;
           }
           img.setAttribute("data-src-idx", String(next));
-          img.setAttribute("data-src-try", "0");
           img.src = String(list[next]);
         } catch {
           try {

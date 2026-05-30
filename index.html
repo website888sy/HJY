@@ -496,6 +496,12 @@
         max-height: 340px;
         overflow: auto;
       }
+      .gallery-rail:empty {
+        display: none;
+      }
+      .gallery-rail > button:only-child {
+        display: none;
+      }
       .gallery-thumb {
         border: 1px solid var(--border);
         background: #fff;
@@ -1895,7 +1901,7 @@
       const PLACEHOLDER_IMG =
         "data:image/svg+xml;charset=utf-8," +
         encodeURIComponent(
-          `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="100%" height="100%" fill="transparent"/><text x="50%" y="50%" font-size="24" text-anchor="middle" fill="#057bb8" font-family="Arial" opacity="0.3">HJY</text></svg>`
+          `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="100%" height="100%" fill="#f9f9f9"/><text x="50%" y="45%" font-size="24" text-anchor="middle" fill="#057bb8" font-family="Arial" opacity="0.3">HJY</text><text x="50%" y="55%" font-size="18" text-anchor="middle" fill="#666666" font-family="Arial" font-weight="bold">لا يتوفر صورة بعد جاري الإضافة</text></svg>`
         );
       const els = {
         appRoot: document.getElementById("appRoot"),
@@ -3601,7 +3607,7 @@
           }
           html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="less" style="background:var(--primary-2);color:#fff">عرض أقل</button>`;
         } else {
-          html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="more" style="background:var(--primary-2);color:var(--primary)">المزيد</button>`;
+          html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="more" style="background:var(--primary-2);color:#fff">المزيد</button>`;
         }
 
         els.pills.innerHTML = html;
@@ -3816,7 +3822,7 @@
             const u = thumbUrls[i];
             thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
               u
-            )}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" /></button>`;
+            )}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentElement.remove()" /></button>`;
           }
         }
         const hasNav = photoList.length > 1;
@@ -3886,7 +3892,6 @@
         }</button>
             <div class="gallery-wrap product-gallery" style="padding:12px">
               <div class="thumb" style="aspect-ratio:1/1;position:relative;border-radius:14px;background:#fff">
-                ${mainSrc === PLACEHOLDER_IMG ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;color:#666;background:rgba(255,255,255,0.8);z-index:1;pointer-events:none;font-weight:bold;">لايتوفر صورة بعد جاري الإضافة</div>` : ""}
                 <img
                   id="productMainImg"
                   src="${escapeHtmlAttr(mainSrc)}"
@@ -5701,11 +5706,13 @@
           const idx = Number(img.getAttribute("data-src-idx") || "0");
           const list = raw ? JSON.parse(raw) : [];
           if (!Array.isArray(list) || list.length === 0) {
+            img.onerror = null;
             img.src = PLACEHOLDER_IMG;
             return;
           }
           const next = Math.max(0, idx + 1);
           if (next >= list.length) {
+            img.onerror = null;
             img.src = PLACEHOLDER_IMG;
             return;
           }
@@ -5713,6 +5720,7 @@
           img.src = String(list[next]);
         } catch {
           try {
+            img.onerror = null;
             img.src = PLACEHOLDER_IMG;
           } catch {}
         }

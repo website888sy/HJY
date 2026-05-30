@@ -1377,16 +1377,11 @@
               <span style="font-size: 16px;">☰</span> الفئات
             </button>
             <div class="pillbar" id="topPillbar" role="group" aria-label="التصنيفات" style="flex:1;">
-              <button class="pill" type="button" data-category="HOME" aria-pressed="true">قائمة رئيسية</button>
-              <button class="pill" type="button" data-category="HOT" aria-pressed="false">عروض مغرية</button>
-              <button class="pill" type="button" data-category="OUT" aria-pressed="false">منتهي كمية</button>
-              <button class="pill" type="button" data-category="FAVORITES" aria-pressed="false">مفضلة</button>
-              <button class="pill" type="button" data-category="ALL" aria-pressed="false">الكل</button>
+              <!-- سيتم توليد الفئات هنا ديناميكياً -->
             </div>
           </div>
           <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
-            <button class="btn btn-ghost" id="homeTopBtn" type="button">قائمة رئيسية</button>
-            <button class="btn btn-ghost" id="productsQaTopBtn" type="button">أسئلة شائعة للمنتجات</button>
+            <button class="btn btn-ghost" id="productsQaTopBtn" type="button" style="border:1px solid #d11; color:#d11; font-weight:bold;">أسئلة شائعة للمنتجات</button>
             <div class="pager" aria-label="التنقل بين الصفحات">
               <button id="prevPage" type="button" aria-label="السابق">▶</button>
               <button id="nextPage" type="button" aria-label="التالي">◀</button>
@@ -1474,6 +1469,7 @@
               <button class="btn btn-danger" id="clearCustomerBtn" type="button" style="padding:8px 10px;font-size:12px">حذف كامل البيانات</button>
             </div>
             <form id="checkoutForm" style="display:grid;gap:10px;max-width:520px;margin-inline:auto">
+              <div style="background:rgba(25,183,255,0.1);color:var(--primary-3);padding:10px;border-radius:12px;margin-bottom:12px;font-size:14px;font-weight:bold;text-align:center;border:1px solid rgba(25,183,255,0.3)">يرجى قراءة المزيد من التفاصيل ضمن البار السفلي من الأقسام المخصصة</div>
               <label style="display:grid;gap:6px">
                 <span style="font-weight:800">رقم هاتف</span>
                 <div class="field-row">
@@ -1910,7 +1906,7 @@
         sortSelect: document.getElementById("sortSelect"),
         viewSelect: document.getElementById("viewSelect"),
         searchBtn: document.getElementById("searchBtn"),
-        pills: Array.from(document.querySelectorAll(".pill[data-category]")),
+        pills: document.getElementById("topPillbar"),
         prevPage: document.getElementById("prevPage"),
         nextPage: document.getElementById("nextPage"),
         prevPageBottom: document.getElementById("prevPageBottom"),
@@ -3580,12 +3576,54 @@
         }
         return score;
       }
+      let isCategoriesExpanded = false;
+
       function updatePills() {
-        const pills = Array.from(document.querySelectorAll(".pill[data-category]"));
-        els.pills = pills;
-        for (const b of pills) {
-          const cat = String(b.getAttribute("data-category") ?? "");
-          b.setAttribute("aria-pressed", cat === state.category ? "true" : "false");
+        if (!(els.pills instanceof HTMLElement)) return;
+        const c = String(state.category || "").trim() || "HOME";
+        let html = "";
+        
+        const buildPill = (cat, label) => {
+          const on = c === cat;
+          return `<button class="pill" type="button" data-category="${escapeHtmlAttr(cat)}" aria-pressed="${on ? "true" : "false"}">${escapeHtml(label)}</button>`;
+        };
+
+        html += buildPill("HOME", "قائمة رئيسية");
+        html += buildPill("ALL", "الكل");
+
+        if (isCategoriesExpanded) {
+          html += buildPill("HOT", "عروض مغرية");
+          html += buildPill("OUT", "منتهي كمية");
+          html += buildPill("FAVORITES", "مفضلة");
+          if (Array.isArray(state.categories)) {
+            for (const cat of state.categories) {
+              if (cat && cat.key && cat.name) html += buildPill(`CAT:${cat.key}`, cat.name);
+            }
+          }
+          html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="less" style="background:var(--primary-2);color:var(--primary)">عرض أقل</button>`;
+        } else {
+          html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="more" style="background:var(--primary-2);color:var(--primary)">المزيد</button>`;
+        }
+
+        els.pills.innerHTML = html;
+        
+        // Re-attach listeners to pills because we rewrote innerHTML
+        const newPills = Array.from(els.pills.querySelectorAll(".pill[data-category]"));
+        for (const btn of newPills) {
+          btn.addEventListener("click", () => {
+            const cat = btn.getAttribute("data-category");
+            if (cat) {
+              setShopHashWithCategory(cat);
+            }
+          });
+        }
+        
+        const toggleBtn = els.pills.querySelector("#toggleCategoriesBtn");
+        if (toggleBtn) {
+          toggleBtn.addEventListener("click", () => {
+            isCategoriesExpanded = !isCategoriesExpanded;
+            updatePills();
+          });
         }
       }
       function paginate(list) {
@@ -3733,8 +3771,19 @@
           renderWhatNew();
           return;
         }
+        
+        state.homeLimit = state.homeLimit || 5;
+        const visibleProducts = state.homeProducts.slice(0, state.homeLimit);
+        
         let html = "";
-        for (const p of state.homeProducts) html += renderCard(p);
+        for (const p of visibleProducts) html += renderCard(p);
+        
+        if (state.homeProducts.length > state.homeLimit) {
+          html += `<div style="grid-column: 1 / -1; display: flex; justify-content: center; padding: 12px;">
+                     <button class="btn btn-ghost" type="button" onclick="window.__hjyLoadMoreHome()">عرض المزيد</button>
+                   </div>`;
+        }
+        
         els.homeGrid.innerHTML = html;
         renderNewOffer();
         renderWhatNew();
@@ -3822,6 +3871,8 @@
             </div>
           </div>
         `;
+        const about2Html = p.about2 ? `<p style="font-size:14px;color:var(--text);white-space:pre-wrap;margin:10px 0 0 0">${escapeHtml(p.about2)}</p>` : "";
+        
         els.productDetails.innerHTML = `
           <div style="display:grid;gap:12px">
           <div class="card" style="min-height:unset">
@@ -3830,6 +3881,7 @@
         }</button>
             <div class="gallery-wrap product-gallery" style="padding:12px">
               <div class="thumb" style="aspect-ratio:1/1;position:relative;border-radius:14px;background:#fff">
+                ${mainSrc === PLACEHOLDER_IMG ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;color:#666;background:rgba(255,255,255,0.8);z-index:1;pointer-events:none;font-weight:bold;">لايتوفر صورة بعد جاري الإضافة</div>` : ""}
                 <img
                   id="productMainImg"
                   src="${escapeHtmlAttr(mainSrc)}"
@@ -3840,6 +3892,7 @@
                   decoding="async"
                   referrerpolicy="no-referrer"
                   onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
+                  style="cursor:zoom-in;transition:transform 0.3s"
                 />
                 ${
                   hasNav
@@ -4349,6 +4402,10 @@
           btn.type = "button";
           btn.setAttribute("data-info", it.name);
           btn.textContent = it.name;
+          btn.addEventListener("click", () => {
+             isCategoriesExpanded = false;
+             updatePills();
+          });
           els.footerLinks.appendChild(btn);
           existing.add(it.key);
         }
@@ -5758,6 +5815,11 @@
           mo.observe(document.body, { childList: true, subtree: true });
         } catch {}
       }
+      window.__hjyLoadMoreHome = function() {
+        state.homeLimit = (state.homeLimit || 5) + 5;
+        renderHome();
+      };
+      
       loadSavedCustomer();
       ["input", "change"].forEach((ev) => {
         els.phoneInput?.addEventListener(ev, saveCustomer);

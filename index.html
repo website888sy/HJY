@@ -1976,7 +1976,26 @@
         PHOTO_EXTS: ["webp", "png", "jpg", "jpeg", "gif"],
         PHOTO_INDEX_CACHE_MS: 30 * 60 * 1000,
         PHOTO_MAX_FILES: 4000,
-        PHOTO_DIRS: ["photo"],
+        PHOTO_DIRS: [
+          "photo",
+          "photo/BATT-LI",
+          "photo/add",
+          "photo/bike-battery",
+          "photo/bms",
+          "photo/cells",
+          "photo/electroincs",
+          "photo/eva",
+          "photo/inverter",
+          "photo/our-prod",
+          "photo/qiachip/home-smart-eq",
+          "photo/qiachip/power-supply",
+          "photo/qiachip/reciver-remote",
+          "photo/qiachip/remote-a",
+          "photo/qiachip/remote-b",
+          "photo/qiachip/wifi-qiachip",
+          "photo/sensor-smart",
+          "photo/wifi-smart-home",
+        ],
       };
       const PLACEHOLDER_IMG =
         "data:image/svg+xml;charset=utf-8," +
@@ -3053,7 +3072,7 @@
         const s = String(raw ?? "").trim();
         if (!s) return [];
         return s
-          .split(",")
+          .split(/[,،\n\r]+/)
           .map((x) => String(x ?? "").trim())
           .filter((x) => x.length > 0)
           .slice(0, 12);

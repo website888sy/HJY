@@ -301,16 +301,21 @@
         box-shadow: var(--ring);
       }
       
-      #catsWrapper.drawer-mode {
-        flex-direction: column !important;
-        align-items: stretch !important;
+      .cats-sidebar-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9998;
+        opacity: 0; pointer-events: none; transition: opacity 0.3s;
       }
-      #catsWrapper.drawer-mode .pillbar {
-        flex-direction: column !important;
-        align-items: stretch !important;
+      .cats-sidebar-backdrop.show {
+        opacity: 1; pointer-events: auto;
       }
-      #catsWrapper.drawer-mode .pill {
-        text-align: right;
+      .cats-sidebar {
+        position: fixed; top: 0; right: 0; bottom: 0; width: 280px; background: #fff;
+        z-index: 9999; transform: translateX(100%); transition: transform 0.3s;
+        padding: 20px; box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+        overflow-y: auto;
+      }
+      .cats-sidebar.show {
+        transform: translateX(0);
       }
       
       .pager {
@@ -722,6 +727,18 @@
         background: rgba(198, 40, 40, 0.1);
         border-color: rgba(198, 40, 40, 0.25);
         color: #c62828;
+      }
+      .glow-gold {
+        border: 1px solid #d4af37;
+        color: #b8860b;
+        background: rgba(212, 175, 55, 0.1);
+        box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        transition: all 0.3s ease;
+        font-weight: 900;
+      }
+      .glow-gold:hover {
+        background: rgba(212, 175, 55, 0.2);
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
       }
       .btn-square {
         width: 42px;
@@ -1147,76 +1164,46 @@
       .footerbar-inner {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 10px 12px;
+        padding: 20px 12px;
         display: flex;
-        gap: 10px;
-        align-items: center;
         justify-content: space-between;
-        flex-wrap: nowrap;
+        align-items: flex-start;
       }
-      .footer-scroller {
+      .footer-col {
         display: flex;
-        gap: 8px;
-        align-items: center;
-        flex: 1;
-        min-width: 0;
-        justify-content: flex-end;
-      }
-      .footer-links {
-        display: flex;
-        gap: 8px;
-        flex-wrap: nowrap;
-        align-items: center;
-        overflow-x: auto;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-        scroll-behavior: smooth;
-        min-width: 0;
-      }
-      .footer-links::-webkit-scrollbar {
-        display: none;
-      }
-      .footer-links[data-expanded="true"] {
-        flex-wrap: wrap;
-        overflow: visible;
+        flex-direction: column;
+        gap: 12px;
       }
       .footer-link {
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.65);
-        padding: 8px 10px;
-        border-radius: 999px;
+        background: transparent;
+        border: none;
+        padding: 0;
         cursor: pointer;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 900;
+        color: var(--text);
+        text-align: right;
+        transition: color 0.2s;
       }
-      .footer-nav {
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.65);
-        width: 34px;
-        height: 34px;
-        border-radius: 999px;
-        cursor: pointer;
-        font-weight: 900;
-        flex: 0 0 auto;
+      .footer-link:hover {
+        color: var(--primary-3);
       }
-      .footer-more {
-        border: 1px solid rgba(10, 160, 234, 0.35);
-        background: rgba(10, 160, 234, 0.12);
-        color: var(--promo);
-        padding: 8px 10px;
-        border-radius: 999px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 900;
-        flex: 0 0 auto;
-        white-space: nowrap;
-      }
-      .qa-strip, .cats-strip {
+      .qa-strip {
         display: flex;
         align-items: center;
         gap: 10px;
         padding: 10px 12px;
         border: 1px solid #d11;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.7);
+        overflow: hidden;
+      }
+      .cats-strip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--primary-3);
         border-radius: 14px;
         background: rgba(255, 255, 255, 0.7);
         overflow: hidden;
@@ -1227,8 +1214,16 @@
         white-space: nowrap;
         flex: 0 0 auto;
       }
+      .cats-strip-label {
+        font-weight: 900;
+        color: var(--primary-3);
+        white-space: nowrap;
+        flex: 0 0 auto;
+      }
       .qa-strip-rail, .cats-strip-rail {
-        display: flex;
+        display: grid;
+        grid-template-rows: auto auto;
+        grid-auto-flow: column;
         gap: 8px;
         overflow-x: auto;
         -ms-overflow-style: none;
@@ -1240,7 +1235,7 @@
       .qa-strip-rail::-webkit-scrollbar, .cats-strip-rail::-webkit-scrollbar {
         display: none;
       }
-      .qa-strip-nav, .cats-strip-nav {
+      .qa-strip-nav {
         border: 1px solid #d11;
         background: #fff;
         color: #d11;
@@ -1251,23 +1246,23 @@
         font-weight: 900;
         flex: 0 0 auto;
       }
+      .cats-strip-nav {
+        border: 1px solid var(--primary-3);
+        background: #fff;
+        color: var(--primary-3);
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 900;
+        flex: 0 0 auto;
+      }
       @media (max-width: 700px) {
-        .footerbar-inner {
-          flex-wrap: wrap;
-          align-items: flex-start;
-        }
-        .footer-scroller {
-          width: 100%;
-          justify-content: flex-start;
-        }
-        .footer-more {
-          margin-inline-start: auto;
-        }
         .qa-strip, .cats-strip {
           padding: 8px 10px;
           gap: 8px;
         }
-        .qa-strip-label {
+        .qa-strip-label, .cats-strip-label {
           display: none;
         }
         .qa-strip-nav, .cats-strip-nav {
@@ -1476,6 +1471,15 @@
     </style>
   </head>
   <body>
+    <div class="cats-sidebar-backdrop" id="catsSidebarBackdrop"></div>
+    <div class="cats-sidebar" id="catsSidebar">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3 style="margin:0;color:var(--primary-3)">الفئات</h3>
+        <button id="catsSidebarClose" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text)">&times;</button>
+      </div>
+      <div id="catsSidebarList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+    
     <div class="app" id="appRoot" data-route="home">
       <div class="promo-bar" id="promoBar">
         <div class="promo-bar-inner" id="promoText"></div>
@@ -1528,7 +1532,8 @@
               <button class="qa-strip-nav" id="topQaNext" type="button" aria-label="يسار">◀</button>
             </div>
 
-            <div class="cats-strip" id="catsWrapper" style="width: 100%;">
+            <div class="cats-strip" id="catsWrapper" style="display:none; width: 100%;">
+              <div class="cats-strip-label">الفئات</div>
               <button class="cats-strip-nav" id="catsPrev" type="button" aria-label="يمين">▶</button>
               <div class="cats-strip-rail" id="topPillbar" role="group" aria-label="التصنيفات">
                 <!-- سيتم توليد الفئات هنا ديناميكياً -->
@@ -1854,10 +1859,11 @@
                 سيتم تواصل معاكم على الواتساب قبل إرسال الطلب للتأكيد عليكم — لن يتم إرسال الطلب بدون تأكيد من قبلكم
               </div>
               <div class="panel-sub" id="invoiceNote" style="display:none">يمكنك نسخ الفاتورة وإرسالها إلينا. الفاتورة تحتوي كل التفاصيل بشكل مرتب.</div>
-              <div id="afterOrderLinks" style="display:none;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px">
+              <div id="afterOrderLinks" style="display:none;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
                 <button class="btn btn-ghost" id="afterComplaintBtn" type="button">الشكاوي</button>
                 <button class="btn btn-ghost" id="afterRatingBtn" type="button">التقييم</button>
                 <button class="btn btn-ghost" id="afterOrdersBtn" type="button">طلباتي سابقة</button>
+                <button class="btn glow-gold" id="afterCustomerReviewsBtn" type="button">تجارب وتقييمات العملاء</button>
               </div>
             </form>
             <div id="checkoutCartSummary" style="max-width:520px;margin-inline:auto;display:grid;gap:10px"></div>
@@ -1945,28 +1951,23 @@
       </main>
       <footer class="footerbar">
         <div class="footerbar-inner">
-          <span style="font-size:11px;font-weight:800">
-            <span style="color:#000">BY HJY.co</span>
-          </span>
-          <div class="footer-scroller">
-            <button class="footer-nav" id="footerPrevBtn" type="button" aria-label="يمين">▶</button>
-            <div class="footer-links" id="footerLinks" data-expanded="false">
-              <button class="footer-link" type="button" data-info="المطور">المطور</button>
-              <button class="footer-link" type="button" data-info="موقعنا">موقعنا</button>
-              <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
-              <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
-              <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
-              <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
-              <button class="footer-link" type="button" data-go="orders">طلباتي السابقة</button>
-              <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
-              <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
-              <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
-              <button class="footer-link" type="button" data-info="المفضلة">المفضلة</button>
-              <button class="footer-link" type="button" data-info="التقييم">التقييم</button>
-              <button class="footer-link" type="button" data-info="الشكاوي">الشكاوي</button>
-            </div>
-            <button class="footer-nav" id="footerNextBtn" type="button" aria-label="يسار">◀</button>
-            <button class="footer-more" id="footerMoreBtn" type="button">عرض المزيد</button>
+          <div class="footer-col">
+            <span style="font-size:11px;font-weight:800;color:#000;margin-bottom:10px;">BY HJY.co</span>
+            <button class="footer-link" type="button" data-info="المطور">المطور</button>
+            <button class="footer-link" type="button" data-info="موقعنا">موقعنا</button>
+            <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
+            <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
+            <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
+            <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
+          </div>
+          <div class="footer-col" id="footerExtrasCol">
+            <button class="footer-link" type="button" data-go="orders">طلباتي السابقة</button>
+            <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
+            <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
+            <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
+            <button class="footer-link" type="button" data-info="المفضلة">المفضلة</button>
+            <button class="footer-link" type="button" data-info="التقييم">التقييم</button>
+            <button class="footer-link" type="button" data-info="الشكاوي">الشكاوي</button>
           </div>
         </div>
       </footer>
@@ -2151,8 +2152,9 @@
         afterOrderLinks: document.getElementById("afterOrderLinks"),
         afterComplaintBtn: document.getElementById("afterComplaintBtn"),
         afterRatingBtn: document.getElementById("afterRatingBtn"),
+        afterCustomerReviewsBtn: document.getElementById("afterCustomerReviewsBtn"),
         afterOrdersBtn: document.getElementById("afterOrdersBtn"),
-        footerLinks: document.getElementById("footerLinks"),
+        footerExtrasCol: document.getElementById("footerExtrasCol"),
         footerPrevBtn: document.getElementById("footerPrevBtn"),
         footerNextBtn: document.getElementById("footerNextBtn"),
         footerMoreBtn: document.getElementById("footerMoreBtn"),
@@ -2687,7 +2689,7 @@
                   </div>
                   <div style="padding:10px;display:grid;gap:4px">
                     ${title ? `<div style="font-weight:900;font-size:16px;line-height:1.35">${escapeHtml(title)}</div>` : ""}
-                    <div class="mini-note" style="direction:ltr;unicode-bidi:plaintext;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(url)}</div>
+                    <a href="${escapeHtmlAttr(url)}" target="_blank" rel="noopener noreferrer" class="btn" style="background:var(--primary-2);color:#fff;text-align:center;padding:6px;font-size:12px;margin-top:6px;">رابط الفيديو</a>
                   </div>
                 </a>
                 <div style="padding:0 10px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -3417,6 +3419,7 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
+        if (els.catsWrapper) els.catsWrapper.style.display = "";
         setPromoVisible(true);
         setStatus("");
         setCheckoutStatus("");
@@ -3432,6 +3435,8 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
+        if (els.catsWrapper) els.catsWrapper.style.display = "none";
+        if (els.topQaBar) els.topQaBar.style.display = "none";
         setPromoVisible(false);
         setCheckoutStatus("");
         setInfoStatus("");
@@ -3447,6 +3452,8 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
+        if (els.catsWrapper) els.catsWrapper.style.display = "none";
+        if (els.topQaBar) els.topQaBar.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -4048,14 +4055,20 @@
         }
 
         els.pills.innerHTML = html;
+        const catsSidebarList = document.getElementById("catsSidebarList");
+        if (catsSidebarList) catsSidebarList.innerHTML = html;
         
         // Re-attach listeners to pills because we rewrote innerHTML
-        const newPills = Array.from(els.pills.querySelectorAll(".pill[data-category]"));
+        const newPills = Array.from(document.querySelectorAll("#topPillbar .pill[data-category], #catsSidebarList .pill[data-category]"));
         for (const btn of newPills) {
           btn.addEventListener("click", () => {
             const cat = btn.getAttribute("data-category");
             if (cat) {
               setShopHashWithCategory(cat);
+              const catsSidebar = document.getElementById("catsSidebar");
+              const catsSidebarBackdrop = document.getElementById("catsSidebarBackdrop");
+              if (catsSidebar) catsSidebar.classList.remove("show");
+              if (catsSidebarBackdrop) catsSidebarBackdrop.classList.remove("show");
             }
           });
         }
@@ -4376,6 +4389,8 @@
               <div class="actions" style="margin-top:0">
                 <button class="btn btn-ghost" type="button" data-share="${escapeHtmlAttr(p.code)}">مشاركة المنتج</button>
                 <button class="btn btn-ghost" type="button" data-qa="1" style="border:1px solid #d11;color:#d11;font-weight:900">أسئلة شائعة</button>
+                <button class="btn btn-ghost" type="button" data-info="فيديوهات" style="border:1px solid var(--primary-3);color:var(--primary-3);font-weight:900">فيديوهات</button>
+                <button class="btn btn-ghost" type="button" data-info="صور" style="border:1px solid var(--primary-3);color:var(--primary-3);font-weight:900">صور</button>
               </div>
             </div>
           </div>
@@ -4846,9 +4861,9 @@
         } catch {}
       }
       function renderFooterAboutExtras() {
-        if (!(els.footerLinks instanceof HTMLElement)) return;
+        if (!(els.footerExtrasCol instanceof HTMLElement)) return;
         const existing = new Set(
-          Array.from(els.footerLinks.querySelectorAll("[data-info]"))
+          Array.from(els.footerExtrasCol.querySelectorAll("[data-info]"))
             .map((b) => normalizeAboutKey(String(b.getAttribute("data-info") ?? "")))
             .filter(Boolean)
         );
@@ -4861,11 +4876,7 @@
           btn.type = "button";
           btn.setAttribute("data-info", it.name);
           btn.textContent = it.name;
-          btn.addEventListener("click", () => {
-             isCategoriesExpanded = false;
-             updatePills();
-          });
-          els.footerLinks.appendChild(btn);
+          els.footerExtrasCol.appendChild(btn);
           existing.add(it.key);
         }
       }
@@ -4952,7 +4963,11 @@
           html += `<button class="pill" type="button" data-top-qa-file="${escapeHtmlAttr(it.name)}">${escapeHtml(it.name)}</button>`;
         }
         els.topQaRail.innerHTML = html;
-        els.topQaBar.style.display = "";
+        if (state.route === "home") {
+          els.topQaBar.style.display = "";
+        } else {
+          els.topQaBar.style.display = "none";
+        }
       }
       async function renderQa(selected) {
         const want = String(selected ?? "").trim();
@@ -5561,12 +5576,22 @@
           applyFilters();
         });
         const catsDrawerBtn = document.getElementById("catsDrawerBtn");
-        if (catsDrawerBtn instanceof HTMLElement) {
-          catsDrawerBtn.addEventListener("click", () => {
-            const wrapper = document.getElementById("catsWrapper");
-            if (wrapper) wrapper.classList.toggle("drawer-mode");
-          });
+        const catsSidebar = document.getElementById("catsSidebar");
+        const catsSidebarBackdrop = document.getElementById("catsSidebarBackdrop");
+        const catsSidebarClose = document.getElementById("catsSidebarClose");
+        
+        function openCatsSidebar() {
+          if (catsSidebar) catsSidebar.classList.add("show");
+          if (catsSidebarBackdrop) catsSidebarBackdrop.classList.add("show");
         }
+        function closeCatsSidebar() {
+          if (catsSidebar) catsSidebar.classList.remove("show");
+          if (catsSidebarBackdrop) catsSidebarBackdrop.classList.remove("show");
+        }
+
+        if (catsDrawerBtn) catsDrawerBtn.addEventListener("click", openCatsSidebar);
+        if (catsSidebarClose) catsSidebarClose.addEventListener("click", closeCatsSidebar);
+        if (catsSidebarBackdrop) catsSidebarBackdrop.addEventListener("click", closeCatsSidebar);
         
         document.getElementById("catHomeBtn")?.addEventListener("click", () => {
           setHash("home");
@@ -5614,6 +5639,7 @@
         }
         if (els.afterComplaintBtn instanceof HTMLElement) els.afterComplaintBtn.addEventListener("click", () => setHash("info=الشكاوي"));
         if (els.afterRatingBtn instanceof HTMLElement) els.afterRatingBtn.addEventListener("click", () => setHash("info=التقييم"));
+        if (els.afterCustomerReviewsBtn instanceof HTMLElement) els.afterCustomerReviewsBtn.addEventListener("click", () => setHash("info=تقييمات عملاء"));
         if (els.afterOrdersBtn instanceof HTMLElement) els.afterOrdersBtn.addEventListener("click", () => setHash("orders"));
         const handleCardsClick = (e) => {
           const t = e.target;
@@ -5977,36 +6003,24 @@
               showToast("تم النسخ", 1400);
             }
           });
-        els.footerLinks.addEventListener("click", (e) => {
+        document.body.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
           const qaBtn = t.closest("[data-qa]");
           if (qaBtn instanceof HTMLElement) return setHash("qa");
-          const go = t.getAttribute("data-go");
-          if (safeLower(go) === "home") return setHash("home");
-          if (safeLower(go) === "orders") return setHash("orders");
-          const key = t.getAttribute("data-info");
-          if (!key) return;
-          setHash(`info=${encodeURIComponent(key)}`);
+          const goBtn = t.closest("[data-go]");
+          if (goBtn instanceof HTMLElement) {
+            const go = goBtn.getAttribute("data-go");
+            if (safeLower(go) === "home") return setHash("home");
+            if (safeLower(go) === "orders") return setHash("orders");
+          }
+          const infoBtn = t.closest("[data-info]");
+          if (infoBtn instanceof HTMLElement) {
+            const key = infoBtn.getAttribute("data-info");
+            if (key) setHash(`info=${encodeURIComponent(key)}`);
+          }
         });
-        if (els.footerPrevBtn instanceof HTMLElement && els.footerLinks instanceof HTMLElement)
-          els.footerPrevBtn.addEventListener("click", () => {
-            try {
-              els.footerLinks.scrollBy({ left: -260, behavior: "smooth" });
-            } catch {}
-          });
-        if (els.footerNextBtn instanceof HTMLElement && els.footerLinks instanceof HTMLElement)
-          els.footerNextBtn.addEventListener("click", () => {
-            try {
-              els.footerLinks.scrollBy({ left: 260, behavior: "smooth" });
-            } catch {}
-          });
-        if (els.footerMoreBtn instanceof HTMLElement && els.footerLinks instanceof HTMLElement)
-          els.footerMoreBtn.addEventListener("click", () => {
-            const on = els.footerLinks.getAttribute("data-expanded") === "true";
-            els.footerLinks.setAttribute("data-expanded", on ? "false" : "true");
-            els.footerMoreBtn.textContent = on ? "عرض المزيد" : "عرض أقل";
-          });
+        // footer buttons click handling removed
         els.infoView.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;

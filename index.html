@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>HJY.co</title>
     <link rel="icon" href="logo.webp" />
     <style>
@@ -935,9 +935,16 @@
       }
       @media (max-width: 520px) {
         .cart-drawer {
-          width: min(420px, calc(100vw - 22px));
-          right: 11px;
-          bottom: 70px;
+          width: 100%;
+          max-width: 100%;
+          right: 0;
+          bottom: 0;
+          border-radius: 24px 24px 0 0;
+          max-height: 85vh;
+          transform: translateY(100%);
+        }
+        .cart-drawer[data-open="true"] {
+          transform: translateY(0);
         }
       }
       .cart-empty {
@@ -1337,24 +1344,6 @@
         .cart-button {
           padding: 12px 14px;
           font-size: 14px;
-        }
-        .cart-drawer {
-          inset: auto;
-          right: 12px;
-          left: auto;
-          bottom: calc(14px + env(safe-area-inset-bottom) + 56px);
-          top: auto;
-          width: min(420px, calc(100vw - 24px));
-          max-height: 82vh;
-          border-radius: 18px;
-          opacity: 0;
-          pointer-events: none;
-          transform: translateY(16px);
-        }
-        .cart-drawer[data-open="true"] {
-          opacity: 1;
-          pointer-events: auto;
-          transform: translateY(0);
         }
         .cart-backdrop {
           background: rgba(10, 36, 48, 0.5);
@@ -4262,19 +4251,34 @@
         els.productMeta.textContent = p.code ? `CODE: ${p.code}` : "—";
         const favOn = isFavorite(p.code);
         const disText = disTextForProduct(p);
-        const photoList = buildPhotoCandidates(p.code, p.photoList);
-        const mainSrc = photoList[0] || PLACEHOLDER_IMG;
-        let thumbs = "";
-        const thumbUrls = photoList.slice(0, 20);
-        if (thumbUrls.length > 1) {
-          for (let i = 0; i < thumbUrls.length; i++) {
-            const u = thumbUrls[i];
-            thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
-              u
-            )}" data-src-list="${escapeHtmlAttr(JSON.stringify([u]))}" data-src-idx="0" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" /></button>`;
+        const allCodes = [p.code];
+        if (Array.isArray(p.photoList)) {
+          for (const ex of p.photoList) {
+            if (ex && typeof ex === "string") allCodes.push(ex.trim());
           }
         }
-        const hasNav = photoList.length > 1;
+        
+        // Remove duplicates
+        const uniqueCodes = [...new Set(allCodes)].filter(Boolean);
+        
+        // Generate candidates per code
+        const perCodeCandidates = uniqueCodes.map(c => buildPhotoCandidates(c, []));
+        
+        const mainSrc = perCodeCandidates.length > 0 && perCodeCandidates[0].length > 0 ? perCodeCandidates[0][0] : PLACEHOLDER_IMG;
+        const mainList = perCodeCandidates.length > 0 ? perCodeCandidates[0] : [PLACEHOLDER_IMG];
+        
+        let thumbs = "";
+        if (perCodeCandidates.length > 1) {
+          for (let i = 0; i < perCodeCandidates.length; i++) {
+            const list = perCodeCandidates[i];
+            if (list.length === 0) continue;
+            const u = list[0];
+            thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
+              u
+            )}" data-src-list="${escapeHtmlAttr(JSON.stringify(list))}" data-src-idx="0" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" /></button>`;
+          }
+        }
+        const hasNav = perCodeCandidates.length > 1;
         const btn =
           p.isOut
             ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
@@ -4344,8 +4348,9 @@
                 <img
                   id="productMainImg"
                   src="${escapeHtmlAttr(mainSrc)}"
-                  data-src-list="${escapeHtmlAttr(JSON.stringify(photoList))}"
+                  data-src-list="${escapeHtmlAttr(JSON.stringify(mainList))}"
                   data-src-idx="0"
+                  data-thumb-idx="0"
                   alt="${escapeHtmlAttr(p.name)}"
                   loading="eager"
                   decoding="async"
@@ -5531,6 +5536,9 @@
             updatePills();
             if (cat === "HOME") setHash("home");
             else setShopHashWithCategory(state.category);
+            if (els.catsWrapper.classList.contains("drawer-mode")) {
+              els.catsWrapper.classList.remove("drawer-mode");
+            }
             applyFilters();
           });
         }
@@ -5667,16 +5675,13 @@
           if (stepBtn instanceof HTMLElement) {
             const img = document.getElementById("productMainImg");
             if (!(img instanceof HTMLImageElement)) return;
-            try {
-              const raw = img.getAttribute("data-src-list");
-              const list = raw ? JSON.parse(raw) : [];
-              const cur = Number(img.getAttribute("data-src-idx") || "0");
-              const step = Number(stepBtn.getAttribute("data-gallery-step") || "0");
-              if (!Array.isArray(list) || list.length === 0) return;
-              const next = ((cur + step) % list.length + list.length) % list.length;
-              img.setAttribute("data-src-idx", String(next));
-              img.src = String(list[next]);
-            } catch {}
+            const step = Number(stepBtn.getAttribute("data-gallery-step") || "0");
+            const curIdx = Number(img.getAttribute("data-thumb-idx") || "0");
+            const thumbs = els.productDetails.querySelectorAll(".gallery-thumb");
+            if (thumbs.length === 0) return;
+            const nextIdx = ((curIdx + step) % thumbs.length + thumbs.length) % thumbs.length;
+            const nextThumb = Array.from(thumbs).find(t => Number(t.getAttribute("data-gallery-idx")) === nextIdx);
+            if (nextThumb instanceof HTMLElement) nextThumb.click();
             return;
           }
           const g = t.closest("[data-gallery]");
@@ -5685,7 +5690,12 @@
             const img = document.getElementById("productMainImg");
             if (img instanceof HTMLImageElement && url) {
               const idx = Number(g.getAttribute("data-gallery-idx") || "0");
-              img.setAttribute("data-src-idx", String(Number.isFinite(idx) ? idx : 0));
+              const thumbImg = g.querySelector("img");
+              if (thumbImg) {
+                 img.setAttribute("data-src-list", thumbImg.getAttribute("data-src-list") || "[]");
+              }
+              img.setAttribute("data-src-idx", "0");
+              img.setAttribute("data-thumb-idx", String(Number.isFinite(idx) ? idx : 0));
               img.src = url;
             }
           }

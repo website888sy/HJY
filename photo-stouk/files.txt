@@ -1,0 +1,6 @@
+# ضع هنا قائمة الصور داخل مجلد photo-stouk
+# كل سطر يمثل مسار ملف صورة (نسبي) داخل photo-stouk
+# أمثلة:
+# album-1/img1.jpg
+# album-1/img2.webp
+# album-2/photo.png

@@ -1136,13 +1136,33 @@
         gap: 10px;
         align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+      }
+      .footer-scroller {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex: 1;
+        min-width: 0;
+        justify-content: flex-end;
       }
       .footer-links {
         display: flex;
         gap: 8px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        scroll-behavior: smooth;
+        min-width: 0;
+      }
+      .footer-links::-webkit-scrollbar {
+        display: none;
+      }
+      .footer-links[data-expanded="true"] {
+        flex-wrap: wrap;
+        overflow: visible;
       }
       .footer-link {
         border: 1px solid var(--border);
@@ -1152,6 +1172,68 @@
         cursor: pointer;
         font-size: 12px;
         font-weight: 900;
+      }
+      .footer-nav {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.65);
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 900;
+        flex: 0 0 auto;
+      }
+      .footer-more {
+        border: 1px solid rgba(10, 160, 234, 0.35);
+        background: rgba(10, 160, 234, 0.12);
+        color: var(--promo);
+        padding: 8px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 900;
+        flex: 0 0 auto;
+        white-space: nowrap;
+      }
+      .qa-strip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid #d11;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.7);
+        overflow: hidden;
+      }
+      .qa-strip-label {
+        font-weight: 900;
+        color: #d11;
+        white-space: nowrap;
+        flex: 0 0 auto;
+      }
+      .qa-strip-rail {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        scroll-behavior: smooth;
+        min-width: 0;
+        flex: 1;
+      }
+      .qa-strip-rail::-webkit-scrollbar {
+        display: none;
+      }
+      .qa-strip-nav {
+        border: 1px solid #d11;
+        background: #fff;
+        color: #d11;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 900;
+        flex: 0 0 auto;
       }
       .toast {
         position: fixed;
@@ -1376,22 +1458,29 @@
             </select>
           </div>
         </div>
-        <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px">
-          <div id="catsWrapper" style="display:flex; gap:10px; align-items:flex-start; width:100%; overflow-x:auto; transition: 0.3s ease;">
-            <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px; height: 35px;">
-              <span style="font-size: 16px;">☰</span> الفئات
-            </button>
-            <div class="pillbar" id="topPillbar" role="group" aria-label="التصنيفات" style="flex:1;">
-              <!-- سيتم توليد الفئات هنا ديناميكياً -->
+        <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px; flex-direction: column; align-items: stretch; gap: 10px">
+          <div style="display:flex; gap:10px; align-items:flex-start; width:100%">
+            <div id="catsWrapper" style="display:flex; gap:10px; align-items:flex-start; width:100%; overflow-x:auto; transition: 0.3s ease;">
+              <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px; height: 35px;">
+                <span style="font-size: 16px;">☰</span> الفئات
+              </button>
+              <div class="pillbar" id="topPillbar" role="group" aria-label="التصنيفات" style="flex:1;">
+                <!-- سيتم توليد الفئات هنا ديناميكياً -->
+              </div>
+            </div>
+            <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+              <div class="pager" aria-label="التنقل بين الصفحات">
+                <button id="prevPage" type="button" aria-label="السابق">▶</button>
+                <button id="nextPage" type="button" aria-label="التالي">◀</button>
+              </div>
+              <p class="panel-sub" id="hint" style="margin: 0; max-width: 360px"></p>
             </div>
           </div>
-          <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
-            <button class="btn btn-ghost" id="productsQaTopBtn" type="button" style="border:1px solid #d11; color:#d11; font-weight:bold;">أسئلة شائعة للمنتجات</button>
-            <div class="pager" aria-label="التنقل بين الصفحات">
-              <button id="prevPage" type="button" aria-label="السابق">▶</button>
-              <button id="nextPage" type="button" aria-label="التالي">◀</button>
-            </div>
-            <p class="panel-sub" id="hint" style="margin: 0; max-width: 360px"></p>
+          <div class="qa-strip" id="topQaBar" style="display:none">
+            <div class="qa-strip-label">أسئلة شائعة</div>
+            <button class="qa-strip-nav" id="topQaPrev" type="button" aria-label="يمين">▶</button>
+            <div class="qa-strip-rail" id="topQaRail" role="group" aria-label="أزرار أسئلة شائعة"></div>
+            <button class="qa-strip-nav" id="topQaNext" type="button" aria-label="يسار">◀</button>
           </div>
         </div>
       </header>
@@ -1703,20 +1792,6 @@
                   <button class="field-clear-out" type="button" data-clear="orderNotesInput" aria-label="حذف" title="حذف">🗑</button>
                 </div>
               </label>
-              <label style="display:grid;gap:6px">
-                <span style="font-weight:800">كود الخصم <span class="mini-note">اختياري</span></span>
-                <div style="display:flex;gap:10px;align-items:center">
-                  <div class="field-row" style="flex:1">
-                    <input
-                      id="discountCodeInput"
-                      type="text"
-                      placeholder="ضع هنا كود الخصم إن كنت تمتلكه"
-                      style="padding:12px;border:1px solid var(--border);border-radius:12px"
-                    />
-                  </div>
-                  <button class="field-clear-out" type="button" data-clear="discountCodeInput" aria-label="حذف" title="حذف">🗑</button>
-                </div>
-              </label>
               <div style="display:flex;gap:10px;flex-wrap:wrap">
                 <button class="btn btn-primary" id="confirmOrderBtn" type="submit" style="flex:1">إتمام الطلب</button>
                 <button class="btn btn-ghost" id="copyInvoiceBtn" type="button" style="flex:1;display:none">نسخ الفاتورة</button>
@@ -1819,20 +1894,25 @@
           <span style="font-size:11px;font-weight:800">
             <span style="color:#000">BY HJY.co</span>
           </span>
-          <div class="footer-links" id="footerLinks">
-            <button class="footer-link" type="button" data-info="المطور">المطور</button>
-            <button class="footer-link" type="button" data-info="موقعنا">موقعنا</button>
-            <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
-            <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
-            <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
-            <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
-            <button class="footer-link" type="button" data-go="orders">طلباتي السابقة</button>
-            <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
-            <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
-            <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
-            <button class="footer-link" type="button" data-info="المفضلة">المفضلة</button>
-            <button class="footer-link" type="button" data-info="التقييم">التقييم</button>
-            <button class="footer-link" type="button" data-info="الشكاوي">الشكاوي</button>
+          <div class="footer-scroller">
+            <button class="footer-nav" id="footerPrevBtn" type="button" aria-label="يمين">▶</button>
+            <div class="footer-links" id="footerLinks" data-expanded="false">
+              <button class="footer-link" type="button" data-info="المطور">المطور</button>
+              <button class="footer-link" type="button" data-info="موقعنا">موقعنا</button>
+              <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
+              <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
+              <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
+              <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
+              <button class="footer-link" type="button" data-go="orders">طلباتي السابقة</button>
+              <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
+              <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
+              <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
+              <button class="footer-link" type="button" data-info="المفضلة">المفضلة</button>
+              <button class="footer-link" type="button" data-info="التقييم">التقييم</button>
+              <button class="footer-link" type="button" data-info="الشكاوي">الشكاوي</button>
+            </div>
+            <button class="footer-nav" id="footerNextBtn" type="button" aria-label="يسار">◀</button>
+            <button class="footer-more" id="footerMoreBtn" type="button">عرض المزيد</button>
           </div>
         </div>
       </footer>
@@ -1918,6 +1998,10 @@
         nextPageBottom: document.getElementById("nextPageBottom"),
         hint: document.getElementById("hint"),
         productsQaTopBtn: document.getElementById("productsQaTopBtn"),
+        topQaBar: document.getElementById("topQaBar"),
+        topQaRail: document.getElementById("topQaRail"),
+        topQaPrev: document.getElementById("topQaPrev"),
+        topQaNext: document.getElementById("topQaNext"),
         homeTopBtn: document.getElementById("homeTopBtn"),
         resultsMeta: document.getElementById("resultsMeta"),
         rangeText: document.getElementById("rangeText"),
@@ -1996,6 +2080,9 @@
         afterRatingBtn: document.getElementById("afterRatingBtn"),
         afterOrdersBtn: document.getElementById("afterOrdersBtn"),
         footerLinks: document.getElementById("footerLinks"),
+        footerPrevBtn: document.getElementById("footerPrevBtn"),
+        footerNextBtn: document.getElementById("footerNextBtn"),
+        footerMoreBtn: document.getElementById("footerMoreBtn"),
         infoTitle: document.getElementById("infoTitle"),
         infoMeta: document.getElementById("infoMeta"),
         infoStatus: document.getElementById("infoStatus"),
@@ -2351,6 +2438,138 @@
         }
 
         return formatAboutTextPlain(src);
+      }
+      function extractYoutubeId(url) {
+        const u = String(url ?? "").trim();
+        if (!u) return "";
+        try {
+          const parsed = new URL(u);
+          const host = safeLower(parsed.hostname || "");
+          if (host === "youtu.be") return String(parsed.pathname || "").replace(/^\//, "").trim();
+          if (host.endsWith("youtube.com") || host.endsWith("m.youtube.com")) {
+            if (parsed.pathname === "/watch") return String(parsed.searchParams.get("v") || "").trim();
+            const m1 = String(parsed.pathname || "").match(/^\/shorts\/([^/?#]+)/);
+            if (m1) return String(m1[1] || "").trim();
+            const m2 = String(parsed.pathname || "").match(/^\/embed\/([^/?#]+)/);
+            if (m2) return String(m2[1] || "").trim();
+          }
+        } catch {}
+        return "";
+      }
+      function renderVideoThumbsFromText(raw) {
+        const src = String(raw ?? "").replace(/\r/g, "").trim();
+        if (!src) return "";
+        const lines = src.split("\n").map((l) => String(l ?? "").trim()).filter(Boolean);
+        let html = `<div style="display:grid;gap:10px">`;
+        html += `<div class="panel-sub" style="font-weight:900;color:var(--text)">فيديوهات</div>`;
+        html += `<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">`;
+        for (const ln of lines) {
+          const m = ln.match(/https?:\/\/[^\s]+/i);
+          const url = m ? String(m[0]).trim() : "";
+          if (!url) continue;
+          const yt = extractYoutubeId(url);
+          const thumb = yt ? `https://img.youtube.com/vi/${encodeURIComponent(yt)}/hqdefault.jpg` : "";
+          const title = ln === url ? "" : ln.replace(url, "").trim();
+          html += `<a href="${escapeHtmlAttr(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">
+              <div style="border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.7);overflow:hidden">
+                <div style="aspect-ratio:16/9;background:#000;display:grid;place-items:center;position:relative">
+                  ${
+                    thumb
+                      ? `<img src="${escapeHtmlAttr(thumb)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()" />`
+                      : `<div style="color:#fff;font-weight:900;opacity:0.9">VIDEO</div>`
+                  }
+                  <div style="position:absolute;inset-inline-start:10px;inset-block-end:10px;background:rgba(0,0,0,0.6);color:#fff;border-radius:999px;padding:6px 10px;font-weight:900;font-size:12px">تشغيل</div>
+                </div>
+                <div style="padding:10px;display:grid;gap:4px">
+                  ${title ? `<div style="font-weight:900">${escapeHtml(title)}</div>` : ""}
+                  <div class="mini-note" style="direction:ltr;unicode-bidi:plaintext;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(url)}</div>
+                </div>
+              </div>
+            </a>`;
+        }
+        html += `</div></div>`;
+        return html;
+      }
+      async function loadPhotoStoukIndex() {
+        const cacheKey = "hjy_photo_stouk_files_v1";
+        try {
+          const raw = localStorage.getItem(cacheKey);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length) return parsed;
+          }
+        } catch {}
+        try {
+          const res = await fetchTextCached("photo-stouk/files.txt", 30 * 60 * 1000);
+          if (res && res.text) {
+            const files = String(res.text)
+              .split(/\r?\n/)
+              .map((l) => l.trim())
+              .filter((l) => l.length > 0 && !l.startsWith("#"))
+              .map((l) => (l.startsWith("photo-stouk/") ? l : `photo-stouk/${l}`))
+              .filter((p) => {
+                const ext = safeLower(p.split(".").pop() || "");
+                return CONFIG.PHOTO_EXTS.includes(ext);
+              });
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(files));
+            } catch {}
+            return files;
+          }
+        } catch {}
+        try {
+          const list = await listGithubFilesRecursive("photo-stouk", CONFIG.PHOTO_EXTS, 4000);
+          const files = list.map((p) => String(p ?? "").trim().replace(/\\/g, "/")).filter(Boolean);
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(files));
+          } catch {}
+          return files;
+        } catch {}
+        return [];
+      }
+      function renderPhotoStoukUI(introText) {
+        const intro = String(introText ?? "").trim();
+        const files = Array.isArray(state.photoStoukFiles) ? state.photoStoukFiles : [];
+        let html = `<div style="display:grid;gap:10px">`;
+        if (intro) html += `<div class="panel-sub">${formatAboutText(intro)}</div>`;
+        if (!files.length) {
+          html += `<div class="panel-sub" style="font-weight:900;color:#d11">لا يوجد صور بعد داخل مجلد photo-stouk أو ملف files.txt فارغ.</div>`;
+          html += `</div>`;
+          return html;
+        }
+        const albumsMap = new Map();
+        for (const p of files) {
+          const s = String(p ?? "").replace(/\\/g, "/");
+          const parts = s.split("/").filter(Boolean);
+          const album = parts.length >= 3 ? parts[1] : "بدون تصنيف";
+          if (!albumsMap.has(album)) albumsMap.set(album, []);
+          albumsMap.get(album).push(s);
+        }
+        const albums = Array.from(albumsMap.keys()).sort((a, b) => a.localeCompare(b, "ar"));
+        if (!state.photoStoukAlbum || !albumsMap.has(state.photoStoukAlbum)) state.photoStoukAlbum = albums[0];
+        const selected = String(state.photoStoukAlbum || albums[0] || "").trim();
+        let pills = "";
+        for (const a of albums) {
+          const on = a === selected;
+          pills += `<button class="pill" type="button" data-photo-stouk-album="${escapeHtmlAttr(a)}" aria-pressed="${on ? "true" : "false"}">${escapeHtml(
+            a
+          )}</button>`;
+        }
+        html += `<div class="pillbar" id="photoStoukAlbums" role="group" aria-label="ألبومات الصور" style="padding:0">${pills}</div>`;
+        const list = albumsMap.get(selected) || [];
+        let grid = "";
+        for (const u of list.slice(0, 200)) {
+          grid += `<button type="button" data-photo-stouk-photo="${escapeHtmlAttr(u)}" style="border:0;padding:0;background:transparent;cursor:pointer">
+              <div class="thumb" style="aspect-ratio:1/1;border-radius:14px;background:#fff">
+                <img src="${escapeHtmlAttr(u)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" data-src-list="${escapeHtmlAttr(
+            JSON.stringify([u])
+          )}" data-src-idx="0" />
+              </div>
+            </button>`;
+        }
+        html += `<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">${grid}</div>`;
+        html += `</div>`;
+        return html;
       }
       function escapeHtmlAttr(s) {
         return escapeHtml(s).replace(/`/g, "&#96;");
@@ -3407,7 +3626,7 @@
                  <div style="direction:ltr;unicode-bidi:plaintext">قبل: $${escapeHtml(formatMoney(qty * baseUnit))} — بعد: $${escapeHtml(formatMoney(line))}</div>
                </div>`
             : "";
-          const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
+          const cand = buildPhotoCandidates(p.code, Array.isArray(p.photoList) ? p.photoList : []);
           const src = cand[0] || PLACEHOLDER_IMG;
           html += `
             <div class="cart-item">
@@ -3494,7 +3713,7 @@
           else if (disNote) disLines.push(disNote);
           if (unit !== base && base > 0) disLines.push(`$${formatMoney(line)} بدل $${formatMoney(baseLine)}`);
           const disText = disLines.filter((x) => String(x ?? "").trim().length > 0).join("\n");
-          const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
+          const cand = buildPhotoCandidates(p.code, Array.isArray(p.photoList) ? p.photoList : []);
           const src = cand[0] || PLACEHOLDER_IMG;
           html += `
             <div class="cart-item">
@@ -3618,6 +3837,10 @@
           btn.addEventListener("click", () => {
             const cat = btn.getAttribute("data-category");
             if (cat) {
+              if (isCategoriesExpanded) {
+                isCategoriesExpanded = false;
+                updatePills();
+              }
               setShopHashWithCategory(cat);
             }
           });
@@ -3701,7 +3924,7 @@
         const view = state.viewMode;
         const favOn = isFavorite(p.code);
         const isHot = isHotCode(p.code);
-        const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
+        const cand = buildPhotoCandidates(p.code, Array.isArray(p.photoList) ? p.photoList : []);
         const src = cand[0] || PLACEHOLDER_IMG;
         const disText = disTextForProduct(p);
         const showDis = (view === "grid" || view === "list") && disText;
@@ -3805,8 +4028,13 @@
         const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(c));
         if (!p) {
           els.productTitle.textContent = "تفاصيل المنتج";
-          els.productMeta.textContent = "غير موجود";
-          els.productDetails.innerHTML = "";
+          if (Array.isArray(state.allProducts) && state.allProducts.length === 0 && c) {
+            els.productMeta.textContent = `CODE: ${c}`;
+            els.productDetails.innerHTML = `<div style="padding:14px"><div class="status" aria-hidden="false">جاري تحميل المنتج...</div></div>`;
+          } else {
+            els.productMeta.textContent = "غير موجود";
+            els.productDetails.innerHTML = "";
+          }
           return;
         }
         els.productTitle.textContent = p.name || "تفاصيل المنتج";
@@ -3925,6 +4153,7 @@
               <div class="actions" style="margin-top:4px">${btn}</div>
               <div class="actions" style="margin-top:0">
                 <button class="btn btn-ghost" type="button" data-share="${escapeHtmlAttr(p.code)}">مشاركة المنتج</button>
+                <button class="btn btn-ghost" type="button" data-qa="1" style="border:1px solid #d11;color:#d11;font-weight:900">أسئلة شائعة</button>
               </div>
             </div>
           </div>
@@ -4098,9 +4327,6 @@
         }
         lines.push(`الدفع: ${String(details.payCurrency || "—")}`);
         lines.push(`ملاحظات: ${String(details.notes || "—")}`);
-        if (details.discountCode) {
-          lines.push(`كود الخصم: ${details.discountCode}`);
-        }
         lines.push(``);
         lines.push(`----------------`);
         lines.push(`المشتريات:`);
@@ -4491,6 +4717,21 @@
         }
         els.qaButtons.innerHTML = html;
       }
+      function renderTopQaBarButtons() {
+        if (!(els.topQaBar instanceof HTMLElement) || !(els.topQaRail instanceof HTMLElement)) return;
+        const list = Array.isArray(state.qaFiles) ? state.qaFiles : [];
+        if (!list.length) {
+          els.topQaBar.style.display = "none";
+          els.topQaRail.innerHTML = "";
+          return;
+        }
+        let html = "";
+        for (const it of list) {
+          html += `<button class="pill" type="button" data-top-qa-file="${escapeHtmlAttr(it.name)}">${escapeHtml(it.name)}</button>`;
+        }
+        els.topQaRail.innerHTML = html;
+        els.topQaBar.style.display = "";
+      }
       async function renderQa(selected) {
         const want = String(selected ?? "").trim();
         if (want) state.qaSelected = want;
@@ -4524,6 +4765,7 @@
             els.qaText.innerHTML = formatAboutText(res.text);
           }
           setQaStatus("", false);
+          renderTopQaBarButtons();
         } catch {
           setQaStatus("تعذر قراءة ملف QA.", true);
           if (els.qaText) els.qaText.textContent = "";
@@ -4915,6 +5157,20 @@
           els.infoText.innerHTML = `${formatAboutText(content)}${buttons}`;
           return;
         }
+        if (normalizeAboutKey(k) === normalizeAboutKey("فيديوهات")) {
+          els.infoText.innerHTML = renderVideoThumbsFromText(content);
+          return;
+        }
+        if (normalizeAboutKey(k) === normalizeAboutKey("صور")) {
+          try {
+            state.photoStoukFiles = await loadPhotoStoukIndex();
+          } catch {
+            state.photoStoukFiles = [];
+          }
+          state.photoStoukIntro = content;
+          els.infoText.innerHTML = renderPhotoStoukUI(content);
+          return;
+        }
         els.infoText.innerHTML = formatAboutText(content);
         if (normalizeAboutKey(k) === normalizeAboutKey("تقييمات عملاء") || normalizeAboutKey(k) === normalizeAboutKey("تقييمات العملاء")) {
           try {
@@ -5138,6 +5394,8 @@
         els.productDetails.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
+          const qaBtn = t.closest("[data-qa]");
+          if (qaBtn instanceof HTMLElement) return setHash("qa");
           const fav = t.closest("[data-fav]");
           if (fav instanceof HTMLElement) {
             const code = fav.getAttribute("data-fav");
@@ -5373,6 +5631,28 @@
         els.backFromInfoBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
         if (els.homeTopBtn instanceof HTMLElement) els.homeTopBtn.addEventListener("click", () => setHash("home"));
         if (els.productsQaTopBtn instanceof HTMLElement) els.productsQaTopBtn.addEventListener("click", () => setHash("qa"));
+        if (els.topQaRail instanceof HTMLElement)
+          els.topQaRail.addEventListener("click", (e) => {
+            const t = e.target;
+            if (!(t instanceof HTMLElement)) return;
+            const b = t.closest("[data-top-qa-file]");
+            if (!(b instanceof HTMLElement)) return;
+            const name = String(b.getAttribute("data-top-qa-file") ?? "").trim();
+            if (!name) return;
+            setHash(`qa=${encodeURIComponent(name)}`);
+          });
+        if (els.topQaPrev instanceof HTMLElement && els.topQaRail instanceof HTMLElement)
+          els.topQaPrev.addEventListener("click", () => {
+            try {
+              els.topQaRail.scrollBy({ left: -240, behavior: "smooth" });
+            } catch {}
+          });
+        if (els.topQaNext instanceof HTMLElement && els.topQaRail instanceof HTMLElement)
+          els.topQaNext.addEventListener("click", () => {
+            try {
+              els.topQaRail.scrollBy({ left: 240, behavior: "smooth" });
+            } catch {}
+          });
         if (els.backFromQaBtn instanceof HTMLElement)
           els.backFromQaBtn.addEventListener("click", () => setShopHashWithCategory(state.category === "HOME" ? "ALL" : state.category));
         if (els.backFromQaBtnBottom instanceof HTMLElement)
@@ -5454,6 +5734,24 @@
           if (!key) return;
           setHash(`info=${encodeURIComponent(key)}`);
         });
+        if (els.footerPrevBtn instanceof HTMLElement && els.footerLinks instanceof HTMLElement)
+          els.footerPrevBtn.addEventListener("click", () => {
+            try {
+              els.footerLinks.scrollBy({ left: -260, behavior: "smooth" });
+            } catch {}
+          });
+        if (els.footerNextBtn instanceof HTMLElement && els.footerLinks instanceof HTMLElement)
+          els.footerNextBtn.addEventListener("click", () => {
+            try {
+              els.footerLinks.scrollBy({ left: 260, behavior: "smooth" });
+            } catch {}
+          });
+        if (els.footerMoreBtn instanceof HTMLElement && els.footerLinks instanceof HTMLElement)
+          els.footerMoreBtn.addEventListener("click", () => {
+            const on = els.footerLinks.getAttribute("data-expanded") === "true";
+            els.footerLinks.setAttribute("data-expanded", on ? "false" : "true");
+            els.footerMoreBtn.textContent = on ? "عرض المزيد" : "عرض أقل";
+          });
         els.infoView.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
@@ -5473,6 +5771,20 @@
             const name = String(inlineQaBtn.getAttribute("data-inline-qa-file") ?? "").trim();
             if (!name) return;
             renderInlineQa(name);
+            return;
+          }
+          const alb = t.closest("[data-photo-stouk-album]");
+          if (alb instanceof HTMLElement) {
+            const name = String(alb.getAttribute("data-photo-stouk-album") ?? "").trim();
+            if (!name) return;
+            state.photoStoukAlbum = name;
+            els.infoText.innerHTML = renderPhotoStoukUI(state.photoStoukIntro);
+            return;
+          }
+          const ph = t.closest("[data-photo-stouk-photo]");
+          if (ph instanceof HTMLElement) {
+            const src = String(ph.getAttribute("data-photo-stouk-photo") ?? "").trim();
+            if (src) openImgModal(src);
             return;
           }
           const fav = t.closest("[data-fav]");
@@ -5637,7 +5949,6 @@
           }
           const payCurrency = els.paySypInput.checked ? "سوري" : "الدولار";
           const notes = String(els.orderNotesInput.value ?? "").trim();
-          const discountCode = String(document.getElementById("discountCodeInput")?.value ?? "").trim();
           const invoiceDetails = {
             phone,
             gov,
@@ -5653,7 +5964,6 @@
             timeRange,
             payCurrency,
             notes,
-            discountCode,
           };
           const invoice = buildInvoiceText(invoiceDetails);
           state.lastInvoiceText = invoice;
@@ -5710,6 +6020,38 @@
             img.src = PLACEHOLDER_IMG;
             return;
           }
+          let retryIdx = Number(img.getAttribute("data-src-retry-idx") || "-1");
+          let retry = Number(img.getAttribute("data-src-retry") || "0");
+          if (retryIdx !== idx) {
+            retryIdx = idx;
+            retry = 0;
+            img.setAttribute("data-src-retry-idx", String(idx));
+            img.setAttribute("data-src-retry", "0");
+          }
+          if (retry < 2) {
+            img.setAttribute("data-src-retry", String(retry + 1));
+            const host =
+              img.closest(".thumb") ||
+              img.closest(".cart-thumb") ||
+              img.closest(".gallery-thumb") ||
+              img.closest(".img-modal-card") ||
+              img.parentElement;
+            if (host instanceof HTMLElement) host.setAttribute("data-img-state", "loading");
+            const cur = String(list[idx] || "");
+            if (cur) {
+              const clean = cur.replace(/[?&]r=\d+/g, "");
+              const sep = clean.includes("?") ? "&" : "?";
+              const busted = `${clean}${sep}r=${Date.now()}`;
+              setTimeout(() => {
+                try {
+                  if (img.getAttribute("data-src-idx") === String(idx)) img.src = busted;
+                } catch {}
+              }, 450 + retry * 650);
+              return;
+            }
+          }
+          img.setAttribute("data-src-retry", "0");
+          img.setAttribute("data-src-retry-idx", String(idx));
           const next = Math.max(0, idx + 1);
           if (next >= list.length) {
             img.onerror = null;
@@ -5717,6 +6059,7 @@
             return;
           }
           img.setAttribute("data-src-idx", String(next));
+          img.setAttribute("data-src-retry-idx", String(next));
           img.src = String(list[next]);
         } catch {
           try {
@@ -5853,8 +6196,10 @@
         .then(() => renderFooterAboutExtras())
         .catch(() => {});
       if (!location.hash) setHash("home");
-      else applyHashRoute();
       loadPromoText().then(() => setPromoVisible(String(location.hash || "").replace(/^#/, "").trim() === "" || safeLower(String(location.hash || "")).includes("home")));
+      loadQaIndex()
+        .then(() => renderTopQaBarButtons())
+        .catch(() => {});
       loadProducts();
     </script>
   </body>

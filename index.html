@@ -31,6 +31,7 @@
         font-family: Arial, Helvetica, sans-serif;
         background: var(--bg);
         color: var(--text);
+        overflow-x: hidden;
       }
       a {
         color: inherit;
@@ -1234,6 +1235,30 @@
         cursor: pointer;
         font-weight: 900;
         flex: 0 0 auto;
+      }
+      @media (max-width: 700px) {
+        .footerbar-inner {
+          flex-wrap: wrap;
+          align-items: flex-start;
+        }
+        .footer-scroller {
+          width: 100%;
+          justify-content: flex-start;
+        }
+        .footer-more {
+          margin-inline-start: auto;
+        }
+        .qa-strip {
+          padding: 8px 10px;
+          gap: 8px;
+        }
+        .qa-strip-label {
+          display: none;
+        }
+        .qa-strip-nav {
+          width: 30px;
+          height: 30px;
+        }
       }
       .toast {
         position: fixed;
@@ -2559,6 +2584,88 @@
         }
         html += `</div>`;
         return html;
+      }
+      function parseVideosCsvText(csvText) {
+        const t = String(csvText ?? "").trim();
+        if (!t) return [];
+        const table = parseCsvText(t);
+        const headers = Array.isArray(table.headers) ? table.headers : [];
+        const rows = Array.isArray(table.rows) ? table.rows : [];
+        if (!headers.length || !rows.length) return [];
+        const findCol = (opts) => {
+          const list = Array.isArray(opts) ? opts : [];
+          for (let i = 0; i < headers.length; i++) {
+            const h = safeLower(String(headers[i] ?? "").trim());
+            for (const o of list) {
+              const k = safeLower(String(o ?? "").trim());
+              if (!k) continue;
+              if (h === k) return i;
+              if (h.includes(k)) return i;
+            }
+          }
+          return -1;
+        };
+        const idxName = findCol(["name", "title", "video", "اسم", "عنوان"]);
+        const idxLink = findCol(["link", "url", "رابط", "لينك"]);
+        if (idxLink < 0) return [];
+        const out = [];
+        for (const r of rows) {
+          const cols = Array.isArray(r) ? r : [];
+          const url = String(cols[idxLink] ?? "").trim();
+          if (!url) continue;
+          const title = idxName >= 0 ? String(cols[idxName] ?? "").trim() : "";
+          out.push({ title, url });
+        }
+        return out;
+      }
+      function renderVideosSection(introText) {
+        const intro = String(introText ?? "").trim();
+        const q = safeLower(String(state.videosQuery ?? "").trim());
+        const list = Array.isArray(state.videosItems) ? state.videosItems : [];
+        const items = q ? list.filter((x) => safeLower(`${x?.title ?? ""} ${x?.url ?? ""}`).includes(q)) : list;
+        const search = `<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div class="search" style="flex:1;min-width:220px;padding:8px 10px">
+              <input id="videosSearchInput" class="search-input" placeholder="بحث عن فيديو..." value="${escapeHtmlAttr(
+                String(state.videosQuery ?? "")
+              )}" />
+            </div>
+            <button class="btn btn-ghost" type="button" data-videos-clear="1">مسح</button>
+          </div>`;
+        let cards = `<div class="panel-sub" style="font-weight:900;color:#d11">لا يوجد عناصر.</div>`;
+        if (items.length) {
+          let grid = `<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">`;
+          for (const it of items) {
+            const url = String(it?.url ?? "").trim();
+            if (!url) continue;
+            const title = String(it?.title ?? "").trim();
+            const yt = extractYoutubeId(url);
+            const thumb = yt ? `https://img.youtube.com/vi/${encodeURIComponent(yt)}/hqdefault.jpg` : "";
+            grid += `<div style="border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.7);overflow:hidden;display:grid">
+                <a href="${escapeHtmlAttr(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">
+                  <div style="aspect-ratio:16/9;background:#000;display:grid;place-items:center;position:relative">
+                    ${
+                      thumb
+                        ? `<img src="${escapeHtmlAttr(thumb)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()" />`
+                        : `<div style="color:#fff;font-weight:900;opacity:0.9">VIDEO</div>`
+                    }
+                    <div style="position:absolute;inset-inline-start:10px;inset-block-end:10px;background:rgba(0,0,0,0.6);color:#fff;border-radius:999px;padding:6px 10px;font-weight:900;font-size:12px">تشغيل</div>
+                  </div>
+                  <div style="padding:10px;display:grid;gap:4px">
+                    ${title ? `<div style="font-weight:900;font-size:16px;line-height:1.35">${escapeHtml(title)}</div>` : ""}
+                    <div class="mini-note" style="direction:ltr;unicode-bidi:plaintext;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(url)}</div>
+                  </div>
+                </a>
+                <div style="padding:0 10px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <a class="btn btn-ghost" href="${escapeHtmlAttr(url)}" target="_blank" rel="noopener noreferrer" style="flex:1;text-align:center">فتح</a>
+                  <button class="btn btn-ghost" type="button" data-video-copy="${escapeHtmlAttr(url)}" style="flex:1">نسخ الرابط</button>
+                </div>
+              </div>`;
+          }
+          grid += `</div>`;
+          cards = grid;
+        }
+        const introHtml = intro ? `<div class="panel-sub">${formatAboutText(intro)}</div>` : "";
+        return `<div style="display:grid;gap:10px">${introHtml}${search}${cards}</div>`;
       }
       async function loadPhotoStoukIndex() {
         const cacheKey = "hjy_photo_stouk_files_v1";
@@ -4120,7 +4227,7 @@
             const u = thumbUrls[i];
             thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
               u
-            )}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentElement.remove()" /></button>`;
+            )}" data-src-list="${escapeHtmlAttr(JSON.stringify([u]))}" data-src-idx="0" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" /></button>`;
           }
         }
         const hasNav = photoList.length > 1;
@@ -5228,13 +5335,18 @@
           return;
         }
         if (normalizeAboutKey(k) === normalizeAboutKey("فيديوهات")) {
-          let cards = "";
+          let csvText = "";
           try {
             const csvRes = await fetchTextCached("about/فيديوهات.csv", 10 * 60 * 1000);
-            if (csvRes && csvRes.text) cards = renderVideoCardsFromCsvText(csvRes.text);
+            if (csvRes && csvRes.text) csvText = String(csvRes.text ?? "");
           } catch {}
-          const intro = content ? `<div class="panel-sub">${formatAboutText(content)}</div>` : "";
-          els.infoText.innerHTML = `<div style="display:grid;gap:10px">${intro}${cards || `<div class="panel-sub" style="font-weight:900;color:#d11">لا يوجد ملف فيديوهات.csv حالياً.</div>`}</div>`;
+          state.videosItems = csvText ? parseVideosCsvText(csvText) : [];
+          if (typeof state.videosQuery !== "string") state.videosQuery = "";
+          state.videosIntro = content;
+          els.infoText.innerHTML =
+            state.videosItems.length === 0
+              ? `<div style="display:grid;gap:10px">${content ? `<div class="panel-sub">${formatAboutText(content)}</div>` : ""}<div class="panel-sub" style="font-weight:900;color:#d11">لا يوجد ملف فيديوهات.csv حالياً.</div></div>`
+              : renderVideosSection(content);
           return;
         }
         if (normalizeAboutKey(k) === normalizeAboutKey("صور")) {
@@ -5831,6 +5943,20 @@
         els.infoView.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
+          const vcopy = t.closest("[data-video-copy]");
+          if (vcopy instanceof HTMLElement) {
+            const url = String(vcopy.getAttribute("data-video-copy") ?? "").trim();
+            if (!url) return;
+            copyText(url);
+            showToast("تم نسخ الرابط", 1600);
+            return;
+          }
+          const vclear = t.closest("[data-videos-clear]");
+          if (vclear instanceof HTMLElement) {
+            state.videosQuery = "";
+            els.infoText.innerHTML = renderVideosSection(state.videosIntro);
+            return;
+          }
           const infoBtn = t.closest("[data-info-btn]");
           if (infoBtn instanceof HTMLElement) {
             const key = infoBtn.getAttribute("data-info-btn");
@@ -5880,6 +6006,13 @@
             const code = prod.getAttribute("data-product");
             if (code) return setHash(`product=${encodeURIComponent(code)}`);
           }
+        });
+        els.infoView.addEventListener("input", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          if (t.id !== "videosSearchInput") return;
+          state.videosQuery = String(t.value ?? "");
+          els.infoText.innerHTML = renderVideosSection(state.videosIntro);
         });
         if (els.imgModal instanceof HTMLElement) {
           els.imgModal.addEventListener("click", (e) => {

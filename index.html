@@ -479,6 +479,16 @@
         aspect-ratio: 1/1;
         background: #fff;
         overflow: hidden;
+        position: relative;
+      }
+      .thumb::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" fill="none" stroke="%2319b7ff" stroke-width="8" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"></animateTransform></circle></svg>') center center no-repeat;
+        background-size: 40px 40px;
+        opacity: 0.5;
+        z-index: 1;
       }
       .thumb img {
         width: 100%;
@@ -486,6 +496,8 @@
         display: block;
         object-fit: contain;
         background: #fff;
+        position: relative;
+        z-index: 2;
       }
       .gallery-wrap {
         display: grid;
@@ -1164,26 +1176,29 @@
       .footerbar-inner {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 20px 12px;
-        display: flex;
-        justify-content: space-between;
+        padding: 30px 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
         align-items: flex-start;
       }
       .footer-col {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 16px;
+        align-items: flex-start;
       }
       .footer-link {
         background: transparent;
         border: none;
         padding: 0;
         cursor: pointer;
-        font-size: 14px;
-        font-weight: 900;
+        font-size: 15px;
+        font-weight: 800;
         color: var(--text);
         text-align: right;
         transition: color 0.2s;
+        text-decoration: none;
       }
       .footer-link:hover {
         color: var(--primary-3);
@@ -1234,6 +1249,10 @@
       }
       .qa-strip-rail::-webkit-scrollbar, .cats-strip-rail::-webkit-scrollbar {
         display: none;
+      }
+      .cats-strip-rail.expanded {
+        display: flex;
+        flex-wrap: wrap;
       }
       .qa-strip-nav {
         border: 1px solid #d11;
@@ -1512,12 +1531,13 @@
           <div style="display:flex; gap:10px; align-items:flex-start; width:100%; flex-direction: column;">
             
             <div style="display:flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%;">
-              <div style="display:flex; gap: 10px; align-items: center;">
+              <div style="display:flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px; height: 35px;">
                   <span style="font-size: 16px;">☰</span> الفئات
                 </button>
                 <button class="pill" type="button" id="catHomeBtn" style="background:var(--primary-2);color:#fff">قائمة رئيسية</button>
                 <button class="pill" type="button" id="catAllBtn" style="background:var(--primary-2);color:#fff">الكل</button>
+                <button class="pill" type="button" id="catsMoreBtn" style="background:var(--primary-2);color:#fff; border: 1px solid var(--primary-3);">عرض المزيد ▼</button>
               </div>
               <div class="pager" aria-label="التنقل بين الصفحات">
                 <button id="prevPage" type="button" aria-label="السابق">▶</button>
@@ -1952,7 +1972,7 @@
       <footer class="footerbar">
         <div class="footerbar-inner">
           <div class="footer-col">
-            <span style="font-size:11px;font-weight:800;color:#000;margin-bottom:10px;">BY HJY.co</span>
+            <span style="font-size:16px;font-weight:900;color:var(--primary-3);margin-bottom:8px;">HJY.co</span>
             <button class="footer-link" type="button" data-info="المطور">المطور</button>
             <button class="footer-link" type="button" data-info="موقعنا">موقعنا</button>
             <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
@@ -1961,6 +1981,7 @@
             <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
           </div>
           <div class="footer-col" id="footerExtrasCol">
+            <span style="font-size:16px;font-weight:900;color:var(--primary-3);margin-bottom:8px;">روابط سريعة</span>
             <button class="footer-link" type="button" data-go="orders">طلباتي السابقة</button>
             <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
             <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
@@ -3420,11 +3441,13 @@
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
         if (els.catsWrapper) els.catsWrapper.style.display = "";
+        if (els.topQaBar) els.topQaBar.style.display = "";
         setPromoVisible(true);
         setStatus("");
         setCheckoutStatus("");
         setInfoStatus("");
         animateIn(els.homeView);
+        renderTopQaBarButtons(); // Update bar state explicitly
       }
       function showShopView() {
         setRoute("shop");
@@ -4168,7 +4191,9 @@
                 loading="lazy"
                 decoding="async"
                 referrerpolicy="no-referrer"
+                onload="this.style.opacity=1"
                 onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
+                style="opacity:0;transition:opacity 0.3s"
               />
             </div>
             <div class="card-body">
@@ -4284,10 +4309,10 @@
             const u = list[0];
             thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
               u
-            )}" data-src-list="${escapeHtmlAttr(JSON.stringify(list))}" data-src-idx="0" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" /></button>`;
+            )}" data-src-list="${escapeHtmlAttr(JSON.stringify(list))}" data-src-idx="0" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.style.opacity=1" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" style="opacity:0;transition:opacity 0.3s" /></button>`;
           }
         }
-        const hasNav = perCodeCandidates.length > 1;
+        const hasNav = perCodeCandidates.length > 1 || mainList.length > 1;
         const btn =
           p.isOut
             ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
@@ -4364,9 +4389,12 @@
                   loading="eager"
                   decoding="async"
                   referrerpolicy="no-referrer"
+                  onload="this.style.opacity=1"
                   onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
-                  style="cursor:zoom-in;transition:transform 0.3s"
+                  onclick="window.openImgModal && window.openImgModal(this.src)"
+                  style="opacity:0;cursor:zoom-in;transition:opacity 0.3s, transform 0.3s"
                 />
+                <button type="button" onclick="document.getElementById('productMainImg').click()" style="position:absolute; bottom:10px; right:10px; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:40px; height:40px; font-size:20px; cursor:pointer; z-index:10; box-shadow:0 2px 5px rgba(0,0,0,0.2)" aria-label="تكبير الصورة">🔍</button>
                 ${
                   hasNav
                     ? `<button class="gallery-nav" type="button" data-gallery-step="-1" data-dir="prev" aria-label="السابق">‹</button>
@@ -4794,7 +4822,9 @@
                 loading="lazy"
                 decoding="async"
                 referrerpolicy="no-referrer"
+                onload="this.style.opacity=1"
                 onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
+                style="opacity:0;transition:opacity 0.3s"
               />
             </div>
             <div class="card-body" style="gap:6px">
@@ -4963,7 +4993,7 @@
           html += `<button class="pill" type="button" data-top-qa-file="${escapeHtmlAttr(it.name)}">${escapeHtml(it.name)}</button>`;
         }
         els.topQaRail.innerHTML = html;
-        if (state.route === "home") {
+        if (state.route === "home" || document.getElementById("appRoot").getAttribute("data-route") === "home") {
           els.topQaBar.style.display = "";
         } else {
           els.topQaBar.style.display = "none";
@@ -5576,10 +5606,21 @@
           applyFilters();
         });
         const catsDrawerBtn = document.getElementById("catsDrawerBtn");
+        const catsMoreBtn = document.getElementById("catsMoreBtn");
+        const topPillbar = document.getElementById("topPillbar");
         const catsSidebar = document.getElementById("catsSidebar");
         const catsSidebarBackdrop = document.getElementById("catsSidebarBackdrop");
         const catsSidebarClose = document.getElementById("catsSidebarClose");
         
+        if (catsMoreBtn) {
+          catsMoreBtn.addEventListener("click", () => {
+            if (topPillbar) {
+              topPillbar.classList.toggle("expanded");
+              catsMoreBtn.textContent = topPillbar.classList.contains("expanded") ? "عرض أقل ▲" : "عرض المزيد ▼";
+            }
+          });
+        }
+
         function openCatsSidebar() {
           if (catsSidebar) catsSidebar.classList.add("show");
           if (catsSidebarBackdrop) catsSidebarBackdrop.classList.add("show");
@@ -5714,6 +5755,19 @@
             const img = document.getElementById("productMainImg");
             if (!(img instanceof HTMLImageElement)) return;
             const step = Number(stepBtn.getAttribute("data-gallery-step") || "0");
+            
+            try {
+              const raw = img.getAttribute("data-src-list");
+              const list = raw ? JSON.parse(raw) : [];
+              if (Array.isArray(list) && list.length > 1) {
+                const cur = Number(img.getAttribute("data-src-idx") || "0");
+                const next = ((cur + step) % list.length + list.length) % list.length;
+                img.setAttribute("data-src-idx", String(next));
+                img.src = String(list[next]);
+                return;
+              }
+            } catch {}
+
             const curIdx = Number(img.getAttribute("data-thumb-idx") || "0");
             const thumbs = els.productDetails.querySelectorAll(".gallery-thumb");
             if (thumbs.length === 0) return;

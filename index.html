@@ -495,7 +495,7 @@
         height: 100%;
         display: block;
         object-fit: contain;
-        background: #fff;
+        background: transparent;
         position: relative;
         z-index: 2;
       }
@@ -1176,29 +1176,37 @@
       .footerbar-inner {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 30px 20px;
+        padding: 40px 20px;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 30px;
         align-items: flex-start;
+      }
+      @media (min-width: 768px) {
+        .footerbar-inner {
+          grid-template-columns: repeat(4, 1fr);
+          padding: 60px 20px;
+        }
       }
       .footer-col {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
         align-items: flex-start;
       }
       .footer-link {
         background: transparent;
         border: none;
-        padding: 0;
+        padding: 4px 0;
         cursor: pointer;
-        font-size: 15px;
-        font-weight: 800;
+        font-size: 14px;
+        font-weight: 700;
         color: var(--text);
         text-align: right;
         transition: color 0.2s;
-        text-decoration: none;
+      }
+      .footer-link:hover {
+        color: var(--primary-3);
       }
       .footer-link:hover {
         color: var(--primary-3);
@@ -1535,9 +1543,10 @@
                 <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px; height: 35px;">
                   <span style="font-size: 16px;">☰</span> الفئات
                 </button>
+                <button class="btn btn-ghost" type="button" onclick="location.hash='qa'" style="padding: 6px 10px; flex: 0 0 auto; font-weight: 900; color: #d11; border: 1px solid rgba(221,17,17,0.5); border-radius: 999px; height: 35px;">أشيع الأسئلة</button>
                 <button class="pill" type="button" id="catHomeBtn" style="background:var(--primary-2);color:#fff">قائمة رئيسية</button>
                 <button class="pill" type="button" id="catAllBtn" style="background:var(--primary-2);color:#fff">الكل</button>
-                <button class="pill" type="button" id="catsMoreBtn" style="background:var(--primary-2);color:#fff; border: 1px solid var(--primary-3);">عرض المزيد ▼</button>
+                <button class="pill" type="button" id="catsMoreBtn" onclick="document.getElementById('catsRail').classList.toggle('expanded')" style="background:var(--primary-2);color:#fff; border: 1px solid var(--primary-3);">عرض المزيد ▼</button>
               </div>
               <div class="pager" aria-label="التنقل بين الصفحات">
                 <button id="prevPage" type="button" aria-label="السابق">▶</button>
@@ -4317,10 +4326,10 @@
           p.isOut
             ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
             : `<button class="btn btn-primary" type="button" data-add="${escapeHtmlAttr(p.code)}">إضافة إلى السلة</button>`;
-        if (normalizeCodeKey(state.suggestExpandedCode) !== normalizeCodeKey(p.code)) state.suggestLimit = 10;
+        if (normalizeCodeKey(state.suggestExpandedCode) !== normalizeCodeKey(p.code)) state.suggestLimit = 5;
         const suggestedAll = computeSuggestedProducts(p);
         const expanded = normalizeCodeKey(state.suggestExpandedCode) === normalizeCodeKey(p.code);
-        const limit = expanded ? Math.max(10, Math.min(30, Number(state.suggestLimit) || 10)) : 10;
+        const limit = expanded ? Math.max(5, Math.min(30, Number(state.suggestLimit) || 5)) : 5;
         const suggested = suggestedAll.slice(0, limit);
         let similarHtml = "";
         if (suggested.length) {

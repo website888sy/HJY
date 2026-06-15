@@ -26,20 +26,28 @@
       * {
         box-sizing: border-box;
       }
-      body {
+      html, body {
         margin: 0;
+        padding: 0;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+      }
+      body {
         font-family: Arial, Helvetica, sans-serif;
         background: var(--bg);
         color: var(--text);
-        overflow-x: hidden;
       }
       a {
         color: inherit;
       }
       .app {
         min-height: 100vh;
-        display: grid;
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
       }
       .promo-bar {
         background: linear-gradient(90deg, var(--primary-2), var(--primary));
@@ -1203,7 +1211,7 @@
         flex: 0 0 auto;
         white-space: nowrap;
       }
-      .qa-strip {
+      .qa-strip, .cats-strip {
         display: flex;
         align-items: center;
         gap: 10px;
@@ -1219,7 +1227,7 @@
         white-space: nowrap;
         flex: 0 0 auto;
       }
-      .qa-strip-rail {
+      .qa-strip-rail, .cats-strip-rail {
         display: flex;
         gap: 8px;
         overflow-x: auto;
@@ -1229,10 +1237,10 @@
         min-width: 0;
         flex: 1;
       }
-      .qa-strip-rail::-webkit-scrollbar {
+      .qa-strip-rail::-webkit-scrollbar, .cats-strip-rail::-webkit-scrollbar {
         display: none;
       }
-      .qa-strip-nav {
+      .qa-strip-nav, .cats-strip-nav {
         border: 1px solid #d11;
         background: #fff;
         color: #d11;
@@ -1255,14 +1263,14 @@
         .footer-more {
           margin-inline-start: auto;
         }
-        .qa-strip {
+        .qa-strip, .cats-strip {
           padding: 8px 10px;
           gap: 8px;
         }
         .qa-strip-label {
           display: none;
         }
-        .qa-strip-nav {
+        .qa-strip-nav, .cats-strip-nav {
           width: 30px;
           height: 30px;
         }
@@ -1497,28 +1505,36 @@
           </div>
         </div>
         <div class="topbar-inner" style="padding-top: 0; padding-bottom: 12px; flex-direction: column; align-items: stretch; gap: 10px">
-          <div style="display:flex; gap:10px; align-items:flex-start; width:100%">
-            <div id="catsWrapper" style="display:flex; gap:10px; align-items:flex-start; width:100%; overflow-x:auto; transition: 0.3s ease;">
-              <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px; height: 35px;">
-                <span style="font-size: 16px;">☰</span> الفئات
-              </button>
-              <div class="pillbar" id="topPillbar" role="group" aria-label="التصنيفات" style="flex:1;">
-                <!-- سيتم توليد الفئات هنا ديناميكياً -->
+          <div style="display:flex; gap:10px; align-items:flex-start; width:100%; flex-direction: column;">
+            
+            <div style="display:flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%;">
+              <div style="display:flex; gap: 10px; align-items: center;">
+                <button class="btn btn-ghost" id="catsDrawerBtn" type="button" style="padding: 6px 10px; flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-weight: 900; color: var(--primary-3); border: 1px solid rgba(25,183,255,0.3); border-radius: 999px; height: 35px;">
+                  <span style="font-size: 16px;">☰</span> الفئات
+                </button>
+                <button class="pill" type="button" id="catHomeBtn" style="background:var(--primary-2);color:#fff">قائمة رئيسية</button>
+                <button class="pill" type="button" id="catAllBtn" style="background:var(--primary-2);color:#fff">الكل</button>
               </div>
-            </div>
-            <div style="margin-inline-start: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
               <div class="pager" aria-label="التنقل بين الصفحات">
                 <button id="prevPage" type="button" aria-label="السابق">▶</button>
                 <button id="nextPage" type="button" aria-label="التالي">◀</button>
               </div>
-              <p class="panel-sub" id="hint" style="margin: 0; max-width: 360px"></p>
             </div>
-          </div>
-          <div class="qa-strip" id="topQaBar" style="display:none">
-            <div class="qa-strip-label">أسئلة شائعة</div>
-            <button class="qa-strip-nav" id="topQaPrev" type="button" aria-label="يمين">▶</button>
-            <div class="qa-strip-rail" id="topQaRail" role="group" aria-label="أزرار أسئلة شائعة"></div>
-            <button class="qa-strip-nav" id="topQaNext" type="button" aria-label="يسار">◀</button>
+
+            <div class="qa-strip" id="topQaBar" style="display:none; width: 100%;">
+              <div class="qa-strip-label">أسئلة شائعة</div>
+              <button class="qa-strip-nav" id="topQaPrev" type="button" aria-label="يمين">▶</button>
+              <div class="qa-strip-rail" id="topQaRail" role="group" aria-label="أزرار أسئلة شائعة"></div>
+              <button class="qa-strip-nav" id="topQaNext" type="button" aria-label="يسار">◀</button>
+            </div>
+
+            <div class="cats-strip" id="catsWrapper" style="width: 100%;">
+              <button class="cats-strip-nav" id="catsPrev" type="button" aria-label="يمين">▶</button>
+              <div class="cats-strip-rail" id="topPillbar" role="group" aria-label="التصنيفات">
+                <!-- سيتم توليد الفئات هنا ديناميكياً -->
+              </div>
+              <button class="cats-strip-nav" id="catsNext" type="button" aria-label="يسار">◀</button>
+            </div>
           </div>
         </div>
       </header>
@@ -4022,21 +4038,13 @@
           return `<button class="pill" type="button" data-category="${escapeHtmlAttr(cat)}" aria-pressed="${on ? "true" : "false"}">${escapeHtml(label)}</button>`;
         };
 
-        html += buildPill("HOME", "قائمة رئيسية");
-        html += buildPill("ALL", "الكل");
-
-        if (isCategoriesExpanded) {
-          html += buildPill("HOT", "عروض مغرية");
-          html += buildPill("OUT", "منتهي كمية");
-          html += buildPill("FAVORITES", "مفضلة");
-          if (Array.isArray(state.categories)) {
-            for (const cat of state.categories) {
-              if (cat && cat.key && cat.name) html += buildPill(`CAT:${cat.key}`, cat.name);
-            }
+        html += buildPill("HOT", "عروض مغرية");
+        html += buildPill("OUT", "منتهي كمية");
+        html += buildPill("FAVORITES", "مفضلة");
+        if (Array.isArray(state.categories)) {
+          for (const cat of state.categories) {
+            if (cat && cat.key && cat.name) html += buildPill(`CAT:${cat.key}`, cat.name);
           }
-          html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="less" style="background:var(--primary-2);color:#fff">عرض أقل</button>`;
-        } else {
-          html += `<button class="pill" type="button" id="toggleCategoriesBtn" data-action="more" style="background:var(--primary-2);color:#fff">المزيد</button>`;
         }
 
         els.pills.innerHTML = html;
@@ -4047,20 +4055,8 @@
           btn.addEventListener("click", () => {
             const cat = btn.getAttribute("data-category");
             if (cat) {
-              if (isCategoriesExpanded) {
-                isCategoriesExpanded = false;
-                updatePills();
-              }
               setShopHashWithCategory(cat);
             }
-          });
-        }
-        
-        const toggleBtn = els.pills.querySelector("#toggleCategoriesBtn");
-        if (toggleBtn) {
-          toggleBtn.addEventListener("click", () => {
-            isCategoriesExpanded = !isCategoriesExpanded;
-            updatePills();
           });
         }
       }
@@ -5571,6 +5567,22 @@
             if (wrapper) wrapper.classList.toggle("drawer-mode");
           });
         }
+        
+        document.getElementById("catHomeBtn")?.addEventListener("click", () => {
+          setHash("home");
+        });
+        
+        document.getElementById("catAllBtn")?.addEventListener("click", () => {
+          setShopHashWithCategory("ALL");
+        });
+        
+        document.getElementById("catsPrev")?.addEventListener("click", () => {
+          document.getElementById("topPillbar")?.scrollBy({ left: -240, behavior: "smooth" });
+        });
+        
+        document.getElementById("catsNext")?.addEventListener("click", () => {
+          document.getElementById("topPillbar")?.scrollBy({ left: 240, behavior: "smooth" });
+        });
         if (els.searchBtn instanceof HTMLElement) {
           els.searchBtn.addEventListener("click", () => {
             state.query = String(els.search.value ?? "");

@@ -4233,8 +4233,17 @@
         const view = state.viewMode;
         const favOn = isFavorite(p.code);
         const isHot = isHotCode(p.code);
-        const cand = buildPhotoCandidates(p.code, Array.isArray(p.photoList) ? p.photoList : []);
+        
+        const allCodes = [p.code];
+        if (Array.isArray(p.photoList)) {
+          for (const ex of p.photoList) {
+            if (ex && typeof ex === "string") allCodes.push(ex.trim());
+          }
+        }
+        const uniqueCodes = [...new Set(allCodes)].filter(Boolean);
+        const cand = buildPhotoCandidates(uniqueCodes[0], uniqueCodes.slice(1));
         const src = cand[0] || PLACEHOLDER_IMG;
+        
         const disText = disTextForProduct(p);
         const showDis = (view === "grid" || view === "list") && disText;
         const showCode = view === "grid" || view === "list";
@@ -4352,6 +4361,8 @@
         els.productMeta.textContent = p.code ? `CODE: ${p.code}` : "—";
         const favOn = isFavorite(p.code);
         const disText = disTextForProduct(p);
+        
+        // Generate candidates combining all codes (main code + photoList)
         const allCodes = [p.code];
         if (Array.isArray(p.photoList)) {
           for (const ex of p.photoList) {

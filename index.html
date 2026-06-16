@@ -1197,7 +1197,7 @@
       }
       @media (min-width: 768px) {
         .footerbar-inner {
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           padding: 60px 20px;
         }
       }
@@ -1559,7 +1559,7 @@
                 <button class="btn btn-ghost" type="button" onclick="location.hash='qa'" style="padding: 6px 10px; flex: 0 0 auto; font-weight: 900; color: #d11; border: 1px solid rgba(221,17,17,0.5); border-radius: 999px; height: 35px;">أشيع الأسئلة</button>
                 <button class="pill" type="button" id="catHomeBtn" style="background:var(--primary-2);color:#fff">قائمة رئيسية</button>
                 <button class="pill" type="button" id="catAllBtn" style="background:var(--primary-2);color:#fff">الكل</button>
-                <button class="pill" type="button" id="catsMoreBtn" onclick="document.getElementById('topPillbar').classList.toggle('expanded')" style="background:var(--primary-2);color:#fff; border: 1px solid var(--primary-3);">عرض المزيد ▼</button>
+                <button class="pill" type="button" id="catsMoreBtn" style="background:var(--primary-2);color:#fff; border: 1px solid var(--primary-3);">عرض المزيد ▼</button>
               </div>
               <div class="pager" aria-label="التنقل بين الصفحات">
                 <button id="prevPage" type="button" aria-label="السابق">▶</button>
@@ -4341,8 +4341,9 @@
         // Generate candidates per code
         const perCodeCandidates = uniqueCodes.map(c => buildPhotoCandidates(c, [])).filter(list => list.length > 0);
         
-        const mainSrc = perCodeCandidates.length > 0 && perCodeCandidates[0].length > 0 ? perCodeCandidates[0][0] : PLACEHOLDER_IMG;
-        const mainList = perCodeCandidates.length > 0 ? perCodeCandidates[0] : [PLACEHOLDER_IMG];
+        const flatCandidates = perCodeCandidates.flat();
+        const mainSrc = flatCandidates.length > 0 ? flatCandidates[0] : PLACEHOLDER_IMG;
+        const mainList = flatCandidates.length > 0 ? flatCandidates : [PLACEHOLDER_IMG];
         
         let thumbs = "";
         if (perCodeCandidates.length > 1) {
@@ -6461,49 +6462,27 @@
           const list = raw ? JSON.parse(raw) : [];
           if (!Array.isArray(list) || list.length === 0) {
             img.onerror = null;
-            img.src = PLACEHOLDER_IMG;
+            const thumbWrap = img.closest('.gallery-thumb');
+            if (thumbWrap) {
+              thumbWrap.remove();
+            } else {
+              img.src = PLACEHOLDER_IMG;
+            }
             return;
           }
-          let retryIdx = Number(img.getAttribute("data-src-retry-idx") || "-1");
-          let retry = Number(img.getAttribute("data-src-retry") || "0");
-          if (retryIdx !== idx) {
-            retryIdx = idx;
-            retry = 0;
-            img.setAttribute("data-src-retry-idx", String(idx));
-            img.setAttribute("data-src-retry", "0");
-          }
-          if (retry < 2) {
-            img.setAttribute("data-src-retry", String(retry + 1));
-            const host =
-              img.closest(".thumb") ||
-              img.closest(".cart-thumb") ||
-              img.closest(".gallery-thumb") ||
-              img.closest(".img-modal-card") ||
-              img.parentElement;
-            if (host instanceof HTMLElement) host.setAttribute("data-img-state", "loading");
-            const cur = String(list[idx] || "");
-            if (cur) {
-              const clean = cur.replace(/[?&]r=\d+/g, "");
-              const sep = clean.includes("?") ? "&" : "?";
-              const busted = `${clean}${sep}r=${Date.now()}`;
-              setTimeout(() => {
-                try {
-                  if (img.getAttribute("data-src-idx") === String(idx)) img.src = busted;
-                } catch {}
-              }, 450 + retry * 650);
-              return;
-            }
-          }
-          img.setAttribute("data-src-retry", "0");
-          img.setAttribute("data-src-retry-idx", String(idx));
+
           const next = Math.max(0, idx + 1);
           if (next >= list.length) {
             img.onerror = null;
-            img.src = PLACEHOLDER_IMG;
+            const thumbWrap = img.closest('.gallery-thumb');
+            if (thumbWrap) {
+              thumbWrap.remove();
+            } else {
+              img.src = PLACEHOLDER_IMG;
+            }
             return;
           }
           img.setAttribute("data-src-idx", String(next));
-          img.setAttribute("data-src-retry-idx", String(next));
           img.src = String(list[next]);
         } catch {
           try {

@@ -2086,6 +2086,7 @@
         PHOTO_MAX_FILES: 4000,
         PHOTO_DIRS: [
           "photo",
+          "PHOTO",
           "photo/BATT-LI",
           "photo/add",
           "photo/bike-battery",
@@ -4379,17 +4380,19 @@
         const mainList = flatCandidates.length > 0 ? flatCandidates : [PLACEHOLDER_IMG];
         
         let thumbs = "";
-        if (uniqueCodes.length > 1) {
-          for (let i = 0; i < uniqueCodes.length; i++) {
-            const list = buildPhotoCandidates(uniqueCodes[i], []);
-            if (list.length === 0) continue;
-            const u = list[0];
-            thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة" style="display:none;"><img src="${escapeHtmlAttr(
+        // If we know exactly which images exist, use them directly to avoid fake/broken thumbnails
+        const thumbItems = photoIndexLoaded ? flatCandidates : uniqueCodes.map(c => buildPhotoCandidates(c, [])[0]).filter(Boolean);
+        
+        if (thumbItems.length > 1) {
+          for (let i = 0; i < thumbItems.length; i++) {
+            const u = thumbItems[i];
+            const list = photoIndexLoaded ? flatCandidates : buildPhotoCandidates(uniqueCodes[i], []);
+            thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
               u
-            )}" data-src-list="${escapeHtmlAttr(JSON.stringify(list))}" data-src-idx="0" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.parentElement.style.display=''; this.style.opacity=1" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" style="opacity:0;transition:opacity 0.3s" /></button>`;
+            )}" data-src-list="${escapeHtmlAttr(JSON.stringify(list))}" data-src-idx="${photoIndexLoaded ? i : 0}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.style.opacity=1" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" style="opacity:0;transition:opacity 0.3s" /></button>`;
           }
         }
-        const hasNav = uniqueCodes.length > 1;
+        const hasNav = thumbItems.length > 1;
         const btn =
           p.isOut
             ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`

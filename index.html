@@ -486,7 +486,7 @@
         height: 100%;
         display: block;
         object-fit: contain;
-        background: transparent;
+        background: #fff;
         position: relative;
         z-index: 2;
       }
@@ -535,6 +535,8 @@
         object-fit: contain;
         display: block;
         background: #fff;
+        position: relative;
+        z-index: 2;
       }
       .gallery-nav {
         position: absolute;
@@ -1195,13 +1197,13 @@
         margin: 0 auto;
         padding: 40px 20px;
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         gap: 30px;
         align-items: flex-start;
       }
       @media (min-width: 768px) {
         .footerbar-inner {
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
           padding: 60px 20px;
         }
       }
@@ -3509,9 +3511,9 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
-        if (els.catsWrapper) els.catsWrapper.style.display = "";
-        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "";
-        if (els.topQaBar) els.topQaBar.style.display = "";
+        if (els.catsWrapper) els.catsWrapper.style.display = "none";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "none";
+        if (els.topQaBar) els.topQaBar.style.display = "none";
         setPromoVisible(false);
         setCheckoutStatus("");
         setInfoStatus("");
@@ -3527,9 +3529,9 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
-        if (els.catsWrapper) els.catsWrapper.style.display = "";
-        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "";
-        if (els.topQaBar) els.topQaBar.style.display = "";
+        if (els.catsWrapper) els.catsWrapper.style.display = "none";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "none";
+        if (els.topQaBar) els.topQaBar.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -3547,9 +3549,9 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
-        if (els.catsWrapper) els.catsWrapper.style.display = "";
-        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "";
-        if (els.topQaBar) els.topQaBar.style.display = "";
+        if (els.catsWrapper) els.catsWrapper.style.display = "none";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "none";
+        if (els.topQaBar) els.topQaBar.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setInfoStatus("");
@@ -3572,6 +3574,9 @@
         els.infoView.style.display = "";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
+        if (els.catsWrapper) els.catsWrapper.style.display = "none";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "none";
+        if (els.topQaBar) els.topQaBar.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -3592,6 +3597,9 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "";
         els.ordersView.style.display = "none";
+        if (els.catsWrapper) els.catsWrapper.style.display = "none";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "none";
+        if (els.topQaBar) els.topQaBar.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -3608,6 +3616,9 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "";
+        if (els.catsWrapper) els.catsWrapper.style.display = "none";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "none";
+        if (els.topQaBar) els.topQaBar.style.display = "none";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -4947,21 +4958,38 @@
       }
       function renderFooterAboutExtras() {
         if (!(els.footerExtrasCol instanceof HTMLElement)) return;
+        const footerInner = els.footerExtrasCol.parentElement;
         const existing = new Set(
-          Array.from(els.footerExtrasCol.querySelectorAll("[data-info]"))
+          Array.from(footerInner.querySelectorAll("[data-info]"))
             .map((b) => normalizeAboutKey(String(b.getAttribute("data-info") ?? "")))
             .filter(Boolean)
         );
         const list = Array.isArray(state.aboutFiles) ? state.aboutFiles : [];
+        let currentCol = els.footerExtrasCol;
+        
         for (const it of list) {
           if (!it || !it.name || !it.key) continue;
           if (existing.has(it.key)) continue;
+          
+          // If the current column has too many items (e.g. > 5), create a new column
+          if (currentCol.children.length >= 6) {
+            const newCol = document.createElement("div");
+            newCol.className = "footer-col";
+            // Optional: add a blank spacer or header for alignment
+            const spacer = document.createElement("span");
+            spacer.style.cssText = "font-size:16px;font-weight:900;color:transparent;margin-bottom:8px;";
+            spacer.textContent = "—";
+            newCol.appendChild(spacer);
+            footerInner.appendChild(newCol);
+            currentCol = newCol;
+          }
+
           const btn = document.createElement("button");
           btn.className = "footer-link";
           btn.type = "button";
           btn.setAttribute("data-info", it.name);
           btn.textContent = it.name;
-          els.footerExtrasCol.appendChild(btn);
+          currentCol.appendChild(btn);
           existing.add(it.key);
         }
       }

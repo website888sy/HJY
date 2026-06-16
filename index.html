@@ -485,9 +485,22 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" fill="none" stroke="%2319b7ff" stroke-width="8" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"></animateTransform></circle></svg>') center center no-repeat;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" fill="none" stroke="%2319b7ff" stroke-width="8" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"></animateTransform></circle></svg>') center calc(50% - 10px) no-repeat;
         background-size: 40px 40px;
         opacity: 0.5;
+        z-index: 1;
+      }
+      .thumb::after {
+        content: "جاري التحميل...";
+        position: absolute;
+        top: calc(50% + 20px);
+        left: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        color: var(--primary-3);
+        opacity: 0.7;
         z-index: 1;
       }
       .thumb img {
@@ -1546,7 +1559,7 @@
                 <button class="btn btn-ghost" type="button" onclick="location.hash='qa'" style="padding: 6px 10px; flex: 0 0 auto; font-weight: 900; color: #d11; border: 1px solid rgba(221,17,17,0.5); border-radius: 999px; height: 35px;">أشيع الأسئلة</button>
                 <button class="pill" type="button" id="catHomeBtn" style="background:var(--primary-2);color:#fff">قائمة رئيسية</button>
                 <button class="pill" type="button" id="catAllBtn" style="background:var(--primary-2);color:#fff">الكل</button>
-                <button class="pill" type="button" id="catsMoreBtn" onclick="document.getElementById('catsRail').classList.toggle('expanded')" style="background:var(--primary-2);color:#fff; border: 1px solid var(--primary-3);">عرض المزيد ▼</button>
+                <button class="pill" type="button" id="catsMoreBtn" onclick="document.getElementById('topPillbar').classList.toggle('expanded')" style="background:var(--primary-2);color:#fff; border: 1px solid var(--primary-3);">عرض المزيد ▼</button>
               </div>
               <div class="pager" aria-label="التنقل بين الصفحات">
                 <button id="prevPage" type="button" aria-label="السابق">▶</button>
@@ -1984,17 +1997,20 @@
             <span style="font-size:16px;font-weight:900;color:var(--primary-3);margin-bottom:8px;">HJY.co</span>
             <button class="footer-link" type="button" data-info="المطور">المطور</button>
             <button class="footer-link" type="button" data-info="موقعنا">موقعنا</button>
+            <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
+            <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسة الاستخدام</button>
+          </div>
+          <div class="footer-col">
+            <span style="font-size:16px;font-weight:900;color:var(--primary-3);margin-bottom:8px;">الشحن والتوصيل</span>
             <button class="footer-link" type="button" data-info="تفاصيل الشحن">تفاصيل الشحن</button>
             <button class="footer-link" type="button" data-info="توصيل مجاني">توصيل مجاني</button>
-            <button class="footer-link" type="button" data-info="سياسية الاستخدام">سياسية الاستخدام</button>
-            <button class="footer-link" type="button" data-go="home">قائمة رئيسية</button>
-          </div>
-          <div class="footer-col" id="footerExtrasCol">
-            <span style="font-size:16px;font-weight:900;color:var(--primary-3);margin-bottom:8px;">روابط سريعة</span>
-            <button class="footer-link" type="button" data-go="orders">طلباتي السابقة</button>
-            <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
             <button class="footer-link" type="button" data-info="فروع مسارات">فروع مسارات</button>
             <button class="footer-link" type="button" data-info="فروع قدموس">فروع قدموس</button>
+          </div>
+          <div class="footer-col" id="footerExtrasCol">
+            <span style="font-size:16px;font-weight:900;color:var(--primary-3);margin-bottom:8px;">خدمة العملاء</span>
+            <button class="footer-link" type="button" data-go="orders">طلباتي السابقة</button>
+            <button class="footer-link" type="button" data-info="أشيع الأسئلة">أشيع الأسئلة</button>
             <button class="footer-link" type="button" data-info="المفضلة">المفضلة</button>
             <button class="footer-link" type="button" data-info="التقييم">التقييم</button>
             <button class="footer-link" type="button" data-info="الشكاوي">الشكاوي</button>
@@ -3320,18 +3336,35 @@
           variants.push(e, e.toUpperCase(), e.toLowerCase());
         }
         const seen = new Set();
+        const uniqueVariants = [];
+        for (const v of variants) {
+          if (!seen.has(v)) {
+            seen.add(v);
+            uniqueVariants.push(v);
+          }
+        }
+        
         const out = [];
         const extList = Array.isArray(CONFIG.PHOTO_EXTS) ? CONFIG.PHOTO_EXTS : ["webp"];
-        for (const v of variants) {
-          const key = `${v}`;
-          if (!v || seen.has(key)) continue;
-          seen.add(key);
-          const mapKey = safeLower(String(v).trim());
-          const indexed = photoIndexMap instanceof Map ? photoIndexMap.get(mapKey) : null;
-          if (Array.isArray(indexed) && indexed.length) {
-            for (const p of indexed) out.push(p);
-            continue;
+        
+        if (photoIndexMap instanceof Map && photoIndexMap.size > 0) {
+          const seenPaths = new Set();
+          for (const v of uniqueVariants) {
+            const mapKey = safeLower(String(v).trim());
+            const indexed = photoIndexMap.get(mapKey);
+            if (Array.isArray(indexed) && indexed.length) {
+              for (const p of indexed) {
+                if (!seenPaths.has(p)) {
+                  seenPaths.add(p);
+                  out.push(p);
+                }
+              }
+            }
           }
+          return out;
+        }
+
+        for (const v of uniqueVariants) {
           for (const dir of CONFIG.PHOTO_DIRS) {
             for (const ext of extList) {
               const e = String(ext ?? "").trim().replace(/^\./, "");
@@ -3340,6 +3373,7 @@
             }
           }
         }
+        
         const uniq = [];
         const used = new Set();
         for (const p of out) {
@@ -4305,7 +4339,7 @@
         const uniqueCodes = [...new Set(allCodes)].filter(Boolean);
         
         // Generate candidates per code
-        const perCodeCandidates = uniqueCodes.map(c => buildPhotoCandidates(c, []));
+        const perCodeCandidates = uniqueCodes.map(c => buildPhotoCandidates(c, [])).filter(list => list.length > 0);
         
         const mainSrc = perCodeCandidates.length > 0 && perCodeCandidates[0].length > 0 ? perCodeCandidates[0][0] : PLACEHOLDER_IMG;
         const mainList = perCodeCandidates.length > 0 ? perCodeCandidates[0] : [PLACEHOLDER_IMG];
@@ -5326,16 +5360,29 @@
         }
         return out;
       }
+      let customerReviewsCurrentPage = 1;
+      let customerReviewsUrls = [];
       function renderCustomerGallery(urls) {
         if (!(els.customerGalleryWrap instanceof HTMLElement) || !(els.customerGallery instanceof HTMLElement)) return;
-        const list = Array.isArray(urls) ? urls : [];
+        const list = Array.isArray(urls) ? urls : customerReviewsUrls;
+        customerReviewsUrls = list;
         if (!list.length) {
           els.customerGalleryWrap.style.display = "none";
           els.customerGallery.innerHTML = "";
           return;
         }
         els.customerGalleryWrap.style.display = "grid";
-        els.customerGallery.innerHTML = list
+        
+        const limit = 10;
+        const totalPages = Math.ceil(list.length / limit);
+        if (customerReviewsCurrentPage < 1) customerReviewsCurrentPage = 1;
+        if (customerReviewsCurrentPage > totalPages) customerReviewsCurrentPage = totalPages || 1;
+        
+        const start = (customerReviewsCurrentPage - 1) * limit;
+        const end = start + limit;
+        const slice = list.slice(start, end);
+        
+        let html = slice
           .map(
             (u) => `
               <img
@@ -5345,12 +5392,35 @@
                 loading="lazy"
                 decoding="async"
                 referrerpolicy="no-referrer"
+                onload="this.style.opacity=1"
+                onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)"
+                style="opacity:0;transition:opacity 0.3s"
                 data-cust-photo="${escapeHtmlAttr(u)}"
               />
             `
           )
           .join("");
+          
+        if (totalPages > 1) {
+            let pager = '<div class="pager" style="justify-content:center;grid-column:1/-1;margin-top:20px;flex-wrap:wrap;gap:8px;">';
+            for (let i = 1; i <= totalPages; i++) {
+                const isActive = i === customerReviewsCurrentPage;
+                pager += `<button class="pill" type="button" style="background:${isActive ? 'var(--primary-3)' : 'var(--primary-2)'};color:#fff;font-weight:900" onclick="window.__hjyCustomerPage(${i})">${i}</button>`;
+            }
+            pager += '</div>';
+            html += pager;
+        }
+        
+        els.customerGallery.innerHTML = html;
       }
+      
+      window.__hjyCustomerPage = (page) => {
+          customerReviewsCurrentPage = page;
+          renderCustomerGallery();
+          try {
+              if (els.customerGalleryWrap) els.customerGalleryWrap.scrollIntoView({ behavior: "smooth" });
+          } catch {}
+      };
       function openImgModal(src) {
         const url = String(src ?? "").trim();
         if (!url) return;

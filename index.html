@@ -481,28 +481,6 @@
         overflow: hidden;
         position: relative;
       }
-      .thumb::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" fill="none" stroke="%2319b7ff" stroke-width="8" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"></animateTransform></circle></svg>') center calc(50% - 10px) no-repeat;
-        background-size: 40px 40px;
-        opacity: 0.5;
-        z-index: 1;
-      }
-      .thumb::after {
-        content: "جاري التحميل...";
-        position: absolute;
-        top: calc(50% + 20px);
-        left: 0;
-        width: 100%;
-        text-align: center;
-        font-size: 12px;
-        font-weight: bold;
-        color: var(--primary-3);
-        opacity: 0.7;
-        z-index: 1;
-      }
       .thumb img {
         width: 100%;
         height: 100%;
@@ -588,13 +566,39 @@
       .img-modal-card {
         position: relative;
       }
-      [data-img-state="loading"]::before {
+      .thumb::before, .gallery-thumb::before {
         content: "";
         position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 34px;
-        height: 34px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" fill="none" stroke="%2319b7ff" stroke-width="8" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"></animateTransform></circle></svg>') center calc(50% - 10px) no-repeat;
+        background-size: 40px 40px;
+        opacity: 0.5;
+        z-index: 1;
+      }
+      .thumb::after, .gallery-thumb::after {
+        content: "جاري التحميل...";
+        position: absolute;
+        top: calc(50% + 20px);
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        color: var(--primary-3);
+        opacity: 0.7;
+        z-index: 1;
+      }
+      .gallery-thumb::before {
+        background-size: 20px 20px;
+        background-position: center calc(50% - 6px);
+      }
+      .gallery-thumb::after {
+        font-size: 9px;
+        top: calc(50% + 12px);
+      }
         margin-left: -17px;
         margin-top: -24px;
         border-radius: 999px;
@@ -1236,7 +1240,7 @@
       }
       .cats-strip {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 10px;
         padding: 10px 12px;
         border: 1px solid var(--primary-3);
@@ -1274,6 +1278,7 @@
       .cats-strip-rail.expanded {
         display: flex;
         flex-wrap: wrap;
+        overflow: visible;
       }
       .qa-strip-nav {
         border: 1px solid #d11;
@@ -2122,6 +2127,8 @@
         topQaRail: document.getElementById("topQaRail"),
         topQaPrev: document.getElementById("topQaPrev"),
         topQaNext: document.getElementById("topQaNext"),
+        catsWrapper: document.getElementById("catsWrapper"),
+        catsMoreBtn: document.getElementById("catsMoreBtn"),
         homeTopBtn: document.getElementById("homeTopBtn"),
         resultsMeta: document.getElementById("resultsMeta"),
         rangeText: document.getElementById("rangeText"),
@@ -3364,9 +3371,9 @@
           return out;
         }
 
-        for (const v of uniqueVariants) {
-          for (const dir of CONFIG.PHOTO_DIRS) {
-            for (const ext of extList) {
+        for (const dir of CONFIG.PHOTO_DIRS) {
+          for (const ext of extList) {
+            for (const v of uniqueVariants) {
               const e = String(ext ?? "").trim().replace(/^\./, "");
               if (!e) continue;
               out.push(`${dir}/${encodeURIComponent(v)}.${e}`);
@@ -3484,6 +3491,7 @@
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
         if (els.catsWrapper) els.catsWrapper.style.display = "";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "";
         if (els.topQaBar) els.topQaBar.style.display = "";
         setPromoVisible(true);
         setStatus("");
@@ -3501,8 +3509,9 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
-        if (els.catsWrapper) els.catsWrapper.style.display = "none";
-        if (els.topQaBar) els.topQaBar.style.display = "none";
+        if (els.catsWrapper) els.catsWrapper.style.display = "";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "";
+        if (els.topQaBar) els.topQaBar.style.display = "";
         setPromoVisible(false);
         setCheckoutStatus("");
         setInfoStatus("");
@@ -3518,8 +3527,9 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
-        if (els.catsWrapper) els.catsWrapper.style.display = "none";
-        if (els.topQaBar) els.topQaBar.style.display = "none";
+        if (els.catsWrapper) els.catsWrapper.style.display = "";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "";
+        if (els.topQaBar) els.topQaBar.style.display = "";
         setPromoVisible(false);
         setStatus("");
         setCheckoutStatus("");
@@ -3537,6 +3547,9 @@
         els.infoView.style.display = "none";
         els.qaView.style.display = "none";
         els.ordersView.style.display = "none";
+        if (els.catsWrapper) els.catsWrapper.style.display = "";
+        if (els.catsMoreBtn) els.catsMoreBtn.style.display = "";
+        if (els.topQaBar) els.topQaBar.style.display = "";
         setPromoVisible(false);
         setStatus("");
         setInfoStatus("");
@@ -4338,25 +4351,23 @@
         // Remove duplicates
         const uniqueCodes = [...new Set(allCodes)].filter(Boolean);
         
-        // Generate candidates per code
-        const perCodeCandidates = uniqueCodes.map(c => buildPhotoCandidates(c, [])).filter(list => list.length > 0);
-        
-        const flatCandidates = perCodeCandidates.flat();
+        // Generate candidates combining all codes
+        const flatCandidates = buildPhotoCandidates(uniqueCodes[0], uniqueCodes.slice(1));
         const mainSrc = flatCandidates.length > 0 ? flatCandidates[0] : PLACEHOLDER_IMG;
         const mainList = flatCandidates.length > 0 ? flatCandidates : [PLACEHOLDER_IMG];
         
         let thumbs = "";
-        if (perCodeCandidates.length > 1) {
-          for (let i = 0; i < perCodeCandidates.length; i++) {
-            const list = perCodeCandidates[i];
+        if (uniqueCodes.length > 1) {
+          for (let i = 0; i < uniqueCodes.length; i++) {
+            const list = buildPhotoCandidates(uniqueCodes[i], []);
             if (list.length === 0) continue;
             const u = list[0];
-            thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة"><img src="${escapeHtmlAttr(
+            thumbs += `<button class="gallery-thumb" type="button" data-gallery="${escapeHtmlAttr(u)}" data-gallery-idx="${i}" aria-label="صورة" style="display:none;"><img src="${escapeHtmlAttr(
               u
-            )}" data-src-list="${escapeHtmlAttr(JSON.stringify(list))}" data-src-idx="0" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.style.opacity=1" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" style="opacity:0;transition:opacity 0.3s" /></button>`;
+            )}" data-src-list="${escapeHtmlAttr(JSON.stringify(list))}" data-src-idx="0" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.parentElement.style.display=''; this.style.opacity=1" onerror="window.__hjyImgFallback && window.__hjyImgFallback(this)" style="opacity:0;transition:opacity 0.3s" /></button>`;
           }
         }
-        const hasNav = perCodeCandidates.length > 1 || mainList.length > 1;
+        const hasNav = uniqueCodes.length > 1;
         const btn =
           p.isOut
             ? `<button class="btn btn-muted" type="button" disabled>منتهي الكمية</button>`
@@ -6479,6 +6490,7 @@
               thumbWrap.remove();
             } else {
               img.src = PLACEHOLDER_IMG;
+              img.style.opacity = 1;
             }
             return;
           }
@@ -6488,6 +6500,7 @@
           try {
             img.onerror = null;
             img.src = PLACEHOLDER_IMG;
+            img.style.opacity = 1;
           } catch {}
         }
       };

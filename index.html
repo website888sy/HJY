@@ -711,8 +711,9 @@
       }
       .price-old {
         font-weight: 800;
-        color: rgba(77, 106, 118, 0.9);
+        color: #888;
         font-size: 12px;
+        text-decoration: line-through;
       }
       .dis-badge {
         border: 1px dashed rgba(25, 183, 255, 0.55);
@@ -1537,12 +1538,12 @@
             <div class="search" role="search">
               <div class="search-field">
                 <img class="search-logo" src="logo.webp" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
-                <input id="searchInput" type="search" placeholder="ابحث بكلمات مفتاحية" autocomplete="off" />
+                <input id="searchInput" type="search" placeholder="يرجى كتابة كلمات مفتاحية هنا" autocomplete="off" />
                 <button class="search-btn" id="searchBtn" type="button" aria-label="بحث">🔍</button>
               </div>
               <select class="select" id="sortSelect" aria-label="ترتيب البحث">
                 <option value="DEFAULT">افتراضي</option>
-                <option value="PRICE_ASC">أرخص سعر</option>
+                <option value="PRICE_ASC" selected>الأرخص سعراً</option>
                 <option value="PRICE_DESC">أعلى سعر</option>
                 <option value="FAVORITES">مفضلة</option>
               </select>
@@ -1550,7 +1551,7 @@
             <select class="select" id="viewSelect" aria-label="طريقة العرض">
               <option value="grid">شبكي</option>
               <option value="compact">مضغوط</option>
-              <option value="brief">مختصر</option>
+              <option value="brief" selected>مختصر</option>
               <option value="list">قائمة</option>
             </select>
           </div>
@@ -1574,21 +1575,6 @@
               </div>
             </div>
 
-            <div class="qa-strip" id="topQaBar" style="display:none; width: 100%;">
-              <div class="qa-strip-label">أسئلة شائعة</div>
-              <button class="qa-strip-nav" id="topQaPrev" type="button" aria-label="يمين">▶</button>
-              <div class="qa-strip-rail" id="topQaRail" role="group" aria-label="أزرار أسئلة شائعة"></div>
-              <button class="qa-strip-nav" id="topQaNext" type="button" aria-label="يسار">◀</button>
-            </div>
-
-            <div class="cats-strip" id="catsWrapper" style="display:none; width: 100%;">
-              <div class="cats-strip-label">الفئات</div>
-              <button class="cats-strip-nav" id="catsPrev" type="button" aria-label="يمين">▶</button>
-              <div class="cats-strip-rail" id="topPillbar" role="group" aria-label="التصنيفات">
-                <!-- سيتم توليد الفئات هنا ديناميكياً -->
-              </div>
-              <button class="cats-strip-nav" id="catsNext" type="button" aria-label="يسار">◀</button>
-            </div>
           </div>
         </div>
       </header>
@@ -1662,6 +1648,10 @@
             </div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
               <button class="btn btn-ghost" id="backToShopBtn" type="button">رجوع للتسوق</button>
+              <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('موقعنا'))">موقعنا</button>
+              <button class="btn btn-ghost" type="button" onclick="setHash('reviews=1')">تقييمات العملاء</button>
+              <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('تفاصيل الشحن'))">تفاصيل الشحن</button>
+              <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('توصيل مجاني'))">توصيل مجاني</button>
             </div>
           </div>
           <div style="padding:14px;display:grid;gap:14px">
@@ -1784,20 +1774,29 @@
                     <button class="btn btn-ghost" id="qadmousBranchesBtn" type="button" style="flex:1">فروع قدموس</button>
                   </div>
                 </div>
+                
+                <div style="background:rgba(25,183,255,0.1);padding:12px;border-radius:12px;border:1px solid rgba(25,183,255,0.3);display:grid;gap:8px">
+                  <div style="font-weight:900;color:var(--primary-3)">يرجى إرسال دفعة صغيرة مسبقاً لتثبيت الطلب على شام كاش</div>
+                  <div style="display:flex;gap:8px;align-items:center;background:#fff;padding:8px;border-radius:8px">
+                    <code style="flex:1;word-break:break-all;font-size:12px;color:#d11">4acb502d12716cfb533d04cda0ecdd9f</code>
+                    <button class="btn btn-primary" type="button" onclick="navigator.clipboard.writeText('4acb502d12716cfb533d04cda0ecdd9f'); alert('تم النسخ');" style="padding:4px 8px;font-size:12px">نسخ الـ QR</button>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:center">
+                    <img src="sham-cash.png" alt="QR Code" style="width:80px;height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--border)" onerror="this.style.display='none'" />
+                    <a href="sham-cash.png" download class="btn btn-ghost" style="padding:6px 12px;font-size:12px;text-decoration:none">تحميل الصورة</a>
+                  </div>
+                </div>
+
                 <div class="checkrow">
-                  <input id="readShippingAgree" type="checkbox" />
+                  <input id="readShippingAgree" type="checkbox" checked />
                   <div style="display:grid;gap:4px">
                     <div style="font-weight:900">انا قرأت جميع تفاصيل الشحن وعلى دراية تامة كيف يتم</div>
                     <button class="btn btn-ghost" id="openShippingBtn" type="button" style="width:fit-content">تفاصيل الشحن</button>
                   </div>
                 </div>
                 <div class="checkrow">
-                  <input id="payAdvanceInput" type="checkbox" />
-                  <div style="display:grid;gap:2px">
-                    <div style="font-weight:900">سوف أدفع مسبقاً</div>
-                    <div class="mini-note">الشحن مجاني في حال دفع مسبق كـ هدية لثقتكم بنا</div>
-                    <div class="mini-note">أجور الشحن فقط وليس الحوالة</div>
-                  </div>
+                  <input id="agreePolicyInput" type="checkbox" checked />
+                  <div style="font-weight:900">انا مطلع على كافة تفاصيل المنتج وموافق على سياسة متجركم</div>
                 </div>
               </div>
               <div id="shipDamascusBlock" style="display:grid;gap:10px">
@@ -1827,6 +1826,13 @@
                   </div>
                 </div>
                 <div id="damascusDeliveryBlock" style="display:grid;gap:10px">
+                  <label class="checkrow" style="margin-bottom:8px">
+                    <input id="urgentOrderInput" type="checkbox" />
+                    <div style="display:grid;gap:2px">
+                      <div style="font-weight:900">الطلب مستعجل أريده خلال يوم أو غداً</div>
+                      <div class="mini-note" style="color:#d11">تضاف عمولة خدمة المستعجل vip قيمة 1 دولار فقط</div>
+                    </div>
+                  </label>
                   <label style="display:grid;gap:6px">
                     <span style="font-weight:800">الموقع العام</span>
                     <div class="field-row">
@@ -1839,6 +1845,14 @@
                       <button class="field-clear" type="button" data-clear="locGeneralInput" aria-label="حذف" title="حذف">🗑</button>
                     </div>
                   </label>
+                  <label class="checkrow" style="margin-top:-4px">
+                    <input id="distantRuralInput" type="checkbox" onchange="document.getElementById('distantRuralNote').style.display=this.checked?'block':'none'" />
+                    <div style="font-weight:900">انا موقعي ضمن ريف دمشق البعيد</div>
+                  </label>
+                  <div id="distantRuralNote" style="display:none;background:rgba(255,193,7,0.1);padding:10px;border-radius:8px;border:1px solid rgba(255,193,7,0.3);font-size:12px;color:#d11;line-height:1.4">
+                    المناطق المدعومة بالشحن الداخلي هي "القطيفة/يبرود/النبك/دير عطية/قطنا/التل/الكسوة/جرامانا/جديدة عرطوز/قنيطرة خان أرنبة/قنيطرة سعسع/شهر العسل حرستا/داريا"<br>
+                    يرجى الدفع مسبقاً عبر شام كاش لكي يكون الشحن الداخلي مجاني - يصلك من 2-4 يوم عادة "انظر تفاصيل الشحن والتوصيل المجاني"
+                  </div>
                   <label style="display:grid;gap:6px">
                     <span style="font-weight:800">الموقع التفصيلي</span>
                     <div class="field-row">
@@ -1851,6 +1865,10 @@
                       <button class="field-clear" type="button" data-clear="locDetailInput" aria-label="حذف" title="حذف">🗑</button>
                     </div>
                   </label>
+                  <div style="display:grid;gap:4px">
+                    <button class="btn btn-ghost" type="button" id="sendLocationBtn" style="border:1px solid var(--primary-3);color:var(--primary-3)">ارسل موقعي على خريطة غوغل (اختياري)</button>
+                    <div class="mini-note" id="locationStatusText"></div>
+                  </div>
                   <label style="display:grid;gap:6px">
                     <span style="font-weight:800">نطاق الوقت المفضل</span>
                     <div class="field-row">
@@ -1866,6 +1884,7 @@
                   <div class="mini-note">يرجى عدم إغلاق الهاتف والانتباه لـ التغطية , يفضل تزويدنا بـ رقم احتياطي بقسم ملاحظات</div>
                   <div class="mini-note">توصيل من 1-3 يوم عادة</div>
                   <div class="mini-note">راجع قسم أسئلة شائعة للتوصيل للمزيد من المعلومات</div>
+                  <div class="mini-note" style="color:#d11;font-weight:bold">يرجى مع شكر العملة بالدولار نظيفة تماماً وإلا لن تقبل</div>
                 </div>
               </div>
               <div style="display:grid;gap:8px">
@@ -1904,7 +1923,7 @@
                 <button class="btn btn-primary" id="confirmOrderBtn" type="submit" style="flex:1">إتمام الطلب</button>
                 <button class="btn btn-ghost" id="copyInvoiceBtn" type="button" style="flex:1;display:none">نسخ الفاتورة</button>
               </div>
-              <div class="mini-note" style="font-size:12px">
+              <div style="font-size:16px; font-weight:bold; color:#007399; text-align:center; padding:10px; margin-top:10px; background:rgba(0,115,153,0.1); border-radius:8px;">
                 سيتم تواصل معاكم على الواتساب قبل إرسال الطلب للتأكيد عليكم — لن يتم إرسال الطلب بدون تأكيد من قبلكم
               </div>
               <div class="panel-sub" id="invoiceNote" style="display:none">يمكنك نسخ الفاتورة وإرسالها إلينا. الفاتورة تحتوي كل التفاصيل بشكل مرتب.</div>
@@ -2062,9 +2081,9 @@
       
       const CONFIG = {
         BRAND: "HJY.co",
-        PROMO_URLS: ["promo.txt"],
-        WHAT_NEW_URLS: ["what_new.txt"],
-        NEW_OFFER_URLS: ["new_offer.txt"],
+        PROMO_URLS: ["data/promo.txt"],
+        WHAT_NEW_URLS: ["data/what_new.txt"],
+        NEW_OFFER_URLS: ["data/new_offer.txt"],
         DATA_SOURCE: "LOCAL",
         DATA_DIR: "data-csv",
         DATA_MANIFEST_URLS: ["data-csv/files.txt"],
@@ -2073,8 +2092,8 @@
         GITHUB_OWNER: "",
         GITHUB_REPO: "",
         GITHUB_BRANCH: "main",
-        HOME_CODES_URLS: ["home.txt", "home.csv", "home"],
-        OUT_PRODUCTS_URLS: ["out_products.csv", "out_proudcts.csv", "out_products", "out_proudcts"],
+        HOME_CODES_URLS: ["data/home.txt", "data/home.csv", "data/home"],
+        OUT_PRODUCTS_URLS: ["data/out_products.csv", "data/out_proudcts.csv", "data/out_products", "data/out_proudcts"],
         ABOUT_DIR: "about",
         ITEMS_PER_PAGE: 20,
         SEARCH_MIN_CHARS: 2,
@@ -2259,8 +2278,8 @@
         category: "HOME",
         query: "",
         page: 1,
-        sortMode: "DEFAULT",
-        viewMode: "compact",
+        sortMode: "PRICE_ASC",
+        viewMode: "brief",
         lastMainRoute: "shop",
         lastProductCode: "",
         lastInvoiceText: "",
@@ -2672,6 +2691,99 @@
         html += `</div>`;
         return html;
       }
+      async function renderGalleryGrouped(type, introContent) {
+        els.infoText.innerHTML = `<div class="status" aria-hidden="false">جاري تحميل البيانات...</div>`;
+        try {
+          const listRes = await fetchTextCached(`data/${type}_list.csv`, 10 * 60 * 1000);
+          const catRes = await fetchTextCached(`data/${type}_categories.csv`, 10 * 60 * 1000);
+          
+          if (!listRes || !listRes.text) {
+            els.infoText.innerHTML = `<div class="panel-sub" style="font-weight:900;color:#d11">لا يوجد ملف ${type}_list.csv</div>`;
+            return;
+          }
+          
+          const listTable = parseCsvText(listRes.text);
+          const listMap = new Map();
+          if (listTable.headers && listTable.rows) {
+            const idCol = listTable.headers.findIndex(h => h.trim() === "#");
+            const titleCol = listTable.headers.findIndex(h => h.trim().toLowerCase() === (type === "videos" ? "title" : "name"));
+            const urlCol = listTable.headers.findIndex(h => h.trim().toLowerCase() === "url");
+            
+            if (idCol >= 0 && urlCol >= 0) {
+              for (const row of listTable.rows) {
+                const id = row[idCol]?.trim();
+                if (id) {
+                  listMap.set(id, {
+                    title: titleCol >= 0 ? row[titleCol]?.trim() : "",
+                    url: row[urlCol]?.trim()
+                  });
+                }
+              }
+            }
+          }
+          
+          let html = `<div style="display:grid;gap:10px">`;
+          if (introContent) {
+            html += `<div class="panel-sub">${formatAboutTextPlain(introContent)}</div>`;
+          }
+          
+          if (catRes && catRes.text) {
+            const catTable = parseCsvText(catRes.text);
+            if (catTable.headers && catTable.rows) {
+              html += `<div class="about-acc-list">`;
+              for (let i = 0; i < catTable.headers.length; i++) {
+                const catName = catTable.headers[i].trim();
+                if (!catName) continue;
+                
+                const ids = catTable.rows.map(r => r[i]?.trim()).filter(Boolean);
+                if (ids.length > 0) {
+                  let itemsHtml = `<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">`;
+                  for (const id of ids) {
+                    const item = listMap.get(id);
+                    if (item && item.url) {
+                      if (type === "videos") {
+                        const yt = extractYoutubeId(item.url);
+                        const thumb = yt ? `https://img.youtube.com/vi/${encodeURIComponent(yt)}/hqdefault.jpg` : "";
+                        itemsHtml += `<a href="${escapeHtmlAttr(item.url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">
+                          <div style="border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.7);overflow:hidden">
+                            <div style="aspect-ratio:16/9;background:#000;display:grid;place-items:center;position:relative">
+                              ${thumb ? `<img src="${escapeHtmlAttr(thumb)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()" />` : `<div style="color:#fff;font-weight:900;opacity:0.9">VIDEO</div>`}
+                              <div style="position:absolute;inset-inline-start:10px;inset-block-end:10px;background:rgba(0,0,0,0.6);color:#fff;border-radius:999px;padding:6px 10px;font-weight:900;font-size:12px">تشغيل</div>
+                            </div>
+                            <div style="padding:10px;display:grid;gap:4px">
+                              ${item.title ? `<div style="font-weight:900;font-size:16px;line-height:1.35">${escapeHtml(item.title)}</div>` : ""}
+                              <div class="mini-note" style="direction:ltr;unicode-bidi:plaintext;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(item.url)}</div>
+                            </div>
+                          </div>
+                        </a>`;
+                      } else {
+                        itemsHtml += `<a href="${escapeHtmlAttr(item.url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit" onclick="window.openImgModal && window.openImgModal(this.href); return false;">
+                          <div style="border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.7);overflow:hidden">
+                            <div style="aspect-ratio:1/1;background:#fff;display:grid;place-items:center;position:relative">
+                              <img src="${escapeHtmlAttr(item.url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()" />
+                            </div>
+                            <div style="padding:10px;display:grid;gap:4px">
+                              ${item.title ? `<div style="font-weight:900;font-size:14px;line-height:1.35;text-align:center">${escapeHtml(item.title)}</div>` : ""}
+                            </div>
+                          </div>
+                        </a>`;
+                      }
+                    }
+                  }
+                  itemsHtml += `</div>`;
+                  html += `<details class="about-acc"><summary class="about-acc-sum">${formatAboutTextPlain(catName)}</summary><div class="about-acc-body panel-sub" style="padding:12px">${itemsHtml}</div></details>`;
+                }
+              }
+              html += `</div>`;
+            }
+          }
+          html += `</div>`;
+          els.infoText.innerHTML = html;
+        } catch (e) {
+          els.infoText.innerHTML = `<div class="panel-sub" style="color:red">خطأ في تحميل البيانات</div>`;
+        }
+      }
+
       function parseVideosCsvText(csvText) {
         const t = String(csvText ?? "").trim();
         if (!t) return [];
@@ -3335,14 +3447,18 @@
         }
         photoIndexMap = map;
       }
-      function buildPhotoCandidates(code, extraCodes) {
+      function buildPhotoCandidates(code, extraCodes, isThumb = false) {
         const c = String(code ?? "").trim();
         const variants = [];
-        if (c) variants.push(c, c.toUpperCase(), c.toLowerCase());
+        if (c) {
+          if (isThumb) variants.push(`thumb_${c}`, `thumb_${c.toUpperCase()}`, `thumb_${c.toLowerCase()}`);
+          variants.push(c, c.toUpperCase(), c.toLowerCase());
+        }
         const extras = Array.isArray(extraCodes) ? extraCodes : [];
         for (const ex of extras) {
           const e = String(ex ?? "").trim();
           if (!e) continue;
+          if (isThumb) variants.push(`thumb_${e}`, `thumb_${e.toUpperCase()}`, `thumb_${e.toLowerCase()}`);
           variants.push(e, e.toUpperCase(), e.toLowerCase());
         }
         const seen = new Set();
@@ -4121,6 +4237,19 @@
           if (code.includes(t)) score += 8;
           if (name.includes(t)) score += 10;
           if (search.includes(t)) score += 6;
+          
+          // Fuzzy match: check 2-character chunks
+          if (t.length >= 2) {
+            for (let i = 0; i < t.length - 1; i++) {
+              const chunk = t.substr(i, 2);
+              if (code.includes(chunk)) score += 1;
+              if (name.includes(chunk)) score += 1;
+              if (search.includes(chunk)) score += 0.5;
+            }
+          } else if (t.length === 1) {
+            if (code.includes(t)) score += 0.5;
+            if (name.includes(t)) score += 0.5;
+          }
         }
         return score;
       }
@@ -4242,7 +4371,7 @@
           }
         }
         const uniqueCodes = [...new Set(allCodes)].filter(Boolean);
-        const cand = buildPhotoCandidates(uniqueCodes[0], uniqueCodes.slice(1));
+        const cand = buildPhotoCandidates(uniqueCodes[0], uniqueCodes.slice(1), true);
         const src = cand[0] || PLACEHOLDER_IMG;
         
         const disText = disTextForProduct(p);
@@ -4258,7 +4387,7 @@
             <button class="fav-btn" type="button" data-fav="${escapeHtmlAttr(p.code)}" aria-pressed="${favOn ? "true" : "false"}" aria-label="المفضلة">${
           favOn ? "♥" : "♡"
         }</button>
-            ${isHot ? `<div style="position:absolute;inset-inline-end:10px;inset-block-start:10px;z-index:2;font-weight:900;font-size:12px;color:#d11;background:#fff;border:1px solid rgba(198,40,40,0.35);border-radius:999px;padding:6px 10px">HOT</div>` : ""}
+            ${isHot ? `<div style="position:absolute;inset-inline-end:10px;inset-block-start:10px;z-index:2;font-weight:900;font-size:12px;color:#d11;background:#fff;border:1px solid rgba(198,40,40,0.35);border-radius:999px;padding:6px 10px">مميز</div>` : ""}
             <div class="thumb">
               <img
                 src="${escapeHtmlAttr(src)}"
@@ -4498,7 +4627,8 @@
                 <button class="btn btn-ghost" type="button" data-share="${escapeHtmlAttr(p.code)}">مشاركة المنتج</button>
                 <button class="btn btn-ghost" type="button" data-qa="1" style="border:1px solid #d11;color:#d11;font-weight:900">أسئلة شائعة</button>
                 <button class="btn btn-ghost" type="button" data-info="فيديوهات" style="border:1px solid var(--primary-3);color:var(--primary-3);font-weight:900">فيديوهات</button>
-                <button class="btn btn-ghost" type="button" data-info="صور" style="border:1px solid var(--primary-3);color:var(--primary-3);font-weight:900">صور</button>
+                <button class="btn btn-ghost" type="button" data-info="ألبوم الصور" style="border:1px solid var(--primary-3);color:var(--primary-3);font-weight:900">ألبوم الصور</button>
+                <button class="btn btn-ghost" type="button" data-info="تقييمات عملاء" style="border:1px solid var(--primary-3);color:var(--primary-3);font-weight:900">تقييمات العملاء</button>
               </div>
             </div>
           </div>
@@ -4726,7 +4856,7 @@
       async function loadHotSet() {
         state.hotSet.clear();
         state.hotPrefixes = [];
-        const res = await fetchTextFirstAvailable(["hot-price.csv"], 60 * 1000);
+        const res = await fetchTextFirstAvailable(["data/hot-price.csv"], 60 * 1000);
         if (!res) return;
         const lines = String(res.text ?? "")
           .split(/\r?\n/)
@@ -4755,7 +4885,7 @@
       }
       async function loadCategories() {
         state.categories = [];
-        const res = await fetchTextCached("categories.csv", 10 * 60 * 1000);
+        const res = await fetchTextCached("data/categories.csv", 10 * 60 * 1000);
         if (!res) return;
         const table = parseCsvText(res.text);
         if (!table.headers.length) return;
@@ -4889,7 +5019,7 @@
         return out;
       }
       function renderMiniProductCard(p) {
-        const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : []);
+        const cand = buildPhotoCandidates(p.code, p.photoList && p.photoList.length ? [p.photoList[0]] : [], true);
         const src = cand[0] || PLACEHOLDER_IMG;
         return `
           <article class="card" data-code="${escapeHtmlAttr(p.code)}" style="min-height:200px">
@@ -4928,9 +5058,9 @@
       async function loadAboutIndex() {
         state.aboutFiles = [];
         try {
-          // محاولة قراءة قائمة الملفات من about_files.txt أولاً لتجنب قيود GitHub API
+          // محاولة قراءة قائمة الملفات من data/about_files.txt أولاً لتجنب قيود GitHub API
           try {
-            const res = await fetchTextCached("about_files.txt", 10 * 60 * 1000);
+            const res = await fetchTextCached("data/about_files.txt", 10 * 60 * 1000);
             if (res && res.text) {
               const files = res.text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith("#"));
               if (files.length > 0) {
@@ -5021,9 +5151,9 @@
       async function loadQaIndex() {
         state.qaFiles = [];
         
-        // محاولة قراءة قائمة الملفات من qa_files.txt أولاً إذا كان موجوداً
+        // محاولة قراءة قائمة الملفات من data/qa_files.txt أولاً إذا كان موجوداً
         try {
-          const res = await fetchTextCached("qa_files.txt", 10 * 60 * 1000);
+          const res = await fetchTextCached("data/qa_files.txt", 10 * 60 * 1000);
           if (res && res.text) {
             const files = res.text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith("#"));
             if (files.length > 0) {
@@ -5558,29 +5688,11 @@
           return;
         }
         if (normalizeAboutKey(k) === normalizeAboutKey("فيديوهات")) {
-          let csvText = "";
-          try {
-            const csvRes = await fetchTextCached("about/فيديوهات.csv", 10 * 60 * 1000);
-            if (csvRes && csvRes.text) csvText = String(csvRes.text ?? "");
-          } catch {}
-          state.videosItems = csvText ? parseVideosCsvText(csvText) : [];
-          if (typeof state.videosQuery !== "string") state.videosQuery = "";
-          state.videosPage = 1;
-          state.videosIntro = content;
-          els.infoText.innerHTML =
-            state.videosItems.length === 0
-              ? `<div style="display:grid;gap:10px">${content ? `<div class="panel-sub">${formatAboutText(content)}</div>` : ""}<div class="panel-sub" style="font-weight:900;color:#d11">لا يوجد ملف فيديوهات.csv حالياً.</div></div>`
-              : renderVideosSection(content);
+          renderGalleryGrouped("videos", content);
           return;
         }
-        if (normalizeAboutKey(k) === normalizeAboutKey("صور")) {
-          try {
-            state.photoStoukFiles = await loadPhotoStoukIndex();
-          } catch {
-            state.photoStoukFiles = [];
-          }
-          state.photoStoukIntro = content;
-          els.infoText.innerHTML = renderPhotoStoukUI(content);
+        if (normalizeAboutKey(k) === normalizeAboutKey("ألبوم الصور") || normalizeAboutKey(k) === normalizeAboutKey("صور")) {
+          renderGalleryGrouped("photos", content);
           return;
         }
         els.infoText.innerHTML = formatAboutText(content);
@@ -6391,6 +6503,35 @@
             syncGovOther();
             showToast("تم حذف كامل البيانات", 1800);
           });
+        const sendLocationBtn = document.getElementById("sendLocationBtn");
+        const locationStatusText = document.getElementById("locationStatusText");
+        const locGeneralInput = document.getElementById("locGeneralInput");
+        if (sendLocationBtn) {
+          sendLocationBtn.addEventListener("click", () => {
+            if (!navigator.geolocation) {
+              locationStatusText.textContent = "المتصفح الخاص بك لا يدعم تحديد الموقع.";
+              locationStatusText.style.color = "red";
+              return;
+            }
+            locationStatusText.textContent = "جاري تحديد الموقع...";
+            locationStatusText.style.color = "var(--text)";
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const link = `https://www.google.com/maps?q=${lat},${lng}`;
+                locGeneralInput.value = locGeneralInput.value ? locGeneralInput.value + " | " + link : link;
+                locationStatusText.textContent = "تم إرفاق الموقع بنجاح.";
+                locationStatusText.style.color = "green";
+              },
+              (error) => {
+                locationStatusText.textContent = "فشل في تحديد الموقع. يرجى تفعيل الـ GPS.";
+                locationStatusText.style.color = "red";
+              }
+            );
+          });
+        }
+
         els.checkoutForm.addEventListener("click", (e) => {
           const t = e.target;
           if (!(t instanceof HTMLElement)) return;
@@ -6425,6 +6566,9 @@
           let locGeneral = "";
           let locDetail = "";
           let timeRange = "";
+          let urgentOrder = false;
+          let distantRural = false;
+          let gpsLocation = window.__hjyGpsLocation || "";
           let gov = String(els.govInput.value ?? "").trim();
           if (gov === "أخرى") {
             const other = String(els.govOtherInput?.value ?? "").trim();
@@ -6434,7 +6578,6 @@
             fullName = String(els.fullNameGovInput.value ?? "").trim();
             shipCenter = String(els.shipCenterInput.value ?? "").trim();
             carrier = els.carrierOther?.checked ? "آخر" : els.carrierMasarat.checked ? "مسارات" : "قدموس";
-            payAdvance = Boolean(els.payAdvanceInput.checked);
           } else {
             fullName = String(els.fullNameDamascusInput.value ?? "").trim();
             damascusType = els.damascusFreeDelivery.checked ? "توصيل مجاني" : "استلام ضمن موقعنا";
@@ -6443,6 +6586,8 @@
               locGeneral = String(els.locGeneralInput.value ?? "").trim();
               locDetail = String(els.locDetailInput.value ?? "").trim();
               timeRange = String(els.timeRangeInput.value ?? "").trim();
+              urgentOrder = document.getElementById("urgentOrderInput")?.checked || false;
+              distantRural = document.getElementById("distantRuralInput")?.checked || false;
             }
           }
           const payCurrency = els.paySypInput.checked ? "سوري" : "الدولار";
@@ -6455,7 +6600,9 @@
             fullName,
             shipCenter,
             carrier,
-            payAdvance,
+            urgentOrder,
+            distantRural,
+            gpsLocation,
             damascusType,
             locGeneral,
             locDetail,

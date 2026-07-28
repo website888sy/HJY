@@ -1,6 +1,13 @@
-# ضع هنا قائمة الصور داخل مجلد photo-stouk
-# كل سطر يمثل مسار ملف صورة (نسبي) داخل photo-stouk
-# أمثلة:
-# album-1/img1.jpg
-# album-1/img2.webp
-# album-2/photo.png
+# قائمة صور المنتجات والأعمال داخل مجلد photo-stouk
+# المجلد الفرعي سيُعتبر اسم الألبوم
+# مثال:
+album-1/img1.jpg
+album-1/img2.webp
+album-2/photo.png
+
+أعمال-وتركيب/install-1.jpg
+أعمال-وتركيب/install-2.jpg
+منتجات-شمسية/solar-1.jpg
+منتجات-شمسية/solar-2.jpg
+بطاريات/battery-1.jpg
+بطاريات/battery-2.jpg

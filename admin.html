@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مدير الموقع - HJY LAB</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --primary: #007399;
+      --primary-hover: #005c8a;
+      --danger: #dc3545;
+      --border: #ddd;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    .tab {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      background: #eee;
+      font-weight: bold;
+    }
+    .tab.active {
+      background: var(--primary);
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: var(--primary-hover);
+    }
+    button.danger {
+      background: var(--danger);
+    }
+    .img-preview {
+      max-width: 100%;
+      max-height: 400px;
+      margin-top: 1rem;
+    }
+    .result-img {
+      max-width: 200px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-top: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem;
+      text-align: right;
+    }
+    th {
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>مدير الموقع - لوحة التحكم</h1>
+    <div>
+      <button onclick="saveSettings()">حفظ الإعدادات</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h3>إعدادات GitHub (للحفظ التلقائي)</h3>
+      <div style="display: flex; gap: 1rem;">
+        <div class="form-group" style="flex: 1;">
+          <label>Token (Classic / Fine-grained)</label>
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Repo (user/repo)</label>
+          <input type="text" id="ghRepo" placeholder="username/HJY-LAB-WEB">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Branch</label>
+          <input type="text" id="ghBranch" value="main">
+        </div>
+      </div>
+      <p style="font-size: 0.85rem; color: #666;">سيتم استخدام هذه البيانات للاتصال بـ GitHub API لتعديل الملفات (مثل المنتجات، الأقسام، الصور، إلخ) مباشرة.</p>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('products')">إدارة المنتجات</div>
+      <div class="tab" onclick="switchTab('images')">معالجة ورفع الصور</div>
+      <div class="tab" onclick="switchTab('other')">إدارة الأقسام الأخرى</div>
+    </div>
+
+    <div id="products" class="tab-content active card">
+      <h2>قائمة المنتجات (products.csv)</h2>
+      <button onclick="loadProducts()">تحميل المنتجات</button>
+      <button onclick="saveProducts()" style="background: #28a745;">حفظ التعديلات في GitHub</button>
+      <div style="overflow-x: auto;">
+        <table id="productsTable">
+          <thead>
+            <tr>
+              <th>كود المنتج</th>
+              <th>الاسم</th>
+              <th>السعر</th>
+              <th>القسم</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5" style="text-align: center;">اضغط على "تحميل المنتجات" لجلب البيانات</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="images" class="tab-content card">
+      <h2>أداة ضغط الصور واقتصاصها (1:1 WebP)</h2>
+      <p>اختر صورة، قم بتحديد المربع (اقتصاص 1:1)، ثم اضغط تحويل ليتم توليد صورة خفيفة بصيغة WebP جاهزة للرفع.</p>
+      
+      <input type="file" id="imageInput" accept="image/*" style="margin-bottom: 1rem;">
+      
+      <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px;">
+          <img id="imageWorkspace" class="img-preview" src="" alt="">
+        </div>
+        <div style="flex: 1; min-width: 300px;">
+          <button onclick="processImage()">قص وتحويل إلى WebP</button>
+          <br>
+          <img id="resultImage" class="result-img" src="" style="display:none;">
+          <div id="downloadLinkContainer" style="margin-top: 1rem; display:none;">
+            <a id="downloadWebp" href="#" download="image.webp" style="display:inline-block; background:var(--primary); color:white; padding:0.5rem 1rem; text-decoration:none; border-radius:4px; font-weight:bold;">تحميل الصورة WebP</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="other" class="tab-content card">
+      <h2>إدارة الأقسام (الفيديوهات، الصور، الأسئلة الشائعة)</h2>
+      <p>هذه الصفحة سيتم تطويرها لاحقاً لتدعم تعديل الملفات التالية:</p>
+      <ul>
+        <li><code>data/categories.csv</code></li>
+        <li><code>data/videos_list.csv</code></li>
+        <li><code>data/photos_list.csv</code></li>
+        <li><code>data/qa_files.txt</code></li>
+      </ul>
+      <p>يمكنك حالياً استخدام الإعدادات أعلاه وتطوير الواجهة للاتصال بـ GitHub لجميع هذه الملفات بنفس طريقة المنتجات.</p>
+    </div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script>
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      
+      event.target.classList.add('active');
+      document.getElementById(tabId).style.display = 'block';
+    }
+
+    // Settings
+    function saveSettings() {
+      localStorage.setItem('ghToken', document.getElementById('ghToken').value);
+      localStorage.setItem('ghRepo', document.getElementById('ghRepo').value);
+      localStorage.setItem('ghBranch', document.getElementById('ghBranch').value);
+      alert('تم حفظ الإعدادات');
+    }
+    
+    window.onload = () => {
+      document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
+      document.getElementById('ghRepo').value = localStorage.getItem('ghRepo') || '';
+      document.getElementById('ghBranch').value = localStorage.getItem('ghBranch') || 'main';
+    };
+
+    // GitHub API Helper (Basic implementation)
+    async function fetchGitHubFile(path) {
+      const repo = document.getElementById('ghRepo').value;
+      const token = document.getElementById('ghToken').value;
+      const branch = document.getElementById('ghBranch').value;
+      
+      if(!repo || !token) {
+        alert("يرجى إدخال Token و Repo");
+        return null;
+      }
+
+      const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if(!res.ok) throw new Error("فشل جلب الملف");
+      const data = await res.json();
+      // Decode Base64 utf-8
+      const content = decodeURIComponent(escape(atob(data.content)));
+      return { content, sha: data.sha };
+    }
+
+    let currentProductsSha = '';
+    let currentProductsData = [];
+
+    async function loadProducts() {
+      try {
+        const file = await fetchGitHubFile('data-csv/cell-bms.csv'); // Example path
+        if(!file) return;
+        currentProductsSha = file.sha;
+        
+        Papa.parse(file.content, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            currentProductsData = results.data;
+            renderProducts();
+          }
+        });
+      } catch(e) {
+        alert(e.message);
+      }
+    }
+
+    function renderProducts() {
+      const tbody = document.querySelector('#productsTable tbody');
+      tbody.innerHTML = '';
+      currentProductsData.slice(0, 50).forEach((row, i) => { // show first 50 for demo
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row['CODE'] || ''}</td>
+          <td>${row['NAME'] || ''}</td>
+          <td>${row['PRICE'] || ''}</td>
+          <td>${row['CAT'] || ''}</td>
+          <td><button class="danger">حذف</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function saveProducts() {
+      alert("وظيفة الحفظ تحتاج لكتابة كود الـ PUT إلى GitHub API باستخدام الـ SHA الجديد والبيانات كـ Base64.");
+      // Implementation placeholder
+    }
+
+    // Image Cropper & WebP compression
+    let cropper;
+    const imageInput = document.getElementById('imageInput');
+    const imageWorkspace = document.getElementById('imageWorkspace');
+    const resultImage = document.getElementById('resultImage');
+    const downloadLinkContainer = document.getElementById('downloadLinkContainer');
+    const downloadWebp = document.getElementById('downloadWebp');
+
+    imageInput.addEventListener('change', (e) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          imageWorkspace.src = event.target.result;
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(imageWorkspace, {
+            aspectRatio: 1, // 1:1 Square
+            viewMode: 1,
+          });
+        };
+        reader.readAsDataURL(files[0]);
+      }
+    });
+
+    function processImage() {
+      if (!cropper) return alert("الرجاء اختيار صورة أولاً");
+      
+      const canvas = cropper.getCroppedCanvas({
+        width: 800,
+        height: 800,
+        fillColor: '#fff'
+      });
+      
+      // Convert to WebP with 0.8 quality
+      const webpUrl = canvas.toDataURL('image/webp', 0.8);
+      
+      resultImage.src = webpUrl;
+      resultImage.style.display = 'block';
+      
+      downloadWebp.href = webpUrl;
+      downloadWebp.download = `product_${Date.now()}.webp`;
+      downloadLinkContainer.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

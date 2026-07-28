@@ -1782,7 +1782,8 @@
                     <button class="btn btn-primary" type="button" onclick="navigator.clipboard.writeText('4acb502d12716cfb533d04cda0ecdd9f'); alert('تم النسخ');" style="padding:4px 8px;font-size:12px">نسخ الـ QR</button>
                   </div>
                   <div style="display:flex;gap:10px;align-items:center">
-                    <img src="sham-cash.png" alt="QR Code" style="width:80px;height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--border)" onerror="this.style.display='none'" />
+                    <img src="sham-cash.png" alt="QR Code" style="width:80px;height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--border);cursor:pointer;" onclick="openImgModal(this.src)" onerror="this.style.display='none'" />
+                    <button type="button" class="btn btn-ghost" onclick="openImgModal('sham-cash.png')" style="padding:6px;font-size:16px;border-radius:50%;" title="تكبير الصورة">🔍</button>
                     <a href="sham-cash.png" download class="btn btn-ghost" style="padding:6px 12px;font-size:12px;text-decoration:none">تحميل الصورة</a>
                   </div>
                 </div>
@@ -4256,7 +4257,6 @@
       let isCategoriesExpanded = false;
 
       function updatePills() {
-        if (!(els.pills instanceof HTMLElement)) return;
         const c = String(state.category || "").trim() || "HOME";
         let html = "";
         
@@ -4274,7 +4274,10 @@
           }
         }
 
-        els.pills.innerHTML = html;
+        if (els.pills instanceof HTMLElement) {
+          els.pills.innerHTML = html;
+        }
+        
         const catsSidebarList = document.getElementById("catsSidebarList");
         if (catsSidebarList) catsSidebarList.innerHTML = html;
         
@@ -4914,61 +4917,6 @@
         state.categories = cats;
       }
       function renderCategoryPills() {
-        const bar = document.querySelector(".pillbar");
-        if (!(bar instanceof HTMLElement)) return;
-        for (const old of Array.from(bar.querySelectorAll('.pill[data-category^="CAT:"]'))) {
-          try {
-            old.remove();
-          } catch {}
-        }
-        try {
-          const moreBtn = bar.querySelector('.pill-more-btn');
-          if (moreBtn) moreBtn.remove();
-        } catch {}
-        
-        const cats = Array.isArray(state.categories) ? state.categories : [];
-        const limit = 5;
-        cats.forEach((c, index) => {
-          const btn = document.createElement("button");
-          btn.className = "pill";
-          btn.type = "button";
-          btn.setAttribute("data-category", `CAT:${c.key}`);
-          btn.setAttribute("aria-pressed", "false");
-          btn.textContent = c.name;
-          if (index >= limit) {
-            btn.style.display = "none";
-            btn.classList.add("hidden-category-pill");
-          }
-          bar.appendChild(btn);
-        });
-        
-        if (cats.length > limit) {
-          const moreBtn = document.createElement("button");
-          moreBtn.className = "pill pill-more-btn";
-          moreBtn.type = "button";
-          moreBtn.textContent = "المزيد";
-          moreBtn.style.background = "rgba(25, 183, 255, 0.12)";
-          moreBtn.style.color = "var(--primary-3)";
-          moreBtn.style.fontWeight = "900";
-          moreBtn.dataset.expanded = "false";
-          moreBtn.addEventListener("click", () => {
-            const isExpanded = moreBtn.dataset.expanded === "true";
-            if (isExpanded) {
-              moreBtn.textContent = "المزيد";
-              moreBtn.dataset.expanded = "false";
-              Array.from(bar.querySelectorAll('.hidden-category-pill')).forEach(btn => {
-                btn.style.display = "none";
-              });
-            } else {
-              moreBtn.textContent = "عرض أقل";
-              moreBtn.dataset.expanded = "true";
-              Array.from(bar.querySelectorAll('.hidden-category-pill')).forEach(btn => {
-                btn.style.display = "";
-              });
-            }
-          });
-          bar.appendChild(moreBtn);
-        }
         updatePills();
       }
       function matchesKeywords(p, keywords) {

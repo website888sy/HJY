@@ -158,22 +158,34 @@
     </div>
 
     <div id="products" class="tab-content active card">
-      <h2>قائمة المنتجات (products.csv)</h2>
-      <button onclick="loadProducts()">تحميل المنتجات</button>
-      <button onclick="saveProducts()" style="background: #28a745;">حفظ التعديلات في GitHub</button>
-      <div style="overflow-x: auto;">
-        <table id="productsTable">
+      <h2>إدارة بيانات الموقع (ملفات CSV)</h2>
+      <div class="form-group" style="max-width: 400px;">
+        <label>اختر الملف لتعديله:</label>
+        <select id="csvFileSelector">
+          <option value="data-csv/cell-bms.csv">المنتجات (cell-bms.csv)</option>
+          <option value="data-csv/hot-price.csv">العروض المميزة (hot-price.csv)</option>
+          <option value="data-csv/out_products.csv">المنتجات منتهية الكمية (out_products.csv)</option>
+          <option value="data/categories.csv">الأقسام (categories.csv)</option>
+          <option value="data/videos_list.csv">قائمة الفيديوهات (videos_list.csv)</option>
+          <option value="data/videos_categories.csv">تصنيفات الفيديوهات (videos_categories.csv)</option>
+          <option value="data/photos_list.csv">قائمة الصور (photos_list.csv)</option>
+          <option value="data/photos_categories.csv">تصنيفات الصور (photos_categories.csv)</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+        <button onclick="loadCsvData()">تحميل البيانات</button>
+        <button onclick="saveCsvData()" style="background: #28a745;">حفظ التعديلات في GitHub</button>
+        <button onclick="addNewRow()" style="background: #17a2b8;">إضافة سطر جديد</button>
+      </div>
+      <div style="overflow-x: auto; max-height: 500px;">
+        <table id="dataTable">
           <thead>
-            <tr>
-              <th>كود المنتج</th>
-              <th>الاسم</th>
-              <th>السعر</th>
-              <th>القسم</th>
-              <th>إجراءات</th>
+            <tr id="tableHeaders">
+              <th>اختر ملفاً واضغط تحميل</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td colspan="5" style="text-align: center;">اضغط على "تحميل المنتجات" لجلب البيانات</td></tr>
+          <tbody id="tableBody">
+            <tr><td style="text-align: center;">لا توجد بيانات</td></tr>
           </tbody>
         </table>
       </div>
@@ -201,15 +213,8 @@
     </div>
 
     <div id="other" class="tab-content card">
-      <h2>إدارة الأقسام (الفيديوهات، الصور، الأسئلة الشائعة)</h2>
-      <p>هذه الصفحة سيتم تطويرها لاحقاً لتدعم تعديل الملفات التالية:</p>
-      <ul>
-        <li><code>data/categories.csv</code></li>
-        <li><code>data/videos_list.csv</code></li>
-        <li><code>data/photos_list.csv</code></li>
-        <li><code>data/qa_files.txt</code></li>
-      </ul>
-      <p>يمكنك حالياً استخدام الإعدادات أعلاه وتطوير الواجهة للاتصال بـ GitHub لجميع هذه الملفات بنفس طريقة المنتجات.</p>
+      <h2>ملاحظات هامة حول البيانات</h2>
+      <p>لتعديل أي ملف بيانات، يرجى التوجه لعلامة التبويب "إدارة بيانات الموقع (ملفات CSV)" واختيار الملف المناسب. جميع الملفات بما فيها الفيديوهات، الصور، العروض، والمنتجات منتهية الكمية مدعومة بشكل كامل في نفس المحرر.</p>
     </div>
 
   </div>
@@ -265,21 +270,30 @@
       return { content, sha: data.sha };
     }
 
-    let currentProductsSha = '';
-    let currentProductsData = [];
+    let currentFileSha = '';
+    let currentCsvHeaders = [];
+    let currentCsvData = [];
+    let currentFilePath = '';
 
-    async function loadProducts() {
+    async function loadCsvData() {
+      const path = document.getElementById('csvFileSelector').value;
+      currentFilePath = path;
+      document.getElementById('tableBody').innerHTML = '<tr><td colspan="100%" style="text-align:center">جاري التحميل...</td></tr>';
+      
       try {
-        const file = await fetchGitHubFile('data-csv/cell-bms.csv'); // Example path
+        const file = await fetchGitHubFile(path);
         if(!file) return;
-        currentProductsSha = file.sha;
+        currentFileSha = file.sha;
         
         Papa.parse(file.content, {
-          header: true,
+          header: false,
           skipEmptyLines: true,
           complete: function(results) {
-            currentProductsData = results.data;
-            renderProducts();
+            if(results.data && results.data.length > 0) {
+              currentCsvHeaders = results.data[0];
+              currentCsvData = results.data.slice(1);
+              renderTable();
+            }
           }
         });
       } catch(e) {
@@ -287,25 +301,84 @@
       }
     }
 
-    function renderProducts() {
-      const tbody = document.querySelector('#productsTable tbody');
+    function renderTable() {
+      const thead = document.getElementById('tableHeaders');
+      const tbody = document.getElementById('tableBody');
+      
+      thead.innerHTML = '';
+      currentCsvHeaders.forEach(h => {
+        thead.innerHTML += `<th>${h}</th>`;
+      });
+      thead.innerHTML += `<th>إجراءات</th>`;
+
       tbody.innerHTML = '';
-      currentProductsData.slice(0, 50).forEach((row, i) => { // show first 50 for demo
+      currentCsvData.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row['CODE'] || ''}</td>
-          <td>${row['NAME'] || ''}</td>
-          <td>${row['PRICE'] || ''}</td>
-          <td>${row['CAT'] || ''}</td>
-          <td><button class="danger">حذف</button></td>
-        `;
+        currentCsvHeaders.forEach((h, colIndex) => {
+          const val = row[colIndex] || '';
+          tr.innerHTML += `<td><input type="text" value="${val.replace(/"/g, '&quot;')}" onchange="updateCell(${rowIndex}, ${colIndex}, this.value)" style="border:none; background:transparent; width:100%; min-width:80px;"></td>`;
+        });
+        tr.innerHTML += `<td><button class="danger" onclick="deleteRow(${rowIndex})">حذف</button></td>`;
         tbody.appendChild(tr);
       });
     }
 
-    async function saveProducts() {
-      alert("وظيفة الحفظ تحتاج لكتابة كود الـ PUT إلى GitHub API باستخدام الـ SHA الجديد والبيانات كـ Base64.");
-      // Implementation placeholder
+    function updateCell(rowIndex, colIndex, val) {
+      currentCsvData[rowIndex][colIndex] = val;
+    }
+
+    function deleteRow(rowIndex) {
+      currentCsvData.splice(rowIndex, 1);
+      renderTable();
+    }
+
+    function addNewRow() {
+      if(!currentCsvHeaders.length) return alert('يرجى تحميل ملف أولاً');
+      const newRow = new Array(currentCsvHeaders.length).fill('');
+      currentCsvData.unshift(newRow);
+      renderTable();
+    }
+
+    async function saveCsvData() {
+      if(!currentFilePath || !currentCsvHeaders.length) return alert('لا يوجد بيانات للحفظ');
+      
+      const repo = document.getElementById('ghRepo').value;
+      const token = document.getElementById('ghToken').value;
+      const branch = document.getElementById('ghBranch').value;
+      
+      const allData = [currentCsvHeaders, ...currentCsvData];
+      const csvString = Papa.unparse(allData, { delimiter: ";" });
+      
+      // UTF-8 to Base64 (supports Arabic)
+      const utf8Bytes = new TextEncoder().encode(csvString);
+      const base64Content = btoa(String.fromCharCode(...utf8Bytes));
+
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${currentFilePath}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Update ${currentFilePath} via Admin Panel`,
+            content: base64Content,
+            sha: currentFileSha,
+            branch: branch
+          })
+        });
+
+        if(!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || 'فشل الحفظ');
+        }
+        
+        const data = await res.json();
+        currentFileSha = data.content.sha;
+        alert('تم حفظ التعديلات بنجاح على GitHub!');
+      } catch(e) {
+        alert("خطأ: " + e.message);
+      }
     }
 
     // Image Cropper & WebP compression

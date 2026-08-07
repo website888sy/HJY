@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة المنتجات - HJY LAB</title>
+<link rel="icon" href="../logo.webp" type="image/webp">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: '#0ea5e9',
+          primaryDark: '#0369a1',
+          accent: '#f59e0b',
+          danger: '#dc2626',
+          success: '#16a34a',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { font-size: 100%; }
+  html.font-sm { font-size: 88%; }
+  html.font-md { font-size: 100%; }
+  html.font-lg { font-size: 114%; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif; padding-top: 52px; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: #0f172a; color: #fff; padding: 12px 24px; border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999; transition: all .3s ease;
+    opacity: 0; font-weight: 600;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 16px; width: 100%; max-height: 92vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+  .th-tbl { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); }
+  .row-hover:hover { background: #f0f9ff; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .dis-entry { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 12px; }
+  input, select, textarea { outline: none; }
+  input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(14,165,233,0.2); border-color: #0ea5e9 !important; }
+  #f_code { text-transform: uppercase; }
+  .scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+  .scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 200;
+    display: none; align-items: center; justify-content: center;
+  }
+  .confirm-overlay.open { display: flex; }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800">
+
+<!-- ============ TOP BAR ============ -->
+<header class="fixed top-0 inset-x-0 bg-gradient-to-l from-primary to-sky-600 text-white shadow-lg z-40">
+  <div class="max-w-[1600px] mx-auto px-2 md:px-4 py-1.5 flex items-center gap-2 flex-wrap">
+    <img src="../logo.webp" alt="Logo" class="w-8 h-8 rounded-lg bg-white p-0.5 shadow object-cover hidden sm:block">
+    <div class="flex items-center gap-1.5 flex-1 min-w-0 bg-white rounded-lg p-1">
+      <select id="csvSelector" class="w-full min-w-0 bg-transparent outline-none text-slate-800 font-bold text-sm px-2 py-1 rounded cursor-pointer">
+        <option value="">-- اختر ملف المنتجات CSV للبدء --</option>
+      </select>
+      <button onclick="App.createNewCsv()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap" title="إنشاء ملف CSV جديد في المستودع">+ ملف جديد</button>
+      <button onclick="App.manualCsvUpload()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap" title="اختيار ملف CSV من جهازك">اختيار يدوي</button>
+      <button onclick="App.reloadCurrentCsv()" class="bg-sky-100 hover:bg-sky-200 text-sky-800 px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap" title="إعادة تحميل الملف الحالي من القرص">إعادة تحميل</button>
+      <button onclick="App.renameCurrentFile()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap" title="إعادة تسمية الملف الحالي">إعادة تسمية</button>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <button onclick="App.openCategoriesManager()" class="bg-white/15 hover:bg-white/25 px-2 py-1.5 rounded-md text-xs font-bold whitespace-nowrap" title="إدارة الفئات">الفئات</button>
+      <button onclick="App.openSettings()" class="bg-white/15 hover:bg-white/25 px-2 py-1.5 rounded-md text-xs font-bold whitespace-nowrap" title="إعدادات الصفحة و GitHub">الإعدادات</button>
+      <button onclick="App.saveAllToGithub()" id="saveAllBtn" class="bg-success hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-extrabold shadow transition-all disabled:opacity-50 whitespace-nowrap" disabled>حفظ ونشر</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main class="max-w-[1600px] mx-auto px-2 md:px-4 py-5">
+
+  <!-- Welcome state -->
+  <div id="welcomeState" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+    <div class="text-6xl mb-4 font-extrabold text-slate-200">HJY</div>
+    <h2 class="text-2xl font-extrabold text-slate-700 mb-2">لوحة إدارة المنتجات</h2>
+    <p class="text-slate-500 mb-6">اختر ملف CSV من الشريط العلوي لبدء التعديل على الأسعار والمنتجات.</p>
+  </div>
+
+  <!-- Products Workspace -->
+  <div id="workspace" class="hidden">
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <div class="text-xs text-slate-500 font-bold">إجمالي المنتجات</div>
+        <div id="statTotal" class="text-3xl font-extrabold text-primary">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <div class="text-xs text-slate-500 font-bold">رائج (HOT)</div>
+        <div id="statHot" class="text-3xl font-extrabold text-orange-500">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <div class="text-xs text-slate-500 font-bold">الصفحة الرئيسية</div>
+        <div id="statHome" class="text-3xl font-extrabold text-sky-600">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <div class="text-xs text-slate-500 font-bold">منتهي الكمية</div>
+        <div id="statOut" class="text-3xl font-extrabold text-danger">0</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-4">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-3">
+        <div class="relative w-full md:w-1/2">
+          <input id="searchInput" placeholder="ابحث هنا بالكود أو الاسم..." class="w-full border border-slate-300 rounded-xl px-4 py-2.5 pr-10 font-semibold" oninput="Products.renderTable()">
+          <span class="absolute right-3 top-2.5 text-slate-400">🔍</span>
+        </div>
+        <div class="flex gap-2 w-full md:w-auto">
+          <button onclick="Products.openEditor()" class="bg-gradient-to-l from-primary to-sky-500 hover:from-primaryDark hover:to-sky-600 text-white px-5 py-2.5 rounded-xl font-extrabold shadow-md w-full md:w-auto whitespace-nowrap">+ إضافة منتج جديد</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto scrollbar">
+        <table class="w-full text-sm">
+          <thead class="th-tbl border-b-2 border-slate-200">
+            <tr>
+              <th class="px-3 py-3 text-right">CODE الكود</th>
+              <th class="px-3 py-3 text-right">NAME الاسم</th>
+              <th class="px-3 py-3 text-right">ABOUT1 الوصف</th>
+              <th class="px-3 py-3 text-center">PRICE السعر</th>
+              <th class="px-3 py-3 text-center">H رأس المال</th>
+              <th class="px-3 py-3 text-center">P الربح</th>
+              <th class="px-3 py-3 text-center">الصورة</th>
+              <th class="px-3 py-3 text-center">الفئات</th>
+              <th class="px-3 py-3 text-center">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+      <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-between items-center gap-3 text-sm text-slate-500">
+        <span id="tableCountInfo" class="font-bold">0 منتج</span>
+        <button onclick="App.saveAllToGithub()" class="bg-success hover:bg-green-700 text-white px-6 py-2 rounded-lg font-extrabold shadow-md">حفظ ونشر</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ============ PRODUCT EDITOR MODAL ============ -->
+<div id="productModal" class="modal-backdrop">
+  <div class="modal-box max-w-6xl">
+    <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-gradient-to-l from-sky-50 to-white sticky top-0">
+      <h3 id="productModalTitle" class="text-xl font-extrabold text-primary">إضافة منتج جديد</h3>
+      <button onclick="Products.closeEditor()" class="text-slate-400 hover:text-danger text-3xl leading-none">&times;</button>
+    </div>
+    <div class="p-5 overflow-y-auto scrollbar space-y-5">
+
+      <!-- Basic -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">الكود (CODE)</label>
+          <input id="f_code" type="text" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2.5 font-extrabold text-primary text-lg" dir="ltr" oninput="Products.onCodeChange()">
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">الاسم (NAME)</label>
+          <input id="f_name" type="text" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2.5 font-bold text-lg">
+        </div>
+      </div>
+
+      <!-- Abouts -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">الوصف 1 (about1)</label>
+          <textarea id="f_about1" rows="3" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">الوصف 2 (about2)</label>
+          <textarea id="f_about2" rows="3" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+
+      <!-- Price: H + P = PRICE -->
+      <div class="bg-gradient-to-l from-sky-50 to-white border-2 border-sky-200 rounded-xl p-4">
+        <div class="font-extrabold text-sky-800 mb-3">الأسعار ( PRICE = H + P )</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">رأس المال (H)</label>
+            <input id="f_h" type="number" step="0.01" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2.5 text-lg font-bold" oninput="Products.calcPrice()">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">الربح (P)</label>
+            <input id="f_p" type="number" step="0.01" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2.5 text-lg font-bold" oninput="Products.calcPrice()">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-primary mb-1">السعر النهائي (PRICE) = تلقائي</label>
+            <input id="f_price" type="number" step="0.01" readonly class="w-full bg-sky-100 border-2 border-sky-300 rounded-lg px-3 py-2.5 text-xl font-extrabold text-sky-800">
+          </div>
+        </div>
+      </div>
+
+      <!-- Classifications: Checkboxes -->
+      <div class="bg-gradient-to-l from-indigo-50 to-white border-2 border-indigo-200 rounded-xl p-4">
+        <div class="font-extrabold text-indigo-800 mb-3">التصنيفات السريعة</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-indigo-100 hover:border-orange-300 transition">
+            <input id="cat_hot" type="checkbox" class="w-5 h-5 text-orange-500 rounded">
+            <span class="font-bold text-orange-600">رائج HOT</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-indigo-100 hover:border-sky-300 transition">
+            <input id="cat_home" type="checkbox" class="w-5 h-5 text-sky-500 rounded">
+            <span class="font-bold text-sky-600">صفحة رئيسية HOME</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer bg-white p-3 rounded-lg border border-indigo-100 hover:border-red-300 transition">
+            <input id="cat_out" type="checkbox" class="w-5 h-5 text-danger rounded">
+            <span class="font-bold text-danger">منتهي الكمية OUT</span>
+          </label>
+        </div>
+        <div class="text-sm font-bold text-indigo-900 mb-2">الفئات المخصصة (من الملف الموحد categories.csv)</div>
+        <div id="customCatsBox" class="flex flex-wrap gap-2 p-3 bg-white rounded-lg border border-indigo-100 min-h-[52px]"></div>
+        <div class="text-xs text-slate-500 mt-2">💡 لإضافة فئة جديدة أو تعديل اسمها: اضغط على زر "إدارة الفئات" من الشريط العلوي</div>
+      </div>
+
+      <!-- Discounts: Easy UI -->
+      <div class="bg-gradient-to-l from-amber-50 to-white border-2 border-amber-200 rounded-xl p-4">
+        <div class="flex justify-between items-center flex-wrap gap-2 mb-3">
+          <div class="font-extrabold text-amber-800">الخصومات والعروض (DIS)</div>
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="Products.addDiscount('percent')" class="text-sm bg-white hover:bg-amber-100 text-amber-800 px-4 py-1.5 border-2 border-amber-300 rounded-lg font-bold">+ خصم نسبة %</button>
+            <button onclick="Products.addDiscount('fixed')" class="text-sm bg-white hover:bg-amber-100 text-amber-800 px-4 py-1.5 border-2 border-amber-300 rounded-lg font-bold">+ خصم سعر ثابت</button>
+          </div>
+        </div>
+        <div id="disBox" class="space-y-2">
+          <div class="text-sm text-amber-700 bg-white/60 p-3 rounded-lg border border-amber-200/60">لم تتم إضافة أي خصومات بعد. اضغط على زر الأعلى لإضافة عرض.</div>
+        </div>
+        <input id="f_dis" type="hidden">
+      </div>
+
+      <!-- Photos: Auto WEBP -->
+      <div class="bg-gradient-to-l from-slate-50 to-white border-2 border-slate-200 rounded-xl p-4">
+        <div class="font-extrabold text-slate-800 mb-3">صور المنتج (تحويل تلقائي إلى WEBP)</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-600 mb-1">ارفع الصور بأي صيغة (JPG / PNG / WEBP)</label>
+            <input id="photoFileInput" type="file" accept="image/*" multiple class="w-full text-sm text-slate-600 file:ml-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-white file:font-bold hover:file:bg-primaryDark">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">وضع التسمية</label>
+            <div class="text-xs bg-white p-2 rounded-lg border border-slate-200 font-bold text-slate-700">
+              الصورة الأولى: <span class="text-primary font-mono">CODE.webp</span><br>
+              التالية: <span class="text-primary font-mono">CODE-1.webp / CODE-2.webp</span> ...
+            </div>
+          </div>
+        </div>
+        <div id="photoPreview" class="grid grid-cols-3 md:grid-cols-6 gap-3 p-3 bg-white rounded-xl border border-slate-200 min-h-[96px]"></div>
+        <div class="mt-3">
+          <label class="block text-xs font-bold text-slate-600 mb-1">أسماء الملفات النهائية (مفصولة بفاصلة):</label>
+          <input id="f_photo" type="text" dir="ltr" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2 font-mono text-sm text-left" placeholder="مثال: CODE, CODE-1, CODE-2">
+        </div>
+      </div>
+
+    </div>
+    <div class="p-5 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 sticky bottom-0">
+      <button onclick="Products.closeEditor()" class="px-6 py-2.5 bg-white border-2 border-slate-300 hover:bg-slate-100 rounded-lg font-bold text-slate-700">إلغاء</button>
+      <button onclick="Products.saveEditor()" class="px-8 py-2.5 bg-gradient-to-l from-primary to-sky-500 hover:from-primaryDark hover:to-sky-600 text-white rounded-lg font-extrabold shadow-md">حفظ المنتج</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CATEGORIES MANAGER MODAL ============ -->
+<div id="categoriesModal" class="modal-backdrop">
+  <div class="modal-box max-w-7xl">
+    <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-gradient-to-l from-indigo-50 to-white sticky top-0 z-10">
+      <div>
+        <h3 class="text-xl font-extrabold text-indigo-800">إدارة الفئات والملف الموحد (categories.csv)</h3>
+        <p class="text-xs text-slate-500 font-bold mt-1">3 أعمدة ثابتة (منتهي كمية / رائج / صفحة رئيسية) + أعمدة الفئات ديناميكية - كل عامود يحتوي على أكواد المنتجات المصنفة تحته</p>
+      </div>
+      <button onclick="Categories.close()" class="text-slate-400 hover:text-danger text-3xl leading-none">&times;</button>
+    </div>
+    <div class="p-5 overflow-y-auto scrollbar flex-1">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button onclick="Categories.addCategoryColumn()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-extrabold shadow-sm">+ إضافة فئة جديدة (عمود)</button>
+        <button onclick="Categories.save()" class="bg-success hover:bg-green-700 text-white px-4 py-2 rounded-lg font-extrabold shadow-sm">حفظ categories.csv</button>
+      </div>
+      <div class="overflow-x-auto scrollbar border-2 border-indigo-100 rounded-xl bg-white">
+        <table id="categoriesTable" class="w-full text-xs md:text-sm">
+          <thead id="catsHeader" class="bg-indigo-50 border-b-2 border-indigo-200"></thead>
+          <tbody id="catsBody" class="divide-y divide-indigo-100/50"></tbody>
+        </table>
+      </div>
+      <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4 text-xs text-amber-900">
+        <div class="font-extrabold mb-1">تعليمات الملف الموحد:</div>
+        • أول خلية في كل عامود = اسم الفئة أو التصنيف<br>
+        • جميع الخلايا تحت اسم الفئة = أكواد المنتجات (CODE) التابعة لهذه الفئة<br>
+        • يسمح بتكرار نفس الكود في أكثر من فئة<br>
+        • لا يمكن حذف أو تغيير اسم الأعمدة الثلاثة الثابتة: <b>منتهي كمية</b>، <b>رائج</b>، <b>صفحة رئيسية</b>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div id="settingsModal" class="modal-backdrop">
+  <div class="modal-box max-w-md">
+    <div class="p-5 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="text-xl font-extrabold">إعدادات الصفحة</h3>
+      <button onclick="App.closeSettings()" class="text-slate-400 hover:text-danger text-3xl leading-none">&times;</button>
+    </div>
+    <div class="p-5 space-y-5">
+      <div>
+        <label class="block text-sm font-bold text-slate-600 mb-2">حجم عرض الصفحة</label>
+        <div class="flex gap-2">
+          <button onclick="App.setFontSize('sm')" id="fs-sm" class="flex-1 border-2 border-slate-200 rounded-lg px-3 py-2 font-bold text-sm hover:border-primary">تصغير</button>
+          <button onclick="App.setFontSize('md')" id="fs-md" class="flex-1 border-2 border-slate-200 rounded-lg px-3 py-2 font-bold text-sm hover:border-primary">عادي</button>
+          <button onclick="App.setFontSize('lg')" id="fs-lg" class="flex-1 border-2 border-slate-200 rounded-lg px-3 py-2 font-bold text-sm hover:border-primary">تكبير</button>
+        </div>
+      </div>
+      <hr class="border-slate-200">
+      <div>
+        <label class="block text-sm font-bold text-slate-600 mb-1">Token</label>
+        <input id="s_token" type="password" placeholder="ghp_xxxxxxxxxxxx" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2 font-mono text-sm" dir="ltr">
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-slate-600 mb-1">Repo (username/repo)</label>
+        <input id="s_repo" type="text" placeholder="username/HJY-LAB-WEB" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2 font-mono text-sm" dir="ltr">
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-slate-600 mb-1">Branch</label>
+        <input id="s_branch" type="text" value="main" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2 font-mono text-sm" dir="ltr">
+      </div>
+    </div>
+    <div class="p-5 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
+      <button onclick="App.saveSettings()" class="bg-primary hover:bg-primaryDark text-white px-6 py-2 rounded-lg font-extrabold">حفظ الإعدادات</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM DIALOG ============ -->
+<div id="confirmDialog" class="confirm-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+    <div class="p-6 border-b border-slate-200 bg-red-50">
+      <h3 id="confirmTitle" class="text-xl font-extrabold text-danger">تأكيد الحذف</h3>
+    </div>
+    <div class="p-6">
+      <p id="confirmMsg" class="text-slate-700 font-semibold">هل أنت متأكد من الحذف؟ هذه العملية لا ترجعية.</p>
+    </div>
+    <div class="p-6 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
+      <button id="confirmCancel" class="px-5 py-2 bg-white border-2 border-slate-300 hover:bg-slate-100 rounded-lg font-bold">إلغاء</button>
+      <button id="confirmOk" class="px-6 py-2 bg-danger hover:bg-red-700 text-white rounded-lg font-extrabold shadow-sm">نعم، احذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROMPT MODAL (in-page) ============ -->
+<div id="promptModal" class="modal-backdrop">
+  <div class="modal-box max-w-sm">
+    <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+      <h3 id="promptTitle" class="text-lg font-extrabold">أدخل القيمة</h3>
+      <button onclick="promptModal.close()" class="text-slate-400 hover:text-danger text-3xl leading-none">&times;</button>
+    </div>
+    <div class="p-4">
+      <input id="promptInput" type="text" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2.5 font-bold" dir="ltr">
+    </div>
+    <div class="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
+      <button onclick="promptModal.close()" class="px-5 py-2 bg-white border-2 border-slate-300 hover:bg-slate-100 rounded-lg font-bold">إلغاء</button>
+      <button id="promptOk" class="px-6 py-2 bg-primary hover:bg-primaryDark text-white rounded-lg font-extrabold">موافق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DISCOUNT MODAL (in-page) ============ -->
+<div id="discountModal" class="modal-backdrop">
+  <div class="modal-box max-w-sm">
+    <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+      <h3 id="discountTitle" class="text-lg font-extrabold">إضافة عرض</h3>
+      <button onclick="discountModal.close()" class="text-slate-400 hover:text-danger text-3xl leading-none">&times;</button>
+    </div>
+    <div class="p-4 space-y-4">
+      <div>
+        <label class="block text-sm font-bold text-slate-600 mb-1">كمية الشراء للتفعيل (عدد القطع)</label>
+        <input id="discQty" type="number" min="1" value="5" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2.5 font-bold">
+      </div>
+      <div>
+        <label id="discValueLabel" class="block text-sm font-bold text-slate-600 mb-1">نسبة الخصم %</label>
+        <input id="discValue" type="number" min="0" step="0.01" value="15" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2.5 font-bold">
+      </div>
+    </div>
+    <div class="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
+      <button onclick="discountModal.close()" class="px-5 py-2 bg-white border-2 border-slate-300 hover:bg-slate-100 rounded-lg font-bold">إلغاء</button>
+      <button id="discountOk" class="px-6 py-2 bg-primary hover:bg-primaryDark text-white rounded-lg font-extrabold">إضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="toast">تم بنجاح</div>
+
+<script>
+/* ======================= UTILITIES ======================= */
+const $ = (id) => document.getElementById(id);
+const toast = (msg, ok=true) => {
+  const t = $('toast');
+  t.innerHTML = String(msg);
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+};
+const confirmAsync = (title, msg, okText='نعم') => new Promise(r => {
+  $('confirmTitle').textContent = title;
+  $('confirmMsg').textContent = msg;
+  $('confirmOk').textContent = okText;
+  $('confirmDialog').classList.add('open');
+  const off = () => { $('confirmCancel').onclick = null; $('confirmOk').onclick = null; $('confirmDialog').classList.remove('open'); };
+  $('confirmCancel').onclick = () => { off(); r(false); };
+  $('confirmOk').onclick = () => { off(); r(true); };
+});
+const promptModal = {
+  resolve: null,
+  open(title, defaultValue='') {
+    $('promptTitle').textContent = title;
+    const inp = $('promptInput');
+    inp.value = defaultValue;
+    $('promptModal').classList.add('open');
+    setTimeout(() => { inp.focus(); inp.select(); }, 50);
+    return new Promise(res => { this.resolve = res; });
+  },
+  ok() {
+    const v = $('promptInput').value;
+    this.close();
+    if (this.resolve) { this.resolve(v); this.resolve = null; }
+  },
+  close() {
+    $('promptModal').classList.remove('open');
+    if (this.resolve) { this.resolve(null); this.resolve = null; }
+  }
+};
+const discountModal = {
+  type: 'percent',
+  resolve: null,
+  open(type='percent') {
+    this.type = type;
+    $('discountTitle').textContent = type === 'percent' ? 'إضافة خصم نسبة' : 'إضافة خصم سعر ثابت';
+    $('discValueLabel').textContent = type === 'percent' ? 'نسبة الخصم %' : 'السعر الجديد بالدولار بعد الخصم';
+    $('discValue').value = type === 'percent' ? '15' : '2.4';
+    $('discQty').value = '5';
+    $('discountModal').classList.add('open');
+    setTimeout(() => { $('discQty').focus(); $('discQty').select(); }, 50);
+    return new Promise(res => { this.resolve = res; });
+  },
+  ok() {
+    const qty = $('discQty').value;
+    const val = $('discValue').value;
+    this.close();
+    if (this.resolve) { this.resolve({ qty, val }); this.resolve = null; }
+  },
+  close() {
+    $('discountModal').classList.remove('open');
+    if (this.resolve) { this.resolve(null); this.resolve = null; }
+  }
+};
+$('promptOk').addEventListener('click', () => promptModal.ok());
+$('promptInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') promptModal.ok(); });
+$('discountOk').addEventListener('click', () => discountModal.ok());
+$('discQty').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('discValue').focus(); });
+$('discValue').addEventListener('keydown', (e) => { if (e.key === 'Enter') discountModal.ok(); });
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const nf = (n) => { const v = Number(n); if(isNaN(v)) return ''; return (Math.round(v*100)/100).toFixed(2).replace(/\.00$/,''); };
+const NO_IMG_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72"><rect width="100%" height="100%" fill="#f1f5f9"/><text x="50%" y="50%" text-anchor="middle" dy=".35em" font-size="12" fill="#94a3b8" font-family="Arial">لا صورة</text></svg>`);
+window.NO_IMG_SVG = NO_IMG_SVG;
+const PHOTO_SUBDIRS = [
+  '',
+  'BATT-LI','add','bike-battery','bms','electroincs','electroincs/cells','eva','inverter','our-prod',
+  'qiachip','qiachip/home-smart-eq','qiachip/power-supply','qiachip/reciver-remote','qiachip/remote-a','qiachip/remote-b','qiachip/wifi-qiachip',
+  'sensor-smart','smart-home-wifi','wifi-smart-home'
+];
+const PHOTO_EXTS = ['.webp', '.jpg', '.jpeg', '.png', '.avif'];
+function genPhotoCandidates(code, photoField, idx=0) {
+  const list = [];
+  const photoNames = String(photoField || '').split(',').map(s => s.trim()).filter(Boolean);
+  const targetName = photoNames[idx] || (idx === 0 ? code : `${code}-${idx}`);
+  if (photoNames[idx]) {
+    const hasExt = PHOTO_EXTS.some(e => photoNames[idx].toLowerCase().endsWith(e));
+    for (const sub of PHOTO_SUBDIRS) {
+      if (hasExt) list.push(sub ? `../photo/${sub}/${photoNames[idx]}` : `../photo/${photoNames[idx]}`);
+      else for (const ext of PHOTO_EXTS) list.push(sub ? `../photo/${sub}/${photoNames[idx]}${ext}` : `../photo/${photoNames[idx]}${ext}`);
+    }
+  }
+  const base = idx === 0 ? code : `${code}-${idx}`;
+  for (const sub of PHOTO_SUBDIRS) {
+    for (const ext of PHOTO_EXTS) {
+      const p = sub ? `../photo/${sub}/${base}${ext}` : `../photo/${base}${ext}`;
+      if (!list.includes(p)) list.push(p);
+    }
+  }
+  return list;
+}
+window.__adminImgFallback = function(img) {
+  try {
+    if (!(img instanceof HTMLImageElement)) return;
+    const raw = img.getAttribute('data-src-list');
+    const list = raw ? JSON.parse(raw) : [];
+    const idx = Number(img.getAttribute('data-src-idx') || '0');
+    if (!Array.isArray(list) || list.length === 0 || idx >= list.length - 1) { img.onerror = null; img.src = NO_IMG_SVG; return; }
+    img.setAttribute('data-src-idx', String(idx + 1));
+    img.src = String(list[idx + 1]);
+  } catch { img.onerror = null; img.src = NO_IMG_SVG; }
+};
+function normalizeProduct(p) {
+  if (!p) return {};
+  const n = {};
+  Object.keys(p).forEach(k => {
+    const nk = String(k).replace(/^\uFEFF/, '').trim().toLowerCase();
+    let v = p[k];
+    if (typeof v === 'string') { v = v.replace(/^\uFEFF/, ''); }
+    n[nk] = v;
+  });
+  n.code = String(n.code || '').trim();
+  n.name = String(n.name || '').trim();
+  n.about1 = String(n.about1 || '').trim();
+  n.about2 = String(n.about2 || '').trim();
+  n.photo = String(n.photo || '').trim();
+  n.dis = String(n.dis || '').trim().replace(/\r?\n/g, ', ');
+  n.h = (n.h === '' || n.h == null) ? '' : (Number(n.h) || 0);
+  n.p = (n.p === '' || n.p == null) ? '' : (Number(n.p) || 0);
+  if ((!n.price || String(n.price).trim() === '') && (Number(n.h) || Number(n.p))) n.price = Number(((Number(n.h) + Number(n.p)).toFixed(2)));
+  else n.price = Number(n.price) || 0;
+  n.keywords = String(n.keywords || '');
+  n.category = String(n.category || '');
+  return n;
+}
+function normalizeProducts(arr) { return (arr || []).map(normalizeProduct).filter(p => p.code); }
+function stripBom(s) { if (typeof s !== 'string') return ''; if (s.charCodeAt(0) === 0xFEFF) return s.slice(1); return s; }
+function tryParseWithDelimiter(clean, delimiter) {
+  try {
+    const p = Papa.parse(clean, { header: true, skipEmptyLines: true, delimiter });
+    const arr = p.data || [];
+    return normalizeProducts(arr);
+  } catch { return []; }
+}
+function smartParseCsv(raw) {
+  const clean = stripBom(raw || '');
+  if (!clean.trim()) return [];
+  const firstLine = (clean.split(/\r?\n/)[0] || '').trim();
+  const semiCount = (firstLine.match(/;/g) || []).length;
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const primaryDelim = semiCount >= commaCount ? ';' : ',';
+  const secondaryDelim = primaryDelim === ';' ? ',' : ';';
+  let products = tryParseWithDelimiter(clean, primaryDelim);
+  const allCodesEmpty = products.every(p => !String(p.code || '').trim());
+  if (products.length === 0 || allCodesEmpty) {
+    const tryAlt = tryParseWithDelimiter(clean, secondaryDelim);
+    const altCodesOk = tryAlt.length && tryAlt.some(p => String(p.code || '').trim());
+    if (altCodesOk) products = tryAlt;
+  }
+  if (products.length && products.every(p => !String(p.name || '').trim() && !String(p.about1 || '').trim())) {
+    const tryAlt = tryParseWithDelimiter(clean, secondaryDelim);
+    if (tryAlt.length && tryAlt.some(p => String(p.name || '').trim())) products = tryAlt;
+  }
+  return products.map(p => normalizeProduct(p));
+}
+async function fetchTextRelatively(pathRelativeToRoot) {
+  try {
+    const prefix = pathRelativeToRoot.startsWith('../') ? '' : '../';
+    const url = prefix + pathRelativeToRoot;
+    const r = await fetch(url, { cache: 'no-store' });
+    if (r.ok) return await r.text();
+    return null;
+  } catch { return null; }
+}
+
+/* ======================= GITHUB ======================= */
+const GH = {
+  getCfg() {
+    return {
+      token: localStorage.getItem('gh_token') || '',
+      repo: localStorage.getItem('gh_repo') || '',
+      branch: localStorage.getItem('gh_branch') || 'main',
+    };
+  },
+  headers(tok=this.getCfg().token) {
+    const h = {
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+    if (tok) h['Authorization'] = `Bearer ${tok}`;
+    return h;
+  },
+  async getFileSHA(path) {
+    const cfg = this.getCfg();
+    if (!cfg.repo) return null;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${path}?ref=${cfg.branch}`, { headers: this.headers() });
+      if (r.ok) { const j = await r.json(); return j.sha || null; }
+      return null;
+    } catch { return null; }
+  },
+  async putFile(path, content, message='Update file', isBinary=false) {
+    const cfg = this.getCfg();
+    if (!cfg.token || !cfg.repo) { toast('الرجاء تعيين إعدادات GitHub أولاً', false); return false; }
+    const sha = await this.getFileSHA(path);
+    const enc = isBinary ? content : btoa(unescape(encodeURIComponent(content)));
+    const body = { message, branch: cfg.branch, content: enc };
+    if (sha) body.sha = sha;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${path}`, {
+        method: 'PUT', headers: this.headers(), body: JSON.stringify(body)
+      });
+      if (r.ok) return true;
+      const j = await r.json(); toast('خطأ GitHub: ' + (j.message || r.status), false); return false;
+    } catch (e) { toast('خطأ اتصال: ' + e.message, false); return false; }
+  },
+  async getFile(path) {
+    const cfg = this.getCfg();
+    if (!cfg.repo) return null;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${path}?ref=${cfg.branch}`, { headers: this.headers() });
+      if (!r.ok) return null;
+      const j = await r.json();
+      if (!j.content) return null;
+      const raw = atob(j.content.replace(/\s/g, ''));
+      const dec = new TextDecoder('utf-8').decode(new Uint8Array([...raw].map(c=>c.charCodeAt(0))));
+      return dec;
+    } catch { return null; }
+  },
+  async listFilesInDir(dir) {
+    const cfg = this.getCfg();
+    if (!cfg.repo) return [];
+    try {
+      const r = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${dir}?ref=${cfg.branch}`, { headers: this.headers() });
+      if (!r.ok) return [];
+      const j = await r.json();
+      if (!Array.isArray(j)) return [];
+      return j.filter(x => x.type === 'file').map(x => x.name);
+    } catch { return []; }
+  },
+  async listFilesRecursive(dir, seen = {}, out = []) {
+    const cfg = this.getCfg();
+    if (!cfg.repo || seen[dir]) return out;
+    seen[dir] = true;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${cfg.repo}/contents/${dir}?ref=${cfg.branch}`, { headers: this.headers() });
+      if (!r.ok) return out;
+      const j = await r.json();
+      if (!Array.isArray(j)) return out;
+      for (const it of j) {
+        if (!it || typeof it !== 'object') continue;
+        if (it.type === 'dir') { await this.listFilesRecursive(`${dir}/${it.name}`, seen, out); continue; }
+        if (it.type === 'file' && String(it.name || '') !== 'files.txt') out.push(`${dir}/${it.name}`);
+      }
+    } catch {}
+    return out;
+  },
+  async regenerateManifests() {
+    const cfg = this.getCfg();
+    if (!cfg.repo) return false;
+    let ok = true;
+    try {
+      const photoList = await this.listFilesRecursive('photo');
+      if (photoList.length) {
+        const ok1 = await this.putFile('photo/files.txt', photoList.join('\n') + '\n', 'تحديث فهرس الصور photo/files.txt');
+        if (!ok1) ok = false;
+      }
+    } catch { ok = false; }
+    try {
+      const custList = await this.listFilesRecursive('customer_photo');
+      if (custList.length) {
+        const ok2 = await this.putFile('customer_photo/files.txt', custList.join('\n') + '\n', 'تحديث فهرس customer_photo/files.txt');
+        if (!ok2) ok = false;
+      }
+    } catch { ok = false; }
+    return ok;
+  }
+};
+
+/* ======================= WEBP CONVERTER ======================= */
+const ImgConv = {
+  async toWebP(file, maxDim = 1200) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('فشل تحويل الصورة'));
+        }, 'image/webp', 0.8);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('صورة غير صالحة')); };
+      img.src = url;
+    });
+  },
+  blobToBase64(blob) {
+    return new Promise(r => {
+      const r2 = new FileReader();
+      r2.onload = () => r(r2.result.split(',')[1]);
+      r2.readAsDataURL(blob);
+    });
+  }
+};
+
+/* ======================= APP STATE ======================= */
+const App = {
+  products: [],       // loaded products from selected CSV
+  categories: [],     // array of cols: { name: string, codes: string[], fixed?: boolean }
+  currentCsv: '',
+  currentCsvBasename: '',
+  pendingPhotos: [],  // { name, base64, blob }
+  photoUploads: [],   // pending GitHub uploads: { path, base64 }
+
+  init() {
+    this.loadSettings();
+    this.applyFontSize(localStorage.getItem('hjy_admin_font') || 'md');
+    this.populateCsvSelector();
+    window.addEventListener('beforeunload', (e) => {
+      if (this.isDirty()) { e.preventDefault(); e.returnValue = ''; }
+    });
+  },
+
+  isDirty() {
+    return (this.currentCsv && this.products.length >= 0);
+  },
+
+  loadSettings() {
+    const c = GH.getCfg();
+    $('s_token').value = c.token;
+    $('s_repo').value = c.repo;
+    $('s_branch').value = c.branch;
+  },
+  openSettings() { $('settingsModal').classList.add('open'); this.loadSettings(); this.applyFontSize(localStorage.getItem('hjy_admin_font') || 'md', true); },
+  closeSettings() { $('settingsModal').classList.remove('open'); },
+  saveSettings() {
+    localStorage.setItem('gh_token', $('s_token').value.trim());
+    localStorage.setItem('gh_repo', $('s_repo').value.trim());
+    localStorage.setItem('gh_branch', $('s_branch').value.trim());
+    toast('تم حفظ الإعدادات');
+    this.closeSettings();
+    this.populateCsvSelector();
+  },
+
+  applyFontSize(size, highlightOnly=false) {
+    const root = document.documentElement;
+    root.classList.remove('font-sm', 'font-md', 'font-lg');
+    root.classList.add('font-' + size);
+    ['sm','md','lg'].forEach(s => {
+      const b = $('fs-' + s);
+      if (b) {
+        b.classList.remove('border-primary', 'bg-sky-50');
+        if (s === size) b.classList.add('border-primary', 'bg-sky-50');
+      }
+    });
+    if (!highlightOnly) localStorage.setItem('hjy_admin_font', size);
+  },
+  setFontSize(size) { this.applyFontSize(size); },
+
+  async populateCsvSelector() {
+    const sel = $('csvSelector');
+    sel.innerHTML = '<option value="">-- جاري تجهيز قائمة الملفات --</option>';
+    let files = [];
+    const idx = await fetchTextRelatively('data-csv/files.txt');
+    if (idx) {
+      files = idx.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(s => s.endsWith('.csv') ? s : s + '.csv');
+    }
+    if (!files.length) files = await GH.listFilesInDir('data-csv');
+    if (!files || files.length === 0) {
+      files = ['cell-bms.csv','add.csv','aurd-elec.csv','box-more.csv','e-bike-batt.csv','eva-prod.csv','hjy-code-remote-rx.csv','inverter.csv','our-prod.csv','qiachip-home-smart-eq.csv','remote-B.csv','rx.csv','smart-home-wifi.csv','smart-sensor-home.csv','solar-batt.csv','wifi-qiachip.csv','remote-A.csv','‏‏remote-A.csv'];
+    }
+    files = files.filter(f => /\.csv$/i.test(f));
+    const unique = [];
+    files.forEach(f => { if (!unique.includes(f)) unique.push(f); });
+    sel.innerHTML = '<option value="">-- اختر ملف المنتجات CSV للبدء --</option>' +
+      unique.map(f => `<option value="data-csv/${f}">${f}</option>`).join('');
+    if (this.currentCsv) sel.value = this.currentCsv;
+    const prevVal = sel.value;
+    sel.onclick = () => { sel.dataset.prev = sel.value; };
+    sel.onchange = () => {
+      const nv = sel.value;
+      if (!nv && sel.dataset.prev) { sel.value = sel.dataset.prev; return; }
+      if (nv === sel.dataset.prev && nv) { this.loadCsv(nv); return; }
+      this.loadCsv(nv);
+    };
+  },
+
+  async reloadCurrentCsv() {
+    if (!this.currentCsv) { toast('اختر ملفاً أولاً', false); return; }
+    toast('جاري إعادة تحميل الملف...');
+    await this.loadCsv(this.currentCsv);
+  },
+
+  async _openFilePickerFallback(reason) {
+    toast(reason + ' — اختر الملف يدوياً من جهازك', false);
+    const fallback = document.createElement('input');
+    fallback.type = 'file'; fallback.accept = '.csv,text/csv';
+    fallback.onchange = (ev) => {
+      const f = ev.target.files?.[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = () => { this.loadCsv(this.currentCsv || ('data-csv/' + f.name), r.result); };
+      r.onerror = () => { toast('فشل قراءة الملف من جهازك', false); };
+      r.readAsText(f, 'utf-8');
+    };
+    fallback.click();
+  },
+
+  async loadCsv(path, manualText=null) {
+    if (!path && !manualText) return;
+    const sel = $('csvSelector');
+    if (path) { this.currentCsv = path; this.currentCsvBasename = path.split('/').pop(); if (sel.value !== path) sel.value = path; }
+    let raw = manualText;
+    let rawSource = '';
+    if (!raw && path) {
+      raw = await fetchTextRelatively(path);
+      if (raw) rawSource = 'تحميل محلي مباشر';
+    }
+    if (!raw && path) {
+      raw = await GH.getFile(path);
+      if (raw) rawSource = 'GitHub API';
+    }
+    if (!raw && !manualText) {
+      if (sel.value && sel.value !== path) sel.value = '';
+      await this._openFilePickerFallback('تعذر الوصول للملف عبر الشبكة');
+      return;
+    }
+    if (raw && raw.length < 20) {
+      if (sel.value && sel.value !== path) sel.value = '';
+      await this._openFilePickerFallback('الملف يبدو فارغاً');
+      return;
+    }
+    try {
+      const parsedRaw = smartParseCsv(raw);
+      this.products = parsedRaw;
+    } catch (e) {
+      console.error('Parse error:', e);
+      toast('خطأ أثناء تحليل الملف: ' + (e.message || e), false);
+      return;
+    }
+    if (!this.products || this.products.length === 0) {
+      toast('لم يتم العثور على أي منتجات صالحة في الملف. تحقق من التنسيق أو اختر ملفاً آخر.', false);
+      const ok = await confirmAsync('اختيار ملف يدوي', 'هل تريد تجربة اختيار الملف يدوياً من جهازك؟');
+      if (ok) {
+        const fallback = document.createElement('input');
+        fallback.type = 'file'; fallback.accept = '.csv,text/csv';
+        fallback.onchange = (ev) => {
+          const f = ev.target.files?.[0]; if (!f) return;
+          const r = new FileReader();
+          r.onload = () => { this.loadCsv(this.currentCsv || ('data-csv/' + f.name), r.result); };
+          r.readAsText(f, 'utf-8');
+        };
+        fallback.click();
+      }
+      return;
+    }
+    const sample = this.products[0] || {};
+    $('welcomeState').classList.add('hidden');
+    $('workspace').classList.remove('hidden');
+    $('saveAllBtn').disabled = false;
+    await this.loadCategories();
+    Products.renderTable();
+    const srcInfo = manualText ? 'اختيار يدوي' : rawSource;
+    toast(`${this.products.length} منتج | الكود الأول: ${sample.code || '—'} | المصدر: ${srcInfo}`);
+  },
+
+  manualCsvUpload() {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.csv,text/csv';
+    inp.onchange = (ev) => {
+      const f = ev.target.files?.[0]; if (!f) return;
+      toast('جاري قراءة الملف: ' + f.name + ' ...');
+      const r = new FileReader();
+      r.onload = () => this.loadCsv('data-csv/' + f.name, r.result);
+      r.onerror = () => toast('فشل قراءة الملف', false);
+      r.readAsText(f, 'utf-8');
+    };
+    inp.click();
+  },
+
+  async createNewCsv() {
+    const name = await promptModal.open('اسم الملف الجديد (مع الامتداد .csv):', 'new-file.csv');
+    if (!name) return;
+    let n = String(name).trim();
+    if (!n) return;
+    if (!/\.csv$/i.test(n)) n += '.csv';
+    const path = 'data-csv/' + n;
+    const HEADER = ['CODE','NAME','PRICE','ABOUT1','ABOUT2','dis','PHOTO','P','H'];
+    const csv = Papa.unparse([HEADER], { delimiter: ';' });
+    toast('جاري إنشاء الملف ورفعه إلى المستودع...');
+    const ok = await GH.putFile(path, csv, `إنشاء ملف جديد: ${n}`);
+    if (!ok) return;
+    const idx = await fetchTextRelatively('data-csv/files.txt');
+    if (idx != null) {
+      const lines = idx.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      if (!lines.includes(n)) {
+        lines.push(n);
+        await GH.putFile('data-csv/files.txt', lines.join('\n') + '\n', 'إضافة الملف الجديد إلى الفهرس');
+      }
+    }
+    toast(`تم إنشاء الملف ${n}`);
+    this.currentCsv = '';
+    await this.populateCsvSelector();
+    await this.loadCsv(path);
+  },
+
+  async renameCurrentFile() {
+    if (!this.currentCsvBasename) { toast('اختر ملفاً أولاً', false); return; }
+    const newName = await promptModal.open('الاسم الجديد للملف (مع الامتداد .csv):', this.currentCsvBasename);
+    if (!newName) return;
+    if (!/\.csv$/i.test(newName)) { toast('يجب أن ينتهي بالامتداد .csv', false); return; }
+    const ok = await confirmAsync('تغيير اسم الملف', `هل تريد تغيير اسم ${this.currentCsvBasename} إلى ${newName}؟\n(سيتم حذف القديم وإنشاء الجديد بعد الضغط على حفظ ونشر)`);
+    if (!ok) return;
+    const oldPath = this.currentCsv;
+    this.currentCsvBasename = newName;
+    this.currentCsv = 'data-csv/' + newName;
+    // update selector
+    const sel = $('csvSelector');
+    if (![...sel.options].some(o => o.value === this.currentCsv)) {
+      const opt = document.createElement('option');
+      opt.value = this.currentCsv; opt.textContent = newName;
+      sel.appendChild(opt);
+    }
+    sel.value = this.currentCsv;
+    this._pendingRename = { from: oldPath, to: this.currentCsv };
+    toast('تم تغيير الاسم. اضغط "حفظ ونشر" للتنفيذ');
+  },
+
+  async loadCategories() {
+    let raw = await fetchTextRelatively('data/categories.csv');
+    if (!raw) raw = await GH.getFile('data/categories.csv');
+    const fixedNames = ['منتهي كمية', 'رائج', 'صفحة رئيسية'];
+    const cleanHeader = (s) => String(s ?? '').replace(/^\uFEFF/, '').trim();
+    if (raw) {
+      const cleanRaw = stripBom(raw);
+      const firstLine = (cleanRaw.split(/\r?\n/)[0] || '').trim();
+      const semiCount = (firstLine.match(/;/g) || []).length, commaCount = (firstLine.match(/,/g) || []).length;
+      const delimiter = semiCount > commaCount ? ';' : ',';
+      const p = Papa.parse(cleanRaw, { skipEmptyLines: true, delimiter });
+      const rows = p.data || [];
+      if (rows.length) {
+        const width = Math.max(...rows.map(r => r.length), 0);
+        const parsedCols = [];
+        for (let c = 0; c < width; c++) {
+          const name = cleanHeader(rows[0]?.[c]);
+          const codes = [];
+          for (let r = 1; r < rows.length; r++) {
+            const v = (rows[r]?.[c] ?? '').trim();
+            if (v) codes.push(v);
+          }
+          if (name || codes.length) parsedCols.push({ name: name || `فئة ${c+1}`, codes });
+        }
+        const used = new Set();
+        const fixedCols = fixedNames.map(name => {
+          const idx = parsedCols.findIndex((cl, i) => !used.has(i) && cl.name === name);
+          if (idx >= 0) { used.add(idx); return { name, codes: parsedCols[idx].codes, fixed: true }; }
+          return { name, codes: [], fixed: true };
+        });
+        const customCols = parsedCols.filter((cl, i) => !used.has(i)).map(cl => ({ name: cl.name, codes: cl.codes, fixed: false }));
+        this.categories = [...fixedCols, ...customCols];
+        return;
+      }
+    }
+    this.categories = fixedNames.map(n => ({ name: n, codes: [], fixed: true }));
+  },
+
+  buildCsvFromProducts() {
+    const HEADER_ORDER = ['CODE','NAME','PRICE','ABOUT1','ABOUT2','dis','PHOTO','P','H'];
+    const rows = [];
+    rows.push(HEADER_ORDER);
+    for (const pRaw of (this.products || [])) {
+      const p = normalizeProduct(pRaw);
+      rows.push([
+        p.code || '', p.name || '', String(nf(p.price) || ''),
+        p.about1 || '', p.about2 || '', p.dis || '',
+        p.photo || '', (p.p === '' || p.p == null) ? '' : String(nf(p.p) || ''), (p.h === '' || p.h == null) ? '' : String(nf(p.h) || '')
+      ]);
+    }
+    return Papa.unparse(rows, { delimiter: ';' });
+  },
+
+  async saveAllToGithub() {
+    const cfg = GH.getCfg();
+    if (!cfg.token || !cfg.repo) { toast('قم بتعيين إعدادات GitHub أولاً', false); App.openSettings(); return; }
+    if (!this.currentCsv) { toast('اختر ملف CSV للمنتجات أولاً', false); return; }
+    toast('جاري الحفظ والرفع...');
+
+    // 1) Upload pending photos
+    if (this.photoUploads.length) {
+      for (const ph of this.photoUploads) {
+        await GH.putFile(ph.path, ph.base64, `إضافة صورة ${ph.path}`, true);
+      }
+      this.photoUploads = [];
+    }
+
+    // 2) Save products CSV
+    const csv = this.buildCsvFromProducts();
+    const okP = await GH.putFile(this.currentCsv, csv, `تحديث المنتجات: ${this.currentCsvBasename}`);
+    if (!okP) return;
+    if (this._pendingRename) {
+      // delete old path
+      const cfg2 = GH.getCfg();
+      try {
+        const sha = await GH.getFileSHA(this._pendingRename.from);
+        if (sha) {
+          await fetch(`https://api.github.com/repos/${cfg2.repo}/contents/${this._pendingRename.from}`, {
+            method: 'DELETE', headers: GH.headers(),
+            body: JSON.stringify({ message: `حذف: ${this._pendingRename.from}`, branch: cfg2.branch, sha })
+          });
+        }
+      } catch {}
+      this._pendingRename = null;
+      this.populateCsvSelector();
+    }
+
+    // 3) Save categories CSV (always)
+    const catsCSV = Categories.toCSV();
+    await GH.putFile('data/categories.csv', catsCSV, 'تحديث categories.csv');
+
+    // 4) Maintain legacy files (out_products.csv, hot-price.csv, home.txt) derived from categories.csv
+    await this.syncLegacyFiles();
+
+    // 5) Regenerate photo/customer_photo manifests (avoid GitHub API rate limits on the site)
+    const manifestOk = await GH.regenerateManifests();
+    if (!manifestOk) toast('تم النشر لكن فشل تحديث فهارس الصور', false);
+
+    toast('تم الحفظ والنشر بنجاح');
+  },
+
+  async syncLegacyFiles() {
+    const col = (name) => (this.categories.find(c => c.name === name)?.codes || []);
+    const outs = col('منتهي كمية');
+    const hots = col('رائج');
+    const homes = col('صفحة رئيسية');
+    await GH.putFile('data/out_products.csv', outs.map(c => `${c}`).join('\n') + (outs.length ? '\n' : ''), 'تحديث out_products.csv');
+    await GH.putFile('data/hot-price.csv', hots.map(c => `${c}`).join('\n') + (hots.length ? '\n' : ''), 'تحديث hot-price.csv');
+    await GH.putFile('data/home.txt', homes.map(c => `${c}`).join('\n') + (homes.length ? '\n' : ''), 'تحديث home.txt');
+  },
+
+  openCategoriesManager() {
+    if (this.categories.length === 0) this.loadCategories().then(() => { Categories.render(); $('categoriesModal').classList.add('open'); });
+    else { Categories.render(); $('categoriesModal').classList.add('open'); }
+  },
+};
+
+/* ======================= CATEGORIES MANAGER ======================= */
+const Categories = {
+  render() {
+    const fixedNames = ['منتهي كمية', 'رائج', 'صفحة رئيسية'];
+    // Ensure first 3 fixed exist (by name) without overwriting custom names
+    for (let i = 0; i < 3; i++) {
+      const fi = App.categories.findIndex(c => c.name === fixedNames[i]);
+      if (fi >= 0) { App.categories[fi].fixed = true; continue; }
+      if (!App.categories[i]) App.categories[i] = { name: fixedNames[i], codes: [], fixed: true };
+    }
+    const cols = App.categories;
+    const maxR = Math.max(...cols.map(c => c.codes.length), 3) + 3;
+    const th = $('catsHeader');
+    const tb = $('catsBody');
+    let thHtml = '<tr>';
+    cols.forEach((c, i) => {
+      const isFixed = c.fixed;
+      thHtml += `<th class="px-2 py-3 text-center border-l border-indigo-100 min-w-[140px]">
+        <div class="flex flex-col items-center gap-1">
+          ${isFixed ? `<span class="chip bg-indigo-600 text-white">ثابت</span>` : `<div class="flex gap-1"><button onclick="Categories.renameCol(${i})" class="text-xs bg-white border border-indigo-300 text-indigo-700 px-2 py-0.5 rounded">تعديل</button><button onclick="Categories.deleteCol(${i})" class="text-xs bg-red-50 border border-red-300 text-red-600 px-2 py-0.5 rounded">حذف</button></div>`}
+          <div class="font-extrabold ${isFixed ? 'text-indigo-800' : 'text-slate-700'}">${esc(c.name)}</div>
+        </div>
+      </th>`;
+    });
+    thHtml += '<th class="w-8"></th></tr>';
+    th.innerHTML = thHtml;
+    let tbHtml = '';
+    for (let r = 0; r < maxR; r++) {
+      tbHtml += `<tr class="row-hover">`;
+      cols.forEach((c, ci) => {
+        const val = c.codes[r] || '';
+        tbHtml += `<td class="px-1 py-1 border-l border-indigo-50"><input data-col="${ci}" data-row="${r}" value="${esc(val)}" oninput="Categories.onCellInput(event)" dir="ltr" class="w-full border border-transparent hover:border-indigo-200 focus:border-indigo-400 rounded px-2 py-1.5 text-sm font-mono ${c.fixed && ci===0 ? 'text-danger' : c.fixed && ci===1 ? 'text-orange-600' : c.fixed && ci===2 ? 'text-sky-700' : 'text-slate-700'}"></td>`;
+      });
+      tbHtml += `<td class="w-8"></td></tr>`;
+    }
+    tb.innerHTML = tbHtml;
+  },
+
+  onCellInput(e) {
+    const ci = +e.target.dataset.col;
+    const ri = +e.target.dataset.row;
+    const cols = App.categories;
+    if (!cols[ci]) return;
+    // Trim empty trailing cells live
+    cols[ci].codes[ri] = e.target.value;
+  },
+
+  async addCategoryColumn() {
+    const name = await promptModal.open('اسم الفئة الجديدة (مثل: بطاريات ليثيوم):', '');
+    if (!name || !name.trim()) return;
+    App.categories.push({ name: name.trim(), codes: [], fixed: false });
+    this.render();
+  },
+
+  async renameCol(i) {
+    const c = App.categories[i];
+    if (!c || c.fixed) return;
+    const n = await promptModal.open('اسم جديد للفئة:', c.name);
+    if (!n || !n.trim()) return;
+    c.name = n.trim();
+    this.render();
+  },
+
+  async deleteCol(i) {
+    const c = App.categories[i];
+    if (!c || c.fixed) return;
+    const ok = await confirmAsync('حذف فئة', `هل تريد حذف الفئة "${c.name}" كاملاً مع كل الأكواد التي تحتها؟`, 'حذف');
+    if (!ok) return;
+    App.categories.splice(i, 1);
+    this.render();
+  },
+
+  save() {
+    // Clean up: trailing empty cells
+    App.categories.forEach(c => {
+      while (c.codes.length && !String(c.codes[c.codes.length-1]).trim()) c.codes.pop();
+    });
+    toast('تم تحديث الفئات. اضغط "حفظ ونشر" لنشرها');
+    this.close();
+  },
+
+  close() { $('categoriesModal').classList.remove('open'); },
+
+  toCSV() {
+    // Clean
+    const cols = App.categories.map(c => ({
+      ...c,
+      codes: c.codes.map(v => String(v ?? '').trim()).filter(Boolean)
+    }));
+    const h = Math.max(...cols.map(c => c.codes.length), 0);
+    const rows = [];
+    rows.push(cols.map(c => c.name));
+    for (let i = 0; i < h; i++) {
+      rows.push(cols.map(c => c.codes[i] || ''));
+    }
+    return Papa.unparse(rows);
+  }
+};
+
+/* ======================= PRODUCTS MANAGER ======================= */
+const Products = {
+  editingIndex: -1,
+  tempPhotos: [], // { name, base64, previewUrl }
+  disRules: [],   // { type, qty, value }
+
+  onCodeChange() {
+    const el = $('f_code');
+    if (el) {
+      const start = el.selectionStart || 0;
+      const end = el.selectionEnd || 0;
+      const v = String(el.value || '');
+      const upper = v.toUpperCase();
+      if (upper !== v) { el.value = upper; try { el.setSelectionRange(start, end); } catch {} }
+    }
+    // auto rename photos names
+    this.refreshPhotoPreview();
+    this.updatePhotoField();
+  },
+
+  /* ---------- RENDER TABLE ---------- */
+  renderTable() {
+    const q = String($('searchInput')?.value || '').trim().toLowerCase();
+    let list = App.products || [];
+    if (q) list = list.filter(p => String(p.code||'').toLowerCase().includes(q) || String(p.name||'').toLowerCase().includes(q));
+    const tbody = $('productsTableBody');
+    const colOut = (App.categories.find(c => c.name === 'منتهي كمية')?.codes || []);
+    const colHot = (App.categories.find(c => c.name === 'رائج')?.codes || []);
+    const colHome = (App.categories.find(c => c.name === 'صفحة رئيسية')?.codes || []);
+
+    let html = '';
+    let outCount = 0, hotCount = 0, homeCount = 0;
+    (App.products || []).forEach(p => {
+      const code = String(p.code || '');
+      if (colOut.includes(code)) outCount++;
+      if (colHot.includes(code)) hotCount++;
+      if (colHome.includes(code)) homeCount++;
+    });
+    $('statTotal').textContent = App.products?.length || 0;
+    $('statHot').textContent = hotCount;
+    $('statHome').textContent = homeCount;
+    $('statOut').textContent = outCount;
+
+    list.forEach((p, i) => {
+      const realIndex = App.products.indexOf(p);
+      const code = String(p.code || '');
+      const candList = genPhotoCandidates(code, p.photo || '', 0);
+      const firstSrc = candList[0] || '';
+      const candJson = esc(JSON.stringify(candList));
+      const cats = [];
+      if (colOut.includes(code)) cats.push('<span class="chip bg-red-100 text-danger">منتهي</span>');
+      if (colHot.includes(code)) cats.push('<span class="chip bg-orange-100 text-orange-700">HOT</span>');
+      if (colHome.includes(code)) cats.push('<span class="chip bg-sky-100 text-sky-700">رئيسية</span>');
+      // Custom categories
+      App.categories.filter(c => !c.fixed).forEach(c => {
+        if (c.codes.includes(code)) cats.push(`<span class="chip bg-indigo-50 text-indigo-700 border border-indigo-100">${esc(c.name)}</span>`);
+      });
+      html += `<tr class="row-hover group">
+        <td class="px-3 py-3 font-mono font-extrabold text-primary">${esc(code)}</td>
+        <td class="px-3 py-3 font-bold text-slate-800">${esc(p.name || '')}</td>
+        <td class="px-3 py-3 text-slate-600 max-w-xs truncate">${esc(p.about1 || '')}</td>
+        <td class="px-3 py-3 text-center">
+          <div class="font-extrabold text-success text-lg">$${nf(p.price)}</div>
+          ${p.dis ? `<div class="chip bg-amber-100 text-amber-800 mt-0.5">عروض</div>`:''}
+        </td>
+        <td class="px-3 py-3 text-center font-bold text-slate-600">${p.h === '' || p.h == null ? '' : nf(p.h)}</td>
+        <td class="px-3 py-3 text-center font-bold text-slate-600">${p.p === '' || p.p == null ? '' : nf(p.p)}</td>
+        <td class="px-3 py-3 text-center">
+          <img loading="lazy" src="${esc(firstSrc)}" alt="" data-src-list="${candJson}" data-src-idx="0" onerror="window.__adminImgFallback && window.__adminImgFallback(this)" class="w-16 h-16 object-cover rounded-lg border border-slate-200 bg-slate-50 inline-block">
+        </td>
+        <td class="px-3 py-3 text-center"><div class="flex flex-wrap gap-1 justify-center max-w-xs">${cats.join('') || '<span class="text-xs text-slate-400">—</span>'}</div></td>
+        <td class="px-3 py-3 text-center">
+          <div class="flex gap-1.5 justify-center">
+            <button onclick="Products.openEditor(${realIndex})" class="bg-primary hover:bg-primaryDark text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm">تعديل</button>
+            <button onclick="Products.deleteProduct(${realIndex})" class="bg-danger hover:bg-red-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm">حذف</button>
+          </div>
+        </td>
+      </tr>`;
+    });
+    if (!html) html = `<tr><td colspan="9" class="p-12 text-center text-slate-400 font-bold">لا توجد منتجات مطابقة لعملية البحث</td></tr>`;
+    tbody.innerHTML = html;
+    $('tableCountInfo').textContent = `${list.length} منتج ${list.length !== (App.products||[]).length ? `(من أصل ${App.products.length})` : ''}`;
+  },
+
+  /* ---------- OPEN / CLOSE EDITOR ---------- */
+  openEditor(index = -1) {
+    this.editingIndex = index;
+    this.disRules = [];
+    this.tempPhotos = [];
+    $('productModalTitle').textContent = index < 0 ? 'إضافة منتج جديد' : 'تعديل المنتج';
+    const p = index >= 0 ? App.products[index] : { code:'', name:'', about1:'', about2:'', price:'', h:'', p:'', photo:'', dis:'' };
+    $('f_code').value = p.code || '';
+    $('f_name').value = p.name || '';
+    $('f_about1').value = p.about1 || '';
+    $('f_about2').value = p.about2 || '';
+    $('f_h').value = p.h ?? '';
+    $('f_p').value = p.p ?? '';
+    const hRaw = String(p.h ?? '').trim();
+    const pRaw = String(p.p ?? '').trim();
+    const hasHP = hRaw !== '' || pRaw !== '';
+    const calcSum = hasHP ? Math.round((Number(hRaw)||0) * 100 + (Number(pRaw)||0) * 100) / 100 : '';
+    $('f_price').value = calcSum !== '' ? calcSum : (p.price ?? '');
+    $('f_photo').value = p.photo || '';
+    // Checkboxes from categories
+    const catCodes = (name) => App.categories.find(c => c.name === name)?.codes || [];
+    const colOut = catCodes('منتهي كمية');
+    const colHot = catCodes('رائج');
+    const colHome = catCodes('صفحة رئيسية');
+    $('cat_out').checked = colOut.includes(String(p.code||''));
+    $('cat_hot').checked = colHot.includes(String(p.code||''));
+    $('cat_home').checked = colHome.includes(String(p.code||''));
+    // Parse dis
+    this.parseDisToRules(p.dis || '');
+    this.renderDisRules();
+    // Custom categories checkboxes
+    this.renderCustomCatsCheckboxes(String(p.code||''));
+    // photo preview
+    this.refreshPhotoPreview();
+    // photo file listener
+    $('photoFileInput').onchange = (e) => this.onPhotoFiles(e);
+    $('photoFileInput').value = '';
+    $('productModal').classList.add('open');
+  },
+  closeEditor() { $('productModal').classList.remove('open'); this.tempPhotos = []; },
+
+  renderCustomCatsCheckboxes(currentCode) {
+    const box = $('customCatsBox');
+    const cols = App.categories.map((c, ci) => ({ c, ci })).filter(x => !x.c.fixed);
+    if (cols.length === 0) { box.innerHTML = '<div class="text-xs text-slate-400">لا توجد فئات مخصصة بعد. أضفها من زر "إدارة الفئات" بالأعلى</div>'; return; }
+    let html = '';
+    cols.forEach(({ c, ci }) => {
+      const checked = c.codes.includes(currentCode) ? 'checked' : '';
+      html += `<label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300"><input type="checkbox" data-custom-cat="${ci}" ${checked} class="w-4 h-4 text-indigo-600"><span class="text-sm font-bold text-slate-700">${esc(c.name)}</span></label>`;
+    });
+    box.innerHTML = html;
+  },
+
+  /* ---------- PRICE ---------- */
+  calcPrice() {
+    const h = Number($('f_h').value || 0);
+    const p = Number($('f_p').value || 0);
+    $('f_price').value = (Math.round((h+p)*100)/100);
+    this.renderDisRules();
+  },
+
+  /* ---------- DISCOUNT RULES ---------- */
+  parseDisToRules(dis) {
+    this.disRules = [];
+    if (!dis) return;
+    const parts = String(dis).split(/\s*,\s*/).filter(Boolean);
+    for (const part of parts) {
+      const m1 = part.match(/^(\d+)\s*[Pp]\s*=\s*(\d+(?:\.\d+)?)\s*%?$/);
+      if (m1) { this.disRules.push({ type: 'percent', qty: +m1[1], value: +m1[2] }); continue; }
+      const m2 = part.match(/^(\d+)\s*[+＋]?\s*[Pp]\s*=\s*(\d+(?:\.\d+)?)$/);
+      if (m2) { this.disRules.push({ type: 'fixed', qty: +m2[1], value: +m2[2] }); continue; }
+    }
+  },
+  rulesToDisString() {
+    return this.disRules.map(r => r.type === 'percent' ? `${r.qty}P=${r.value}%` : `${r.qty}+P=${r.value}`).join(', ');
+  },
+  async addDiscount(type) {
+    const res = await discountModal.open(type);
+    if (!res) return;
+    const qty = Number(res.qty), val = Number(res.val);
+    if (!qty || isNaN(qty) || qty <= 0) return;
+    if (isNaN(val) || val < 0) return;
+    if (type === 'percent') {
+      this.disRules.push({ type: 'percent', qty, value: val });
+    } else {
+      this.disRules.push({ type: 'fixed', qty, value: val });
+    }
+    this.renderDisRules();
+  },
+  removeDis(i) { this.disRules.splice(i, 1); this.renderDisRules(); },
+  updateDisQty(i, v) { if (!isNaN(+v) && +v > 0) this.disRules[i].qty = +v; this.renderDisRules(); },
+  updateDisValue(i, v) { if (!isNaN(+v) && +v >= 0) this.disRules[i].value = +v; this.renderDisRules(); },
+
+  renderDisRules() {
+    const box = $('disBox');
+    const price = Number($('f_price').value || 0);
+    if (this.disRules.length === 0) {
+      box.innerHTML = '<div class="text-sm text-amber-700 bg-white/60 p-3 rounded-lg border border-amber-200/60">لم تتم إضافة أي خصومات بعد. اضغط على زر الأعلى لإضافة عرض.</div>';
+      $('f_dis').value = '';
+      return;
+    }
+    $('f_dis').value = this.rulesToDisString();
+    let html = '';
+    this.disRules.forEach((r, i) => {
+      if (r.type === 'percent') {
+        const newP = Math.max(0, (price * (1 - r.value/100)));
+        html += `<div class="dis-entry grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
+          <div class="md:col-span-1 text-center"><span class="chip bg-orange-100 text-orange-700">% نسبة</span></div>
+          <div class="md:col-span-3 flex items-center gap-2 text-sm">عند <input type="number" min="1" value="${r.qty}" oninput="Products.updateDisQty(${i},this.value)" class="w-16 border border-amber-300 rounded px-2 py-1 font-bold text-center"> قطعة فما فوق</div>
+          <div class="md:col-span-3 flex items-center gap-2 text-sm">خصم <input type="number" min="0" step="0.1" value="${r.value}" oninput="Products.updateDisValue(${i},this.value)" class="w-20 border border-amber-300 rounded px-2 py-1 font-bold text-center"> %</div>
+          <div class="md:col-span-4 flex items-center gap-2 text-sm font-bold">
+            <span class="text-slate-500 line-through">$${nf(price)}</span>
+            <span class="mx-1">→</span>
+            <span class="text-success text-lg">$${nf(newP)}</span>
+          </div>
+          <div class="md:col-span-1 text-left"><button onclick="Products.removeDis(${i})" class="text-danger hover:text-red-700 text-xl leading-none">×</button></div>
+        </div>`;
+      } else {
+        html += `<div class="dis-entry grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
+          <div class="md:col-span-1 text-center"><span class="chip bg-green-100 text-green-700">$ ثابت</span></div>
+          <div class="md:col-span-3 flex items-center gap-2 text-sm">عند <input type="number" min="1" value="${r.qty}" oninput="Products.updateDisQty(${i},this.value)" class="w-16 border border-amber-300 rounded px-2 py-1 font-bold text-center"> قطعة فما فوق</div>
+          <div class="md:col-span-3 flex items-center gap-2 text-sm">خصم بالسعر ليصبح <input type="number" min="0" step="0.01" value="${r.value}" oninput="Products.updateDisValue(${i},this.value)" class="w-24 border border-amber-300 rounded px-2 py-1 font-bold text-center"> $</div>
+          <div class="md:col-span-4 flex items-center gap-2 text-sm font-bold">
+            <span class="text-slate-500 line-through">$${nf(price)}</span>
+            <span class="mx-1">→</span>
+            <span class="text-success text-lg">$${nf(r.value)}</span>
+          </div>
+          <div class="md:col-span-1 text-left"><button onclick="Products.removeDis(${i})" class="text-danger hover:text-red-700 text-xl leading-none">×</button></div>
+        </div>`;
+      }
+    });
+    box.innerHTML = html;
+  },
+
+  /* ---------- PHOTOS ---------- */
+  async onPhotoFiles(e) {
+    const files = [...(e.target.files || [])];
+    if (!files.length) return;
+    const code = String($('f_code').value || '').trim();
+    if (!code) { toast('اكتب الكود CODE أولاً لتسمية الصور', false); return; }
+    toast('جاري تحويل الصور إلى WEBP...');
+    const existingNames = ($('f_photo').value || '').split(',').map(s => s.trim()).filter(Boolean);
+    let currentIdx = existingNames.length; // start from current count
+    // Determine starting index: count existing photos
+    if (currentIdx === 0) currentIdx = 0;
+    else {
+      // check if first photo uses plain code (without -1), if so next should be 1, 2...
+      const first = existingNames[0];
+      if (first === code || first === `${code}.webp`) {
+        currentIdx = existingNames.length - 1; // existing 1 photo means idx=0 -> next is 1
+      }
+    }
+    let isFirst = existingNames.length === 0;
+
+    for (const file of files) {
+      try {
+        const blob = await ImgConv.toWebP(file);
+        const base64 = await ImgConv.blobToBase64(blob);
+        const name = isFirst ? `${code}.webp` : `${code}-${currentIdx}.webp`;
+        if (isFirst) isFirst = false; else currentIdx++;
+        const preview = URL.createObjectURL(blob);
+        this.tempPhotos.push({ name, base64, preview, blob });
+        existingNames.push(name.replace(/\.webp$/i,''));
+      } catch (err) { toast('فشل تحويل صورة: '+file.name, false); }
+    }
+    $('f_photo').value = existingNames.join(', ');
+    this.refreshPhotoPreview();
+    toast(`تم تحويل ${files.length} صورة إلى WEBP`);
+  },
+
+  refreshPhotoPreview() {
+    const box = $('photoPreview');
+    const code = String($('f_code').value || '').trim();
+    const names = ($('f_photo').value || '').split(',').map(s => s.trim()).filter(Boolean);
+    const tempByName = Object.fromEntries(this.tempPhotos.map(t => [t.name.replace(/\.webp$/i,''), t]));
+    const items = names.map((nRaw, idx) => {
+      const n = nRaw.replace(/\.webp$/i,'');
+      const t = tempByName[n];
+      if (t) return { kind:'temp', src: t.preview, name: n, cands: null };
+      const cands = genPhotoCandidates(code, names.join(','), idx);
+      return { kind:'remote', src: cands[0] || NO_IMG_SVG, name: n, cands };
+    });
+    if (items.length === 0) { box.innerHTML = '<div class="col-span-full text-center text-slate-400 text-sm py-5">لم تتم إضافة أي صور بعد</div>'; return; }
+    box.innerHTML = items.map((it, i) => {
+      const candsAttr = it.cands ? ` data-src-list="${esc(JSON.stringify(it.cands))}" data-src-idx="0" onerror="window.__adminImgFallback && window.__adminImgFallback(this)"` : ` onerror="this.onerror=null;this.src=NO_IMG_SVG"`;
+      return `<div class="relative group">
+        <img src="${esc(it.src)}"${candsAttr} class="w-full aspect-square object-cover rounded-lg border border-slate-200 bg-slate-50">
+        <button type="button" onclick="Products.removePhoto(${i})" class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-danger text-white text-sm font-extrabold shadow opacity-0 group-hover:opacity-100 transition">×</button>
+        <div class="text-[10px] text-slate-500 font-mono mt-1 truncate" dir="ltr">${esc(it.name)}</div>
+      </div>`;
+    }).join('');
+  },
+
+  updatePhotoField() { this.refreshPhotoPreview(); },
+
+  removePhoto(i) {
+    const names = ($('f_photo').value || '').split(',').map(s => s.trim()).filter(Boolean);
+    const removed = names[i];
+    names.splice(i, 1);
+    // also remove from tempPhotos if present
+    const idxT = this.tempPhotos.findIndex(t => t.name.replace(/\.webp$/i,'') === (removed||'').replace(/\.webp$/i,''));
+    if (idxT >= 0) { try { URL.revokeObjectURL(this.tempPhotos[idxT].preview); } catch {} this.tempPhotos.splice(idxT, 1); }
+    $('f_photo').value = names.join(', ');
+    this.refreshPhotoPreview();
+  },
+
+  /* ---------- SAVE / DELETE ---------- */
+  async saveEditor() {
+    const code = String($('f_code').value || '').trim().toUpperCase();
+    const name = String($('f_name').value || '').trim();
+    if (!code) { toast('يجب إدخال الكود CODE', false); return; }
+    if (!name) { toast('يجب إدخال الاسم NAME', false); return; }
+    $('f_code').value = code;
+    const obj = {
+      code,
+      name,
+      about1: $('f_about1').value || '',
+      about2: $('f_about2').value || '',
+      h: Number($('f_h').value || 0),
+      p: Number($('f_p').value || 0),
+      price: Number($('f_price').value || 0),
+      photo: ($('f_photo').value || '').trim(),
+      dis: this.rulesToDisString(),
+      keywords: App.products[this.editingIndex]?.keywords || '',
+      category: App.products[this.editingIndex]?.category || '',
+    };
+
+    // Update product in list
+    if (this.editingIndex < 0) App.products.unshift(obj);
+    else App.products[this.editingIndex] = obj;
+
+    // Update checkboxes -> categories (fixed 3 + custom)
+    const prevCode = this.editingIndex >= 0 ? String(App.products[this.editingIndex]?.code || '') : code;
+    // Remove all old codes first in all columns for this product being edited
+    App.categories.forEach(col => {
+      col.codes = col.codes.filter(c => c !== prevCode && c !== code);
+    });
+    const ensureCat = (name) => {
+      let col = App.categories.find(c => c.name === name);
+      if (!col) { col = { name, codes: [], fixed: true }; App.categories.push(col); }
+      return col;
+    };
+    // Re-add based on checkboxes
+    if ($('cat_out').checked) ensureCat('منتهي كمية').codes.push(code);
+    if ($('cat_hot').checked) ensureCat('رائج').codes.push(code);
+    if ($('cat_home').checked) ensureCat('صفحة رئيسية').codes.push(code);
+    // Custom cats
+    document.querySelectorAll('input[data-custom-cat]').forEach(chk => {
+      const ci = +chk.dataset.customCat;
+      const col = App.categories[ci];
+      if (chk.checked && col) col.codes.push(code);
+    });
+
+    // Upload photos immediately (compressed) to photo/ folder in the repo
+    const pending = this.tempPhotos.slice();
+    this.tempPhotos = [];
+    for (const ph of pending) App.photoUploads.push({ path: `photo/${ph.name}`, base64: ph.base64 });
+    this.closeEditor();
+    this.renderTable();
+    if (pending.length) {
+      toast('جاري رفع الصور وضغطها...');
+      let okCount = 0, failCount = 0;
+      for (const ph of pending) {
+        const p = `photo/${ph.name}`;
+        const ok = await GH.putFile(p, ph.base64, `رفع صورة ${p}`, true);
+        if (ok) {
+          okCount++;
+          const i = App.photoUploads.findIndex(x => x.path === p);
+          if (i >= 0) App.photoUploads.splice(i, 1);
+        } else failCount++;
+        try { URL.revokeObjectURL(ph.preview); } catch {}
+      }
+      if (failCount) toast(`تم حفظ المنتج، رفع ${okCount} صورة وفشل ${failCount} (ستُرفع عند الضغط على حفظ ونشر)`, okCount > 0);
+      else toast(`تم حفظ المنتج ورفع ${okCount} صورة مضغوطة بنجاح`);
+    } else {
+      toast('تم حفظ المنتج');
+    }
+  },
+
+  async deleteProduct(i) {
+    const p = App.products[i]; if (!p) return;
+    const ok = await confirmAsync('حذف منتج', `هل أنت متأكد من حذف المنتج:\n${p.code} - ${p.name}\n\nسيتم حذفه من ملف CSV المنتجات فقط.`, 'حذف');
+    if (!ok) return;
+    const code = String(p.code || '');
+    App.products.splice(i, 1);
+    // Also remove from all categories
+    App.categories.forEach(col => { col.codes = col.codes.filter(c => c !== code); });
+    this.renderTable();
+    toast('تم حذف المنتج');
+  }
+};
+
+/* ======================= BOOT ======================= */
+document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
+</body>
+</html>

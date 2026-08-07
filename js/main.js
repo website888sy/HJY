@@ -1499,13 +1499,13 @@ function debounce(fn, ms) {
       function parseDisRules(raw) {
         const text = String(raw ?? "").replace(/\r/g, "\n").trim();
         if (!text) return [];
-        const lines = text
-          .split("\n")
+        const parts = text
+          .split(/[,،;\n]+/)
           .map((l) => String(l ?? "").trim())
           .filter((l) => l.length > 0);
         const rules = [];
-        for (const line of lines) {
-          const s = safeLower(line).replace(/\s+/g, "");
+        for (const part of parts) {
+          const s = safeLower(part).replace(/\s+/g, "");
           const mPercent = s.match(/^(\d+)\s*p\s*=\s*([0-9.]+)%$/i);
           if (mPercent) {
             const qty = Number(mPercent[1]);

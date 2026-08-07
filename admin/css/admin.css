@@ -1,0 +1,34 @@
+
+  html { font-size: 100%; }
+  html.font-sm { font-size: 88%; }
+  html.font-md { font-size: 100%; }
+  html.font-lg { font-size: 114%; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif; padding-top: 52px; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: #0f172a; color: #fff; padding: 12px 24px; border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 9999; transition: all .3s ease;
+    opacity: 0; font-weight: 600;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 16px; width: 100%; max-height: 92vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+  .th-tbl { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); }
+  .row-hover:hover { background: #f0f9ff; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .dis-entry { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 12px; }
+  input, select, textarea { outline: none; }
+  input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(14,165,233,0.2); border-color: #0ea5e9 !important; }
+  #f_code { text-transform: uppercase; }
+  .scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+  .scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 200;
+    display: none; align-items: center; justify-content: center;
+  }
+  .confirm-overlay.open { display: flex; }

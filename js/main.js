@@ -1360,6 +1360,37 @@ function debounce(fn, ms) {
         const noQuery = base.split("?")[0] || "";
         return safeLower(noQuery.replace(/\.[^./]+$/, "").trim());
       }
+      async function loadPhotoIndexFromManifest(dir, exts) {
+        const d = String(dir ?? "").trim().replace(/\\/g, "/").replace(/^\/+/, "").replace(/\/+$/, "");
+        const extSet = new Set(
+          (Array.isArray(exts) ? exts : []).map((x) => String(x ?? "").trim().replace(/^\./, "").toLowerCase()).filter(Boolean)
+        );
+        const candidates = [`${d}/files.txt`, `data/${d}_files.txt`];
+        for (const u of candidates) {
+          try {
+            const res = await fetchTextCached(u, 10 * 60 * 1000);
+            if (res && res.text) {
+              const lines = String(res.text).split(/\r?\n/).map((l) => String(l ?? "").trim()).filter((l) => l.length > 0 && !l.startsWith("#"));
+              if (lines.length) {
+                const out = [];
+                const seen = new Set();
+                for (const line of lines) {
+                  const p = String(line).replace(/\\/g, "/").replace(/^\/+/, "");
+                  if (!p || seen.has(p)) continue;
+                  const lower = safeLower(p);
+                  const dot = lower.lastIndexOf(".");
+                  const ext = dot >= 0 ? lower.slice(dot + 1) : "";
+                  if (extSet.size && !extSet.has(ext)) continue;
+                  seen.add(p);
+                  out.push(p);
+                }
+                if (out.length) return out;
+              }
+            }
+          } catch {}
+        }
+        return [];
+      }
       async function loadPhotoIndex() {
         if (photoIndexLoaded) return;
         photoIndexLoaded = true;
@@ -1380,8 +1411,15 @@ function debounce(fn, ms) {
           } catch {}
         }
         if (list.length === 0) {
-          list = await listGithubFilesRecursive(dir, exts, max);
-          setCachedText(cacheKey, JSON.stringify(list));
+          // 1) manifest files first (avoids GitHub API rate limits)
+          list = await loadPhotoIndexFromManifest(dir, exts);
+          // 2) fallback to GitHub API recursive listing
+          if (list.length === 0) {
+            try {
+              list = await listGithubFilesRecursive(dir, exts, max);
+            } catch {}
+          }
+          if (list.length) setCachedText(cacheKey, JSON.stringify(list));
         }
         if (!list.length) return;
         const map = new Map();
@@ -2308,11 +2346,6 @@ function debounce(fn, ms) {
         const c = normalizeCodeKey(code);
         if (!c) return false;
         if (state.hotSet && state.hotSet.has(c)) return true;
-        const prefs = Array.isArray(state.hotPrefixes) ? state.hotPrefixes : [];
-        for (const p of prefs) {
-          const pref = String(p ?? "").trim();
-          if (pref && c.startsWith(pref)) return true;
-        }
         return false;
       }
       function applyFilters() {
@@ -2325,7 +2358,7 @@ function debounce(fn, ms) {
         if (String(state.category || "").startsWith("CAT:")) {
           const key = normalizeCategoryKey(String(state.category || "").slice("CAT:".length));
           const cat = (Array.isArray(state.categories) ? state.categories : []).find((c) => c && c.key === key);
-          if (cat) list = list.filter((p) => matchesKeywords(p, cat.keywords));
+          if (cat) list = list.filter((p) => cat.codes.has(normalizeCodeKey(p.code)));
         }
         if (state.category === "HOME") {
           showHomeView();
@@ -2836,93 +2869,71 @@ function debounce(fn, ms) {
         }
         return lines.join("\n");
       }
-      async function loadOutSet() {
-        state.outSet.clear();
-        const res = await fetchTextFirstAvailable(CONFIG.OUT_PRODUCTS_URLS, 2 * 60 * 1000);
-        if (!res) return;
-        const lines = String(res.text ?? "")
-          .split(/\r?\n/)
-          .map((l) => String(l ?? "").trim())
-          .filter((l) => l.length > 0);
-        for (const c of lines) state.outSet.add(normalizeCodeKey(c));
-      }
-      async function loadHotSet() {
-        state.hotSet.clear();
-        state.hotPrefixes = [];
-        const res = await fetchTextFirstAvailable(["data/hot-price.csv"], 60 * 1000);
-        if (!res) return;
-        const lines = String(res.text ?? "")
-          .split(/\r?\n/)
-          .map((l) => String(l ?? "").trim())
-          .filter((l) => l.length > 0);
-        const prefSet = new Set();
-        for (const c of lines) {
-          const raw = String(c ?? "").trim();
-          if (!raw) continue;
-          const norm = normalizeCodeKey(raw);
-          if (!norm) continue;
-          state.hotSet.add(norm);
-          if (/^(kt|k)\d+$/i.test(norm)) {
-            prefSet.add(norm);
-            const digits = norm.replace(/^(kt|k)/i, "");
-            if (digits) {
-              prefSet.add(`kt${digits}`);
-              prefSet.add(`k${digits}`);
-            }
-          }
-        }
-        state.hotPrefixes = Array.from(prefSet);
-      }
       function normalizeCategoryKey(name) {
         return safeLower(String(name ?? "")).replace(/\s+/g, " ").trim();
       }
-      async function loadCategories() {
+
+      async function loadCategorization() {
+        state.outSet.clear();
+        state.hotSet.clear();
+        state.homeProducts = [];
         state.categories = [];
-        const res = await fetchTextCached("data/categories.csv", 10 * 60 * 1000);
+        
+        const res = await fetchTextCached("data/categories.csv", 5 * 60 * 1000);
         if (!res) return;
+        
         const table = parseCsvText(res.text);
-        if (!table.headers.length) return;
-        const normHeader = (h) => safeLower(String(h ?? "").replace(/^\uFEFF/, "").replace(/\s+/g, ""));
-        const idxOf = (candidates) => {
-          const wanted = new Set((Array.isArray(candidates) ? candidates : []).map((x) => normHeader(x)));
-          for (let i = 0; i < table.headers.length; i++) {
-            if (wanted.has(normHeader(table.headers[i]))) return i;
+        if (!table.headers || !table.headers.length) return;
+        
+        const normHeader = (h) => String(h ?? "").replace(/^\uFEFF/, "").trim();
+        const headers = table.headers.map(normHeader);
+        
+        // Find special columns
+        const outIdx = headers.findIndex(h => h === "منتهي كمية");
+        const hotIdx = headers.findIndex(h => h === "رائج");
+        const homeIdx = headers.findIndex(h => h === "صفحة رئيسية");
+        
+        // Map other columns to categories
+        const customCats = [];
+        for (let i = 0; i < headers.length; i++) {
+          if (i !== outIdx && i !== hotIdx && i !== homeIdx && headers[i]) {
+            customCats.push({ index: i, name: headers[i], codes: new Set() });
           }
-          return -1;
-        };
-        const idxName = idxOf(["name"]);
-        const idxKeyword = idxOf(["keyword", "keywords", "key", "keys"]);
-        if (idxName === -1 || idxKeyword === -1) return;
-        const cats = [];
-        for (const row of table.rows) {
-          const name = String(row[idxName] ?? "").trim();
-          const raw = String(row[idxKeyword] ?? "").trim();
-          if (!name) continue;
-          const keywords = raw
-            .split("-")
-            .map((x) => String(x ?? "").trim())
-            .filter((x) => x.length > 0);
-          cats.push({ name, key: normalizeCategoryKey(name), keywords });
         }
-        state.categories = cats;
+        
+        const homeCodes = [];
+        
+        for (const row of table.rows) {
+          if (outIdx !== -1 && row[outIdx]) state.outSet.add(normalizeCodeKey(row[outIdx]));
+          if (hotIdx !== -1 && row[hotIdx]) state.hotSet.add(normalizeCodeKey(row[hotIdx]));
+          if (homeIdx !== -1 && row[homeIdx]) homeCodes.push(normalizeCodeKey(row[homeIdx]));
+          
+          for (const cat of customCats) {
+            if (row[cat.index]) {
+              cat.codes.add(normalizeCodeKey(row[cat.index]));
+            }
+          }
+        }
+        
+        // Populate home products (must run after products are loaded, so we save the codes)
+        state.homeCodesList = homeCodes;
+        
+        // Populate categories
+        state.categories = customCats.map(c => ({
+          name: c.name,
+          key: normalizeCategoryKey(c.name),
+          codes: c.codes
+        }));
       }
+
       function renderCategoryPills() {
         updatePills();
       }
-      function matchesKeywords(p, keywords) {
-        const list = Array.isArray(keywords) ? keywords : [];
-        if (!list.length) return false;
-        const hay = safeLower(String(p?.name ?? ""));
-        for (const kw of list) {
-          const k = safeLower(String(kw ?? "")).trim();
-          if (!k) continue;
-          if (hay.includes(k)) return true;
-        }
-        return false;
-      }
+
       function matchingCategoriesForProduct(p) {
         const cats = Array.isArray(state.categories) ? state.categories : [];
-        return cats.filter((c) => c && matchesKeywords(p, c.keywords));
+        const norm = normalizeCodeKey(p?.code);
+        return cats.filter((c) => c && c.codes.has(norm));
       }
       function hash32(s) {
         const str = String(s ?? "");
@@ -3203,18 +3214,10 @@ function debounce(fn, ms) {
           if (els.qaText) els.qaText.textContent = "";
         }
       }
-      async function loadHomeCodes() {
+      function loadHomeCodes() {
         state.homeProducts = [];
         setHomeStatus("جاري تجهيز الصفحة الرئيسية...", false);
-        const res = await fetchTextFirstAvailable(CONFIG.HOME_CODES_URLS, 10 * 60 * 1000);
-        if (!res) {
-          setHomeStatus(USER_LOAD_ERROR_MSG, true);
-          return;
-        }
-        const codes = String(res.text ?? "")
-          .split(/\r?\n/)
-          .map((l) => String(l ?? "").trim())
-          .filter((l) => l.length > 0);
+        const codes = state.homeCodesList || [];
         const picked = [];
         const seen = new Set();
         for (const code of codes) {
@@ -3241,8 +3244,7 @@ function debounce(fn, ms) {
         }, 3000);
         setBootProgress(20);
         try {
-          await loadOutSet();
-          await loadHotSet();
+          await loadCategorization();
           setBootProgress(35);
           const dataFiles = await resolveDataFiles();
           if (!Array.isArray(dataFiles) || dataFiles.length === 0) throw new Error("NO_DATA_FILES");
@@ -3312,7 +3314,6 @@ function debounce(fn, ms) {
             }
           }
           state.allProducts = Array.from(productsByCode.values());
-          await loadCategories();
           renderCategoryPills();
           stillLoading = false;
           clearTimeout(slowTimer);
@@ -3322,7 +3323,7 @@ function debounce(fn, ms) {
           renderCart();
           loadNewOffer();
           loadWhatNew();
-          await loadHomeCodes();
+          loadHomeCodes();
           renderHome();
           applyHashRoute();
           loadPhotoIndex()
@@ -3468,8 +3469,17 @@ function debounce(fn, ms) {
         const exts = ["webp", "png", "jpg", "jpeg", "gif"];
         let list = [];
         try {
-          list = await listGithubFilesRecursive("customer_photo", exts, 400);
+          const res = await fetchTextCached("customer_photo/files.txt", 10 * 60 * 1000);
+          if (res && res.text) {
+            const lines = String(res.text).split(/\r?\n/).map((l) => String(l ?? "").trim()).filter((l) => l.length > 0 && !l.startsWith("#"));
+            if (lines.length) list = lines.map((l) => String(l).replace(/\\/g, "/").replace(/^\/+/, ""));
+          }
         } catch {}
+        if (!Array.isArray(list) || list.length === 0) {
+          try {
+            list = await listGithubFilesRecursive("customer_photo", exts, 400);
+          } catch {}
+        }
         if (!Array.isArray(list) || list.length === 0) list = customerPhotoFallbackList();
         const out = [];
         const seen = new Set();

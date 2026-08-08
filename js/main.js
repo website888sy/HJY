@@ -1499,7 +1499,9 @@ function debounce(fn, ms) {
       function parseDisRules(raw) {
         const text = String(raw ?? "").replace(/\r/g, "\n").trim();
         if (!text) return [];
-        const parts = text
+        const noteM = text.match(/"""?([\s\S]*?)"""?/);
+        const cleaned = noteM ? text.replace(/"""?[\s\S]*?"""?/, "") : text;
+        const parts = cleaned
           .split(/[,،;\n]+/)
           .map((l) => String(l ?? "").trim())
           .filter((l) => l.length > 0);

@@ -328,20 +328,7 @@ function debounce(fn, ms) {
         return html;
       }
       function shortenUrlText(url) {
-        const u = String(url ?? "").trim();
-        if (!u) return "";
-        try {
-          const parsed = new URL(u);
-          const host = String(parsed.host || "");
-          let path = String(parsed.pathname || "");
-          if (path && path !== "/") {
-            if (path.length > 18) path = path.slice(0, 18) + "…";
-            return host + path;
-          }
-          return host;
-        } catch {
-          return u.length > 32 ? u.slice(0, 32) + "…" : u;
-        }
+        return String(url ?? "").trim();
       }
       function normalizeHref(url) {
         const u = String(url ?? "").trim();

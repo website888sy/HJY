@@ -377,7 +377,7 @@ function debounce(fn, ms) {
         return html;
       }
       function formatAboutTextPlain(raw) {
-        let cleaned = String(raw ?? "");
+        let cleaned = String(raw ?? "").replace(/^\uFEFF/, "");
         let lines = cleaned.split(/\r?\n/);
         let htmlParts = [];
         
@@ -467,7 +467,7 @@ function debounce(fn, ms) {
           .replace(/'/g, "&#39;");
       }
       function formatAboutText(raw) {
-        const src = String(raw ?? "");
+        const src = String(raw ?? "").replace(/^\uFEFF/, "");
         const lines = src.replace(/\r/g, "").split("\n");
         const parts = [];
         let free = [];
@@ -1168,8 +1168,8 @@ function debounce(fn, ms) {
         const ghPages = String(location.hostname || "").toLowerCase().endsWith(".github.io");
         if (ghPages && !wantsNoCache()) {
           const sep = u.includes("?") ? "&" : "?";
-          u = `${u}${sep}v=${Math.floor(Date.now() / 60000)}`;
-          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 60 * 1000) || 60 * 1000;
+          u = `${u}${sep}v=${Math.floor(Date.now() / 300000)}`;
+          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 5 * 60 * 1000) || 5 * 60 * 1000;
         }
         const cacheKey = `hjy_text_cache_v1::${u}`;
         if (!wantsNoCache()) {
@@ -1203,8 +1203,8 @@ function debounce(fn, ms) {
         const ghPages = String(location.hostname || "").toLowerCase().endsWith(".github.io");
         if (ghPages && !wantsNoCache()) {
           const sep = u.includes("?") ? "&" : "?";
-          u = `${u}${sep}v=${Math.floor(Date.now() / 60000)}`;
-          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 60 * 1000) || 60 * 1000;
+          u = `${u}${sep}v=${Math.floor(Date.now() / 300000)}`;
+          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 5 * 60 * 1000) || 5 * 60 * 1000;
         }
         const cacheKey = `hjy_json_cache_v1::${u}`;
         if (!wantsNoCache()) {
@@ -4462,14 +4462,17 @@ function debounce(fn, ms) {
             const val = e.target.value.trim().toLowerCase();
             const sugs = els.shipCenterSuggestions;
             if (!sugs) return;
-            if (!val || val.length < 2) {
+            if (!val) {
               sugs.style.display = "none";
               return;
             }
             const branches = await fetchBranches();
             if(!branches || branches.length === 0) return;
-            
-            const filtered = branches.filter(b => b.branch.toLowerCase().includes(val)).slice(0, 5);
+            // only suggest branches of the selected carrier (مسارات/قدموس), or all for "آخر"
+            const carrier = els.carrierQadmous?.checked ? "قدموس" : (els.carrierOther?.checked ? "all" : "مسارات");
+            let pool = branches;
+            if (carrier !== "all") pool = branches.filter(b => b.company === carrier);
+            const filtered = pool.filter(b => b.branch.toLowerCase().includes(val)).slice(0, 8);
             if (filtered.length > 0) {
               sugs.innerHTML = filtered.map(b => `
                 <div class="branch-suggestion" style="padding:8px; border-bottom:1px solid var(--border); cursor:pointer; font-size:13px;" data-branch="${escapeHtmlAttr(b.branch)}" data-company="${escapeHtmlAttr(b.company)}">
@@ -4492,7 +4495,13 @@ function debounce(fn, ms) {
               sugs.style.display = "none";
             }
           });
-          
+          // re-render suggestions when the carrier changes
+          [els.carrierMasarat, els.carrierQadmous, els.carrierOther].forEach(rd => {
+            if (rd) rd.addEventListener("change", () => {
+              const ev = new Event("input", { bubbles: true });
+              if (els.shipCenterInput) els.shipCenterInput.dispatchEvent(ev);
+            });
+          });
           document.addEventListener('click', (e) => {
             if (els.shipCenterSuggestions && !els.shipCenterInput.contains(e.target) && !els.shipCenterSuggestions.contains(e.target)) {
               els.shipCenterSuggestions.style.display = "none";

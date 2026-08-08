@@ -149,7 +149,7 @@
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
               <button class="btn btn-ghost" id="backToShopBtn" type="button">رجوع للتسوق</button>
               <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('موقعنا'))">موقعنا</button>
-              <button class="btn btn-ghost" type="button" onclick="changeView('customerReviewsView')">تقييمات العملاء</button>
+              <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('تقييمات عملاء'))" style="border:1px solid #eab308;color:#eab308;font-weight:900;background:rgba(234,179,8,0.08)">تقييمات العملاء</button>
               <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('تفاصيل الشحن'))">تفاصيل الشحن</button>
               <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('توصيل مجاني'))">توصيل مجاني</button>
               <button class="btn btn-ghost" type="button" onclick="alert('خدمة الشحن خارج سوريا غير متاحة حالياً، يرجى التواصل معنا عبر واتساب للمزيد من التفاصيل.')">شحن خارج سوريا</button>
@@ -325,8 +325,11 @@
                     </label>
                     <label class="checkrow" style="flex:1;align-items:center">
                       <input id="damascusPickup" type="radio" name="damascusType" value="PICKUP" />
-                      <div style="display:grid;gap:2px">
-                        <div style="font-weight:900">استلام ضمن موقعنا</div>
+                      <div style="display:grid;gap:2px;flex:1">
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                          <span style="font-weight:900">استلام ضمن موقعنا</span>
+                          <button type="button" class="btn btn-ghost" onclick="setHash('info='+encodeURIComponent('موقعنا'))" style="padding:2px 8px;font-size:11px;border:1px solid var(--primary-3);color:var(--primary-3)">اين موقعنا؟</button>
+                        </div>
                       </div>
                     </label>
                   </div>
@@ -585,6 +588,11 @@
       </div>
     </div>
     
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+      }
+    </script>
     <script src="js/main.js"></script>
   </body>
 </html>

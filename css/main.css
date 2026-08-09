@@ -467,7 +467,7 @@
       .thumb {
         width: 100%;
         aspect-ratio: 1/1;
-        background: #fff;
+        background: linear-gradient(135deg, #eef2f7 0%, #e2e8f0 100%);
         overflow: hidden;
         position: relative;
       }
@@ -1505,4 +1505,24 @@
         .card {
           min-height: unset;
         }
+      }
+
+      /* ---- Responsive & performance enhancements ---- */
+      .grid > * { min-width: 0; }
+      @media (max-width: 360px) {
+        .grid[data-view="compact"],
+        .grid[data-view="brief"],
+        .grid[data-view="list"] {
+          grid-template-columns: 1fr;
+        }
+        .card .actions { flex-wrap: wrap; }
+      }
+      @media (min-width: 521px) and (max-width: 700px) {
+        .grid[data-view="list"] .card { grid-template-columns: 110px 1fr; }
+      }
+      @media (max-width: 420px) {
+        .topbar .controls { flex-direction: column; }
+        .topbar .select { width: 100%; }
+        .prices { flex-wrap: wrap; }
+        .gallery-wrap { grid-template-columns: 1fr; }
       }

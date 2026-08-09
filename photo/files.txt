@@ -19,6 +19,8 @@ photo/BATT-LI/SB200-24-A.webp
 photo/BATT-LI/SB300-12-A.webp
 photo/BATT-LI/SB300-24-A.webp
 photo/BATT-LI/SB300-48-A.webp
+photo/INV-AST-4K-5G-1.webp
+photo/INV-AST-4K-5G.webp
 photo/SB200-12-A.webp
 photo/SS-HJY01-1.webp
 photo/SS-HJY01.webp

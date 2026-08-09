@@ -304,27 +304,29 @@ function debounce(fn, ms) {
         } catch {}
       }
       if (wantsNoCache()) clearLocalCaches();
+      function buildLinkTag(urlText, style) {
+        let url = String(urlText ?? "");
+        let tail = "";
+        while (url.length) {
+          const last = url[url.length - 1];
+          if (!last) break;
+          if (".,;:!?)]}،؛؟!\"'›»”".includes(last)) {
+            tail = last + tail;
+            url = url.slice(0, -1);
+            continue;
+          }
+          break;
+        }
+        if (!url) return String(urlText ?? "");
+        const href = url.toLowerCase().startsWith("www.") ? "https://" + url : url;
+        const label = escapeHtml(shortenUrlText(url) || url);
+        const styleAttr = style ? ` style="${style}"` : "";
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer"${styleAttr}>${label}</a>${tail}`;
+      }
       function linkifyOnly(raw) {
         let html = escapeHtml(String(raw ?? ""));
         html = html.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
-        html = html.replace(/(https?:\/\/[^\s<]+)/g, (m) => {
-          let url = String(m);
-          let tail = "";
-          while (url.length) {
-            const last = url[url.length - 1];
-            if (!last) break;
-            if (".,;:!?)]}،؛؟!\"'›»”".includes(last)) {
-              tail = last + tail;
-              url = url.slice(0, -1);
-              continue;
-            }
-            break;
-          }
-          if (!url) return m;
-          const href = url;
-          const label = escapeHtml(shortenUrlText(href) || href);
-          return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>${tail}`;
-        });
+        html = html.replace(/(https?:\/\/[^\s<]+)/g, (m) => buildLinkTag(m, ""));
         return html;
       }
       function shortenUrlText(url) {
@@ -338,30 +340,12 @@ function debounce(fn, ms) {
       }
       function linkifyText(escapedText) {
         let html = String(escapedText ?? "");
+        const links = [];
         html = html.replace(/(\b(?:https?:\/\/|www\.)[^\s<>]+)/gi, (m) => {
-          let url = String(m);
-          let tail = "";
-          while (url.length) {
-            const last = url[url.length - 1];
-            if (!last) break;
-            if (".,;:!?)]}،؛؟!\"'›»”".includes(last)) {
-              tail = last + tail;
-              url = url.slice(0, -1);
-              continue;
-            }
-            break;
-          }
-          if (!url) return m;
-          const href = url.toLowerCase().startsWith("www.") ? "https://" + url : url;
-          const label = escapeHtml(shortenUrlText(href) || href);
-          return `\x01\x02\x03\x04${href}\x05${label}\x06${tail}`;
+          links.push(buildLinkTag(m, "color:var(--primary-3);text-decoration:underline"));
+          return `\u0001L${links.length - 1}\u0002`;
         });
-        
-        html = html.replace(/\x01\x02\x03\x04([^\x05]+)\x05([^\x06]+)\x06/g, (m, href, label) => {
-          return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-3);text-decoration:underline">${label}</a>`;
-        });
-        
-        return html;
+        return html.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[+i] || m);
       }
       function formatAboutTextPlain(raw) {
         let cleaned = String(raw ?? "").replace(/^\uFEFF/, "");
@@ -378,10 +362,15 @@ function debounce(fn, ms) {
           let hasUrl = /(?:https?:\/\/|www\.)[^\s<"']+/.test(line);
           let escapedLine = escapeHtml(line);
           
+          // protect URLs FIRST (so bdi/phone/markdown replaces don't corrupt links)
+          const links = [];
+          escapedLine = escapedLine.replace(/(\b(?:https?:\/\/|www\.)[^\s<>]+)/gi, (m) => {
+            links.push(buildLinkTag(m, "color:var(--primary-3);text-decoration:underline"));
+            return `\u0001L${links.length - 1}\u0002`;
+          });
           escapedLine = escapedLine.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
           escapedLine = escapedLine.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
           escapedLine = escapedLine.replace(/\b[0-9a-f]{12,}\b/gi, (m) => `<bdi dir="ltr">${m}</bdi>`);
-          escapedLine = linkifyText(escapedLine);
           escapedLine = escapedLine.replace(/([A-Z]+)\/\/\s*([\s\S]+?)\s*\/\/\1/g, (m, color, text) => {
             const colors = {
               "RED": "#e74c3c", "BLUE": "#3498db", "GREEN": "#2ecc71", "YELLOW": "#f1c40f",
@@ -394,6 +383,7 @@ function debounce(fn, ms) {
           });
           escapedLine = escapedLine.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
           escapedLine = escapedLine.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
+          escapedLine = escapedLine.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[+i] || m);
           
           if (hasUrl) {
             htmlParts.push(`<div style="direction: ltr; text-align: left; overflow-wrap: break-word; word-wrap: break-word; text-overflow: ellipsis; white-space: pre-wrap;">${escapedLine}</div>`);
@@ -419,10 +409,15 @@ function debounce(fn, ms) {
           let hasUrl = /(?:https?:\/\/|www\.)[^\s<"']+/.test(line);
           let escapedLine = escapeHtml(line);
           
+          // protect URLs FIRST (so bdi/phone/markdown replaces don't corrupt links)
+          const links = [];
+          escapedLine = escapedLine.replace(/(\b(?:https?:\/\/|www\.)[^\s<>]+)/gi, (m) => {
+            links.push(buildLinkTag(m, "color:var(--primary-3);text-decoration:underline"));
+            return `\u0001L${links.length - 1}\u0002`;
+          });
           escapedLine = escapedLine.replace(/\b\d{7,15}\b/g, (m) => `<bdi dir="ltr">${m}</bdi>`);
           escapedLine = escapedLine.replace(/(^|[^\w>])([+]?[\d][\d .,+\-()\/]{0,30}[\d])(?=$|[^\w<])/g, (m, a, b) => `${a}<bdi dir="ltr">${b}</bdi>`);
           escapedLine = escapedLine.replace(/\b[0-9a-f]{12,}\b/gi, (m) => `<bdi dir="ltr">${m}</bdi>`);
-          escapedLine = linkifyText(escapedLine);
           escapedLine = escapedLine.replace(/([A-Z]+)\/\/\s*([\s\S]+?)\s*\/\/\1/g, (m, color, text) => {
             const colors = {
               "RED": "#e74c3c", "BLUE": "#3498db", "GREEN": "#2ecc71", "YELLOW": "#f1c40f",
@@ -435,6 +430,7 @@ function debounce(fn, ms) {
           });
           escapedLine = escapedLine.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
           escapedLine = escapedLine.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
+          escapedLine = escapedLine.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[+i] || m);
           
           if (hasUrl) {
             htmlParts.push(`<div style="direction: ltr; text-align: left; overflow-wrap: break-word; word-wrap: break-word; text-overflow: ellipsis; white-space: pre-wrap;">${escapedLine}</div>`);

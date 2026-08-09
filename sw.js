@@ -8,7 +8,7 @@ self.addEventListener("install", (e) => {
     caches
       .open(STATIC_CACHE)
       .then((c) =>
-        c.addAll(["./", "./index.html", "./css/main.css", "./js/main.js", "./logo.webp", "./sham-cash.webp"]).catch(() => {})
+        c.addAll(["./", "./index.html", "./css/main.css", "./js/main.js", "./logo.webp", "./sham-cash.webp", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png"]).catch(() => {})
       )
       .then(() => self.skipWaiting())
   );

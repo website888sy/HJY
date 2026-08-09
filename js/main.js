@@ -1482,8 +1482,7 @@ function debounce(fn, ms) {
       function parseDisRules(raw) {
         const text = String(raw ?? "").replace(/\r/g, "\n").trim();
         if (!text) return [];
-        const noteM = text.match(/--([\s\S]*?)--/);
-        const cleaned = noteM ? text.replace(/--[\s\S]*?--/, "") : text;
+        const cleaned = text.replace(/--[\s\S]*?--/, "").replace(/"([^"]*)"/, "");
         const parts = cleaned
           .split(/[,،;\n]+/)
           .map((l) => String(l ?? "").trim())
@@ -1516,6 +1515,16 @@ function debounce(fn, ms) {
         }
         return uniq;
       }
+      function extractDisNote(raw) {
+        const text = String(raw ?? "");
+        let m = text.match(/^\s*"([\s\S]*?)"\s*$/);
+        if (m) return String(m[1] || "").trim();
+        m = text.match(/"([^"]*)"/);
+        if (m) return String(m[1] || "").trim();
+        m = text.match(/--([\s\S]*?)--/);
+        if (m) return String(m[1] || "").trim();
+        return "";
+      }
       function pickRuleForQty(rules, qty) {
         const q = Math.max(1, Number(qty) || 1);
         const list = Array.isArray(rules) ? rules : [];
@@ -1537,9 +1546,7 @@ function debounce(fn, ms) {
       }
       function disTextForProduct(product) {
         const note = String(product?.disNote ?? "").trim();
-        if (note) return note;
         const rules = Array.isArray(product?.disRules) ? product.disRules : [];
-        if (rules.length === 0) return "";
         const base = Number(product?.price) || 0;
         let out = "";
         for (const r of rules) {
@@ -1550,6 +1557,7 @@ function debounce(fn, ms) {
             out += `سعر خاص ${formatMoney(r.value)} عند شراء ${r.qty} قطع — بدل ${formatMoney(base)}\n`;
           }
         }
+        if (note) out += (out ? "\n" : "") + note;
         return out.trim();
       }
       function setRoute(route) {
@@ -3271,14 +3279,8 @@ function debounce(fn, ms) {
               const price = parsePriceNumber(idxPrice >= 0 ? row[idxPrice] : "");
               const photoRaw = idxPhoto >= 0 ? String(row[idxPhoto] ?? "").trim() : "";
               const disRaw = idxDis >= 0 ? String(row[idxDis] ?? "").trim() : "";
-              let disNote = "";
-              let disRules = [];
-              const m = disRaw.match(/^"([\s\S]*)"$/);
-              if (m) {
-                disNote = String(m[1] ?? "").trim();
-              } else {
-                disRules = parseDisRules(disRaw);
-              }
+              const disNote = extractDisNote(disRaw);
+              const disRules = parseDisRules(disRaw);
               const photoList = parsePhotoList(photoRaw);
               const key = normalizeCodeKey(code);
               const isOut = state.outSet.has(key);

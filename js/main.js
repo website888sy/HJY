@@ -2378,7 +2378,7 @@ function debounce(fn, ms) {
         state.filteredProducts = list;
         render();
       }
-      function renderCard(p) {
+      function renderCard(p, eager = false) {
         const view = state.viewMode;
         const favOn = isFavorite(p.code);
         const isHot = isHotCode(p.code);
@@ -2413,7 +2413,8 @@ function debounce(fn, ms) {
                 data-src-list="${escapeHtmlAttr(JSON.stringify(cand))}"
                 data-src-idx="0"
                 alt="${escapeHtmlAttr(p.name)}"
-                loading="lazy"
+                loading="${eager ? "eager" : "lazy"}"
+                fetchpriority="${eager ? "high" : "auto"}"
                 decoding="async"
                 referrerpolicy="no-referrer"
                 onload="this.style.opacity=1"
@@ -2443,7 +2444,7 @@ function debounce(fn, ms) {
         const slice = paginate(list);
         els.grid.setAttribute("data-view", state.viewMode);
         let html = "";
-        for (const p of slice) html += renderCard(p);
+        for (let i = 0; i < slice.length; i++) html += renderCard(slice[i], i < 6);
         els.grid.innerHTML = html;
         if (list.length === 0) {
           if (Array.isArray(state.allProducts) && state.allProducts.length === 0) {
@@ -2479,7 +2480,7 @@ function debounce(fn, ms) {
         const visibleProducts = state.homeProducts.slice(0, state.homeLimit);
         
         let html = "";
-        for (const p of visibleProducts) html += renderCard(p);
+        for (let i = 0; i < visibleProducts.length; i++) html += renderCard(visibleProducts[i], i < 4);
         
         if (state.homeProducts.length > state.homeLimit) {
           html += `<div style="grid-column: 1 / -1; display: flex; justify-content: center; padding: 12px;">
@@ -2490,6 +2491,34 @@ function debounce(fn, ms) {
         els.homeGrid.innerHTML = html;
         renderNewOffer();
         renderWhatNew();
+      }
+      function updateOGMeta(p) {
+        try {
+          const base = "https://website888sy.github.io/HJY";
+          const title = p && p.name ? `${p.name} - HJY.co` : "HJY.co - متجر إلكترونيات ولوازم الطاقة";
+          const desc = p && p.about1 ? String(p.about1).slice(0, 160) : "متجر إلكترونيات، بطاريات، انفرترات ولوازم الطاقة في سوريا";
+          const cands = p ? buildPhotoCandidates(p.code, Array.isArray(p.photoList) ? p.photoList : []) : [];
+          const img = cands && cands[0] ? cands[0] : "logo.webp";
+          const fullImg = img.indexOf("http") === 0 ? img : `${base}/${img.replace(/^\//, "")}`;
+          const url = p ? `${base}/#product=${encodeURIComponent(p.code)}` : `${base}/`;
+          const set = (attr, val) => {
+            let m = document.querySelector(`meta[property="${attr}"]`) || document.querySelector(`meta[name="${attr}"]`);
+            if (!m) {
+              m = document.createElement("meta");
+              m.setAttribute(attr.startsWith("og:") ? "property" : "name", attr);
+              document.head.appendChild(m);
+            }
+            m.setAttribute("content", String(val));
+          };
+          set("og:title", title);
+          set("og:description", desc);
+          set("og:image", fullImg);
+          set("og:url", url);
+          set("twitter:title", title);
+          set("twitter:description", desc);
+          set("twitter:image", fullImg);
+          document.title = title;
+        } catch {}
       }
       function renderProductDetails(code) {
         const c = String(code ?? "").trim();
@@ -2510,6 +2539,7 @@ function debounce(fn, ms) {
         els.productMeta.textContent = p.code ? `CODE: ${p.code}` : "—";
         const favOn = isFavorite(p.code);
         const disText = disTextForProduct(p);
+        updateOGMeta(p);
         
         // Generate candidates combining all codes (main code + photoList)
         const allCodes = [p.code];

@@ -313,7 +313,7 @@ function debounce(fn, ms) {
           while (url.length) {
             const last = url[url.length - 1];
             if (!last) break;
-            if (".,;:!?)]}،؛؟!\"'›»”>".includes(last)) {
+            if (".,;:!?)]}،؛؟!\"'›»”".includes(last)) {
               tail = last + tail;
               url = url.slice(0, -1);
               continue;
@@ -338,13 +338,13 @@ function debounce(fn, ms) {
       }
       function linkifyText(escapedText) {
         let html = String(escapedText ?? "");
-        html = html.replace(/(\b(?:https?:\/\/|www\.)[^\s<"']+)/gi, (m) => {
+        html = html.replace(/(\b(?:https?:\/\/|www\.)[^\s<>]+)/gi, (m) => {
           let url = String(m);
           let tail = "";
           while (url.length) {
             const last = url[url.length - 1];
             if (!last) break;
-            if (".,;:!?)]}،؛؟!\"'›»”>*_~-".includes(last)) {
+            if (".,;:!?)]}،؛؟!\"'›»”".includes(last)) {
               tail = last + tail;
               url = url.slice(0, -1);
               continue;
@@ -1486,8 +1486,8 @@ function debounce(fn, ms) {
       function parseDisRules(raw) {
         const text = String(raw ?? "").replace(/\r/g, "\n").trim();
         if (!text) return [];
-        const noteM = text.match(/"([^"]*)"/);
-        const cleaned = noteM ? text.replace(/"([^"]*)"/, "") : text;
+        const noteM = text.match(/--([\s\S]*?)--/);
+        const cleaned = noteM ? text.replace(/--[\s\S]*?--/, "") : text;
         const parts = cleaned
           .split(/[,،;\n]+/)
           .map((l) => String(l ?? "").trim())

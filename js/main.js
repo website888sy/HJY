@@ -1155,8 +1155,8 @@ function debounce(fn, ms) {
         const ghPages = String(location.hostname || "").toLowerCase().endsWith(".github.io");
         if (ghPages && !wantsNoCache()) {
           const sep = u.includes("?") ? "&" : "?";
-          u = `${u}${sep}v=${Math.floor(Date.now() / 300000)}`;
-          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 5 * 60 * 1000) || 5 * 60 * 1000;
+          u = `${u}${sep}v=${Math.floor(Date.now() / 60000)}`;
+          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 60 * 1000) || 60 * 1000;
         }
         const cacheKey = `hjy_text_cache_v1::${u}`;
         if (!wantsNoCache()) {
@@ -1190,8 +1190,8 @@ function debounce(fn, ms) {
         const ghPages = String(location.hostname || "").toLowerCase().endsWith(".github.io");
         if (ghPages && !wantsNoCache()) {
           const sep = u.includes("?") ? "&" : "?";
-          u = `${u}${sep}v=${Math.floor(Date.now() / 300000)}`;
-          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 5 * 60 * 1000) || 5 * 60 * 1000;
+          u = `${u}${sep}v=${Math.floor(Date.now() / 60000)}`;
+          maxAgeMs = Math.min(Number(maxAgeMs) || 0, 60 * 1000) || 60 * 1000;
         }
         const cacheKey = `hjy_json_cache_v1::${u}`;
         if (!wantsNoCache()) {
@@ -1317,7 +1317,7 @@ function debounce(fn, ms) {
       }
       async function resolveDataFiles() {
         const manifestUrls = Array.isArray(CONFIG.DATA_MANIFEST_URLS) ? CONFIG.DATA_MANIFEST_URLS : [];
-        const res = await fetchTextFirstAvailable(manifestUrls, 5 * 60 * 1000);
+        const res = await fetchTextFirstAvailable(manifestUrls, 60 * 1000);
         if (res) {
           const files = parseDataManifestText(res.text);
           if (files.length) return files;
@@ -2868,7 +2868,7 @@ function debounce(fn, ms) {
         state.homeProducts = [];
         state.categories = [];
         
-        const res = await fetchTextCached("data/categories.csv", 5 * 60 * 1000);
+        const res = await fetchTextCached("data/categories.csv", 60 * 1000);
         if (!res) return;
         
         const table = parseCsvText(res.text);

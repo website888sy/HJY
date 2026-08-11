@@ -20,7 +20,11 @@ photo/BATT-LI/SB200-24-A.webp
 photo/BATT-LI/SB300-12-A.webp
 photo/BATT-LI/SB300-24-A.webp
 photo/BATT-LI/SB300-48-A.webp
+photo/DFR0756.webp
+photo/DIMMER-DC-1.webp
 photo/DRX1K-315.webp
+photo/ESP32-30P.webp
+photo/ESP32-38PIN.webp
 photo/INV-AST-4K-5G-1.webp
 photo/INV-AST-4K-5G.webp
 photo/LEP100-GP.webp

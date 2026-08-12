@@ -47,6 +47,10 @@ photo/GP72-20-2.webp
 photo/GP72-20.webp
 photo/INV-AST-4K-5G-1.webp
 photo/INV-AST-4K-5G.webp
+photo/JSK-30-72-1.webp
+photo/JSK-30-72-2.webp
+photo/JSK-30-72-3.webp
+photo/JSK-30-72.webp
 photo/LEP100-GP.webp
 photo/LEP15A-JSK-1.webp
 photo/LEP15A-JSK-2.webp

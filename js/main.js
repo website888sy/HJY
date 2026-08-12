@@ -2204,31 +2204,29 @@ function debounce(fn, ms) {
         return s.split(/\s+/).filter((t) => t.length > 0).slice(0, 10);
       }
       function relevanceScore(p, tokens) {
-        const search = safeLower(p.search);
         if (!tokens.length) return 0;
-        let score = 0;
         const code = safeLower(p.code);
         const name = safeLower(p.name);
+        const q = tokens.join(" ").replace(/\s+/g, " ").trim();
+        if (!q) return 0;
+        let score = 0;
+        // Whole-query matches rank highest (code > name)
+        if (q === code) return 1000;
+        if (q === name) return 950;
+        if (code.startsWith(q)) score += 70;
+        if (name === q) score += 80;
+        if (name.startsWith(q)) score += 60;
+        if (name.includes(q)) score += 50;
+        if (code.includes(q)) score += 45;
+        // Token-level matches
         for (const t of tokens) {
           if (!t) continue;
-          if (code === t) score += 20;
-          if (code.startsWith(t)) score += 12;
-          if (code.includes(t)) score += 8;
-          if (name.includes(t)) score += 10;
-          if (search.includes(t)) score += 6;
-          
-          // Fuzzy match: check 2-character chunks
-          if (t.length >= 2) {
-            for (let i = 0; i < t.length - 1; i++) {
-              const chunk = t.substr(i, 2);
-              if (code.includes(chunk)) score += 1;
-              if (name.includes(chunk)) score += 1;
-              if (search.includes(chunk)) score += 0.5;
-            }
-          } else if (t.length === 1) {
-            if (code.includes(t)) score += 0.5;
-            if (name.includes(t)) score += 0.5;
-          }
+          if (code === t) score += 100;
+          else if (code.startsWith(t)) score += 40;
+          else if (code.includes(t)) score += 20;
+          if (name === t) score += 90;
+          else if (name.startsWith(t)) score += 55;
+          else if (name.includes(t)) score += 30;
         }
         return score;
       }

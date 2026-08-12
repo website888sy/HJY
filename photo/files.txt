@@ -35,10 +35,16 @@ photo/ESP32-30P.webp
 photo/ESP32-38PIN.webp
 photo/ESP32-CH-30P.webp
 photo/ESP32-SH-38P.webp
+photo/GP48-20-1.webp
+photo/GP48-20-2.webp
+photo/GP48-20.webp
 photo/GP60-20-1.webp
 photo/GP60-20-2.webp
 photo/GP60-20-3.webp
 photo/GP60-20.webp
+photo/GP72-20-1.webp
+photo/GP72-20-2.webp
+photo/GP72-20.webp
 photo/INV-AST-4K-5G-1.webp
 photo/INV-AST-4K-5G.webp
 photo/LEP100-GP.webp

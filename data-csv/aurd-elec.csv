@@ -1,4 +1,7 @@
 CODE;NAME;PRICE;ABOUT1;ABOUT2;dis;PHOTO;P;H
+ESP32-CH-30P;esp32 holder 30 pin  هولدر;3.50;هولدر ل esp32 مشاريع نظيفة وانيقة  مخصص ل 30 رجل esp32;;;ESP32-CH-30P;1.75;1.75
+ESP32-SH-38P;esp32 holder 38pin;4.40;هولدر esp32 ل مشاريع نظيفة 38 رجل;;;ESP32-SH-38P;2.20;2.20
+ARD-SH-NANO;ardunio shield nano هولدر;2.30;هولدر لاوردينو نانو لمشاريع احترافية ونظيفة;;;ARD-SH-NANO;1.20;1.10
 DIMMER-DC-1;دايمر 12 فولت لتخفيف شدة التيار وتحكم بالسرعة الحمولة - 3 امبير;1.10;;;;DIMMER-DC-1;0.35;0.75
 ESP32-30P;esp32  - 30 pin;4.48;;;;ESP32-30P;0.58;3.90
 ESP32-38PIN;esp32 wroom 38 pin;6.17;;;;ESP32-38PIN;1.17;5

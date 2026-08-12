@@ -2,6 +2,7 @@ photo/AA-BB11-0.webp
 photo/AA-BB11-1.webp
 photo/AA-BB11.webp
 photo/AB-48V-16S.webp
+photo/ARD-SH-NANO.webp
 photo/BATT-LI/DATA-206.webp
 photo/BATT-LI/DESAY-DATA.webp
 photo/BATT-LI/GP100-12.webp
@@ -32,6 +33,8 @@ photo/DIMMER-DC-1.webp
 photo/DRX1K-315.webp
 photo/ESP32-30P.webp
 photo/ESP32-38PIN.webp
+photo/ESP32-CH-30P.webp
+photo/ESP32-SH-38P.webp
 photo/GP60-20-1.webp
 photo/GP60-20-2.webp
 photo/GP60-20-3.webp

@@ -2357,7 +2357,8 @@ function debounce(fn, ms) {
           return;
         }
         showShopView();
-        if (q.length >= CONFIG.SEARCH_MIN_CHARS) {
+        const hasQuery = q.length >= CONFIG.SEARCH_MIN_CHARS;
+        if (hasQuery) {
           const scored = [];
           for (const p of list) {
             const score = relevanceScore(p, tokens);
@@ -2366,8 +2367,11 @@ function debounce(fn, ms) {
           scored.sort((a, b) => b.score - a.score);
           list = scored.map((x) => x.p);
         }
-        if (state.sortMode === "PRICE_ASC") list = [...list].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-        if (state.sortMode === "PRICE_DESC") list = [...list].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+        // price sort only when browsing without an active search (keeps relevance order for search)
+        if (!hasQuery) {
+          if (state.sortMode === "PRICE_ASC") list = [...list].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+          if (state.sortMode === "PRICE_DESC") list = [...list].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+        }
         
         const available = list.filter(p => !p.isOut);
         const outOfStock = list.filter(p => p.isOut);

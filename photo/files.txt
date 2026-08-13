@@ -46,6 +46,9 @@ photo/FIBER-B.webp
 photo/GP100-12-A-1.webp
 photo/GP100-12-A-2.webp
 photo/GP100-12-A.webp
+photo/GP100-24-A-1.webp
+photo/GP100-24-A-2.webp
+photo/GP100-24-A.webp
 photo/GP48-20-1.webp
 photo/GP48-20-2.webp
 photo/GP48-20.webp

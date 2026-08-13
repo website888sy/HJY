@@ -41,6 +41,10 @@ photo/ESP32-30P.webp
 photo/ESP32-38PIN.webp
 photo/ESP32-CH-30P.webp
 photo/ESP32-SH-38P.webp
+photo/EVE40-72-1.webp
+photo/EVE40-72-2.webp
+photo/EVE40-72-3.webp
+photo/EVE40-72.webp
 photo/FEB-S.webp
 photo/FIBER-B.webp
 photo/GP100-12-A-1.webp

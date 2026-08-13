@@ -43,6 +43,9 @@ photo/ESP32-CH-30P.webp
 photo/ESP32-SH-38P.webp
 photo/FEB-S.webp
 photo/FIBER-B.webp
+photo/GP100-12-A-1.webp
+photo/GP100-12-A-2.webp
+photo/GP100-12-A.webp
 photo/GP48-20-1.webp
 photo/GP48-20-2.webp
 photo/GP48-20.webp
@@ -68,6 +71,8 @@ photo/LEP20-EVE-B.webp
 photo/LEP20A-GP-1.webp
 photo/LEP20A-GP.webp
 photo/NI-10MM.webp
+photo/SB100-12-AN-1.webp
+photo/SB100-12-AN.webp
 photo/SB200-12-A.webp
 photo/SS-HJY01-1.webp
 photo/SS-HJY01.webp

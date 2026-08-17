@@ -188,8 +188,6 @@ photo/SH224-1.webp
 photo/SH224.webp
 photo/SH228.webp
 photo/SOCKETWB03.jpeg
-photo/SS-HJY01-1.webp
-photo/SS-HJY01.webp
 photo/SZ01.webp
 photo/TAPE-5CM-LI.webp
 photo/TDT-AB-8S.webp

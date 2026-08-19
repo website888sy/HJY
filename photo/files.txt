@@ -51,8 +51,10 @@ photo/BS-50CM.webp
 photo/BS-55CM.webp
 photo/CB-60-10.webp
 photo/CB-60-5.webp
+photo/CB-60-8.webp
 photo/CB-72-10.webp
 photo/CB-72-5.webp
+photo/CB-72-8.webp
 photo/CH7210-1.webp
 photo/CH7210.webp
 photo/DATA-206.webp

@@ -124,9 +124,11 @@
         min-width: 0;
         display: flex;
         align-items: center;
+        gap: 6px;
       }
       .search-logo {
         position: absolute;
+        right: 4px;
         inset-inline-start: 4px;
         top: 50%;
         transform: translateY(-50%);
@@ -173,13 +175,15 @@
         }
       }
       .search input {
+        flex: 1;
+        min-width: 0;
         width: 100%;
         border: 0;
         outline: none;
         font-size: 14px;
         background: transparent;
         color: var(--text);
-        padding-inline-end: 34px;
+        padding-inline-end: 4px;
         padding-inline-start: 38px;
       }
       .search input::placeholder {
@@ -197,12 +201,9 @@
         outline: none;
       }
       .search-btn {
-        position: absolute;
-        inset-inline-end: 4px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 28px;
-        height: 28px;
+        flex: 0 0 auto;
+        width: 30px;
+        height: 30px;
         border-radius: 999px;
         border: 1px solid rgba(25, 183, 255, 0.28);
         background: rgba(25, 183, 255, 0.1);
@@ -212,6 +213,11 @@
         cursor: pointer;
         font-size: 14px;
         padding: 0;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .search > .select {
+        flex: 0 0 auto;
       }
       .select:focus {
         box-shadow: var(--ring);
@@ -590,17 +596,6 @@
       .gallery-thumb::after {
         font-size: 9px;
         top: calc(50% + 12px);
-      }
-        margin-left: -17px;
-        margin-top: -24px;
-        border-radius: 999px;
-        border: 4px solid rgba(130, 130, 130, 0.35);
-        border-top-color: rgba(209, 17, 17, 0.75);
-        border-right-color: rgba(25, 183, 255, 0.75);
-        border-bottom-color: rgba(130, 130, 130, 0.65);
-        box-shadow: 0 0 10px rgba(209, 17, 17, 0.22), 0 0 12px rgba(25, 183, 255, 0.18), 0 0 10px rgba(130, 130, 130, 0.18);
-        animation: hjySpinner 900ms linear infinite;
-        pointer-events: none;
       }
       [data-img-state="loading"]::after {
         content: "LOADING";

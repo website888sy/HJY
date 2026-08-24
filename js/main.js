@@ -2198,19 +2198,54 @@ function debounce(fn, ms) {
         els.checkoutCartSummary.innerHTML = html;
         updateCheckoutMeta();
       }
+      function normalizeArabicText(s) {
+        return safeLower(String(s ?? ""))
+          .replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+          .replace(/[أإآٱ]/g, "ا")
+          .replace(/ة/g, "ه")
+          .replace(/ى/g, "ي")
+          .replace(/ؤ/g, "و")
+          .replace(/ئ/g, "ي")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
       function buildSearchTokens(q) {
-        const s = safeLower(q).trim();
+        const s = normalizeArabicText(q);
         if (!s) return [];
         return s.split(/\s+/).filter((t) => t.length > 0).slice(0, 10);
       }
+      function fuzzyTokenMatch(token, text) {
+        const t = String(token ?? "").trim();
+        const src = String(text ?? "");
+        if (!t || !src) return false;
+        if (src.includes(t)) return true;
+        if (t.length < 3) return false;
+        for (let i = 0; i < t.length; i++) {
+          const variant = t.slice(0, i) + t.slice(i + 1);
+          if (variant.length >= 2 && src.includes(variant)) return true;
+        }
+        for (let i = 0; i + 1 < t.length; i++) {
+          const variant = t.slice(0, i) + t[i + 1] + t[i] + t.slice(i + 2);
+          if (src.includes(variant)) return true;
+        }
+        for (const w of src.split(/\s+/)) {
+          if (!w || w.length !== t.length) continue;
+          let diff = 0;
+          for (let i = 0; i < t.length; i++) {
+            if (t[i] !== w[i] && ++diff > 1) break;
+          }
+          if (diff <= 1) return true;
+        }
+        return false;
+      }
       function relevanceScore(p, tokens) {
         if (!tokens.length) return 0;
-        const code = safeLower(p.code);
-        const name = safeLower(p.name);
+        const code = normalizeArabicText(p.code);
+        const name = normalizeArabicText(p.name);
+        const about = normalizeArabicText(`${p.about1 || ""} ${p.about2 || ""}`);
         const q = tokens.join(" ").replace(/\s+/g, " ").trim();
         if (!q) return 0;
         let score = 0;
-        // Whole-query matches rank highest (code > name)
         if (q === code) return 1000;
         if (q === name) return 950;
         if (code.startsWith(q)) score += 70;
@@ -2218,15 +2253,21 @@ function debounce(fn, ms) {
         if (name.startsWith(q)) score += 60;
         if (name.includes(q)) score += 50;
         if (code.includes(q)) score += 45;
-        // Token-level matches
+        if (about.includes(q)) score += 38;
         for (const t of tokens) {
           if (!t) continue;
-          if (code === t) score += 100;
+          const codeExact = code === t;
+          const nameExact = name === t;
+          const codeTok = codeExact || code.startsWith(t) || fuzzyTokenMatch(t, code);
+          const nameTok = nameExact || name.startsWith(t) || fuzzyTokenMatch(t, name);
+          const aboutTok = about.includes(t) || fuzzyTokenMatch(t, about);
+          if (codeExact) score += 100;
           else if (code.startsWith(t)) score += 40;
-          else if (code.includes(t)) score += 20;
-          if (name === t) score += 90;
+          else if (codeTok) score += 20;
+          if (nameExact) score += 90;
           else if (name.startsWith(t)) score += 55;
-          else if (name.includes(t)) score += 30;
+          else if (nameTok) score += 30;
+          if (aboutTok) score += 12;
         }
         return score;
       }
@@ -3886,6 +3927,18 @@ function debounce(fn, ms) {
             applyFilters();
           }, 180)
         );
+        els.search.addEventListener("keydown", (e) => {
+          if (String(e?.key ?? "") !== "Enter") return;
+          e.preventDefault();
+          state.query = String(els.search.value ?? "");
+          state.page = 1;
+          if (state.category === "HOME") {
+            state.category = "ALL";
+            updatePills();
+          }
+          setShopHashWithCategory(state.category);
+          applyFilters();
+        });
         const searchLogo = document.querySelector(".search-logo");
         if (searchLogo instanceof HTMLImageElement) {
           searchLogo.addEventListener("click", () => openImgModal(searchLogo.currentSrc || searchLogo.src || "logo.webp"));

@@ -7,7 +7,6 @@ eva-prod.csv
 hjy-code-remote-rx.csv
 home-smart-eq.csv
 inverter.csv
-new-file.csv
 our-prod.csv
 qiachip-home-smart-eq.csv
 remote-A.csv

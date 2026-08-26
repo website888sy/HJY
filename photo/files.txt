@@ -46,8 +46,6 @@ photo/CB-60-8.webp
 photo/CB-72-10.webp
 photo/CB-72-5.webp
 photo/CB-72-8.webp
-photo/CH7210-1.webp
-photo/CH7210.webp
 photo/DATA-206.webp
 photo/DESAY-DATA.webp
 photo/DFR0756.webp

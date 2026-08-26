@@ -240,8 +240,5 @@ photo/mr8.avif
 photo/ps12v.webp
 photo/ps5v.webp
 photo/smart-sensor-home.csv
-photo/souer-g.webp
-photo/suoer10.webp
-photo/suoer4.webp
 photo/suoer9.webp
 photo/vm01.webp

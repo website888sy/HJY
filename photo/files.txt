@@ -21,13 +21,11 @@ photo/AB-48V-16S.webp
 photo/ANT.webp
 photo/ARD-SH-NANO.webp
 photo/B48-20-1.webp
-photo/B48-20-2023EB.webp
 photo/B48-20.webp
 photo/B48-40-1.webp
 photo/B48-40.webp
 photo/B60-20-1.webp
 photo/B60-20-2.webp
-photo/B60-20-2023EB.webp
 photo/B60-20.webp
 photo/B72-20-1.webp
 photo/B72-20.webp

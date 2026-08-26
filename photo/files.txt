@@ -111,6 +111,7 @@ photo/GP48-20.webp
 photo/GP60-20-1.webp
 photo/GP60-20-2.webp
 photo/GP60-20-3.webp
+photo/GP60-20-4.webp
 photo/GP60-20.webp
 photo/GP72-20-1.webp
 photo/GP72-20-2.webp
@@ -130,6 +131,7 @@ photo/JKLCD32.webp
 photo/JSK-30-72-1.webp
 photo/JSK-30-72-2.webp
 photo/JSK-30-72-3.webp
+photo/JSK-30-72-4.webp
 photo/JSK-30-72.webp
 photo/KR1201.webp
 photo/KR2202.webp

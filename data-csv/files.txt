@@ -2,7 +2,6 @@ add.csv
 aurd-elec.csv
 batt-acc.csv
 cell-bms.csv
-e-bike-batt.csv
 eva-prod.csv
 hjy-code-remote-rx.csv
 home-smart-eq.csv
@@ -17,3 +16,4 @@ smart-sensor-home.csv
 solar-batt.csv
 wifi-qiachip.csv
 bike-charger.csv
+e-bike-battery.csv

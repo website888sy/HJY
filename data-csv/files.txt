@@ -1,5 +1,7 @@
+ReceiverRF.csv
 add.csv
 aurd-elec.csv
+battery-accessories.csv
 bike-charger.csv
 cell-bms.csv
 e-bike-battery.csv
@@ -12,5 +14,6 @@ qiachip-home-smart-eq.csv
 remote-A.csv
 remote-B.csv
 smart-home-wifi.csv
-wifi-qiachip.csv
+smart-sensor-home.csv
 solar-battery.csv
+wifi-qiachip.csv

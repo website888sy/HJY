@@ -82,8 +82,6 @@ photo/EW7484-4.webp
 photo/EW7484-5.webp
 photo/EW7484-6.webp
 photo/EW7484.webp
-photo/F1.jpg
-photo/F2.jpg
 photo/FE60-20-1.webp
 photo/FE60-20-2.webp
 photo/FE60-20-3.webp
@@ -169,7 +167,6 @@ photo/LEP280.webp
 photo/LEP280HOLDAR.webp
 photo/LOCK12V.webp
 photo/NI-10MM.webp
-photo/P1.jpg
 photo/PC01-1.webp
 photo/PC01.webp
 photo/PS12-1A.jpg
@@ -210,7 +207,6 @@ photo/SOCKETWB03WIFI.webp
 photo/SZ01.webp
 photo/TAPE-5CM-LI.webp
 photo/TDT-AB-8S.webp
-photo/W1.webp
 photo/WL101.webp
 photo/WS01.webp
 photo/WS02.jpg

@@ -1521,3 +1521,23 @@
         .prices { flex-wrap: wrap; }
         .gallery-wrap { grid-template-columns: 1fr; }
       }
+
+      /* ===== Hierarchical category page (main → subcategories) ===== */
+      .cat-page { width: 100%; }
+      .cat-page-title {
+        font-size: 20px; font-weight: 900; color: var(--text); margin: 4px 0 18px;
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      }
+      .cat-sub-section { margin-bottom: 30px; }
+      .cat-sub-title {
+        font-size: 15px; font-weight: 800; color: var(--text); margin: 0 0 12px;
+        display: flex; align-items: center; gap: 8px; padding-inline-start: 10px;
+        border-inline-start: 4px solid var(--primary-2, #19b7ff);
+      }
+      .cat-sub-count {
+        font-size: 11px; font-weight: 700; color: var(--muted, #5f6b7a);
+        background: rgba(25, 183, 255, 0.12); border-radius: 999px; padding: 3px 9px;
+      }
+      .cat-sub-grid { width: 100%; }
+      .cat-more-wrap { display: flex; justify-content: center; margin-top: 14px; }
+      .cat-more-wrap .btn { font-weight: 800; }

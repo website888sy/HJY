@@ -11,7 +11,6 @@ our-prod.csv
 qiachip-home-smart-eq.csv
 remote-A.csv
 remote-B.csv
-rx.csv
 smart-home-wifi.csv
 smart-sensor-home.csv
 wifi-qiachip.csv

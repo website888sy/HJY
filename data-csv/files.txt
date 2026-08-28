@@ -1,6 +1,5 @@
 add.csv
 aurd-elec.csv
-batt-acc.csv
 bike-charger.csv
 cell-bms.csv
 e-bike-battery.csv

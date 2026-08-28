@@ -15,4 +15,3 @@ wifi-qiachip.csv
 remote-A.csv
 batt-acc.csv
 home-smart-eq.csv
-_renametest2.csv

@@ -212,6 +212,10 @@ function debounce(fn, ms) {
         lastProductCode: "",
         lastInvoiceText: "",
         categories: [],
+        mainCategories: [],   // [{ name, key, subs: [{ name, key, codes: Set }] }] from SubcategoriesA/B
+        subCatLimits: {},     // subcategory key -> visible count (عرض المزيد)
+        currentMainKey: "",
+        subCatExpanded: {},   // main category key -> true when sub-pills are expanded in sidebar
         similarExpandedCode: "",
         suggestExpandedCode: "",
         suggestLimit: 10,
@@ -2287,7 +2291,7 @@ function debounce(fn, ms) {
         topHtml += buildPill("OUT", "منتهي كمية");
         topHtml += buildPill("FAVORITES", "مفضلة");
         
-        const allCats = Array.isArray(state.categories) ? state.categories : [];
+        const allCats = (Array.isArray(state.mainCategories) && state.mainCategories.length ? state.mainCategories : (Array.isArray(state.categories) ? state.categories : []));
         const limit = 5;
         let catsToShow = allCats;
         if (!isCategoriesExpanded && allCats.length > limit) {
@@ -2321,7 +2325,22 @@ function debounce(fn, ms) {
         sidebarHtml += buildSidebarPill("OUT", "منتهي كمية");
         sidebarHtml += buildSidebarPill("FAVORITES", "مفضلة");
         for (const cat of allCats) {
-          if (cat && cat.key && cat.name) sidebarHtml += buildSidebarPill(`CAT:${cat.key}`, cat.name);
+          if (!cat || !cat.key || !cat.name) continue;
+          if (searchTerm && !cat.name.toLowerCase().includes(searchTerm)) continue;
+          const on = c === `CAT:${cat.key}`;
+          const isExpanded = !!state.subCatExpanded[cat.key];
+          const hasSubs = Array.isArray(cat.subs) && cat.subs.length > 0;
+          sidebarHtml += `<div style="width:100%">
+            <div style="display:flex;align-items:center;gap:4px">
+              <button class="pill" style="flex:1;text-align:right;border-radius:8px;padding:12px;margin-bottom:5px" type="button" data-category="CAT:${escapeHtmlAttr(cat.key)}" aria-pressed="${on ? "true" : "false"}">${escapeHtml(cat.name)}</button>
+              ${hasSubs ? `<button class="pill" type="button" data-sub-toggle="${escapeHtmlAttr(cat.key)}" aria-label="الفئات الفرعية" style="border-radius:8px;padding:10px 8px;margin-bottom:5px">${isExpanded ? "▲" : "▼"}</button>` : ""}
+            </div>
+            ${hasSubs && isExpanded ? `<div style="padding-inline-start:14px;margin-bottom:6px">${cat.subs.map(s => {
+              if (searchTerm && !s.name.toLowerCase().includes(searchTerm)) return '';
+              const subOn = c === `SUB:${cat.key}:${s.key}`;
+              return `<button class="pill" style="width:100%;text-align:right;border-radius:8px;padding:10px 12px;margin-bottom:4px;font-size:12.5px" type="button" data-category="SUB:${escapeHtmlAttr(cat.key)}:${escapeHtmlAttr(s.key)}" aria-pressed="${subOn ? "true" : "false"}">▸ ${escapeHtml(s.name)}</button>`;
+            }).join("")}</div>` : ""}
+          </div>`;
         }
 
         if (sidebarHtml === '' && searchTerm) {
@@ -2330,6 +2349,17 @@ function debounce(fn, ms) {
 
         const catsSidebarList = document.getElementById("catsSidebarList");
         if (catsSidebarList) catsSidebarList.innerHTML = sidebarHtml;
+        
+        // Sub-category toggle arrows
+        const subToggles = Array.from(document.querySelectorAll("#catsSidebarList [data-sub-toggle]"));
+        for (const btn of subToggles) {
+          btn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            const k = btn.getAttribute("data-sub-toggle");
+            state.subCatExpanded[k] = !state.subCatExpanded[k];
+            updatePills();
+          });
+        }
         
         // Re-attach listeners
         const newPills = Array.from(document.querySelectorAll("#topPillbar .pill[data-category], #catsSidebarList .pill[data-category]"));
@@ -2387,8 +2417,27 @@ function debounce(fn, ms) {
         if (state.category === "FAVORITES") list = list.filter((p) => isFavorite(p.code));
         if (state.category === "HOT") list = list.filter((p) => isHotCode(p.code));
         if (state.category === "OUT") list = list.filter((p) => p.isOut);
+        if (String(state.category || "").startsWith("SUB:")) {
+          // filter to a specific subcategory (flat list with pagination)
+          const parts = String(state.category || "").split(":");
+          if (parts.length >= 3) {
+            const mainKey = normalizeCategoryKey(parts[1]);
+            const subKey = normalizeCategoryKey(parts[2]);
+            const main = (state.mainCategories || []).find(m => m && m.key === mainKey);
+            const sub = main ? (main.subs || []).find(s => s && s.key === subKey) : null;
+            if (sub) list = list.filter(p => sub.codes.has(normalizeCodeKey(p.code)));
+          }
+        }
         if (String(state.category || "").startsWith("CAT:")) {
           const key = normalizeCategoryKey(String(state.category || "").slice("CAT:".length));
+          // Hierarchical main category -> render the subcategory page
+          const main = (state.mainCategories || []).find((m) => m && m.key === key);
+          if (main) {
+            showShopView();
+            renderCategoryPage(main);
+            return;
+          }
+          // fallback: legacy flat category
           const cat = (Array.isArray(state.categories) ? state.categories : []).find((c) => c && c.key === key);
           if (cat) list = list.filter((p) => cat.codes.has(normalizeCodeKey(p.code)));
         }
@@ -2483,6 +2532,7 @@ function debounce(fn, ms) {
         `;
       }
       function render() {
+        showShopPagination();
         const list = Array.isArray(state.filteredProducts) ? state.filteredProducts : [];
         const slice = paginate(list);
         els.grid.setAttribute("data-view", state.viewMode);
@@ -2497,6 +2547,61 @@ function debounce(fn, ms) {
           }
         }
         else setStatus("", false);
+      }
+
+      /* Hierarchical main-category page: subcategory title + 5 products + "عرض المزيد" (+10) */
+      function renderCategoryPage(main) {
+        state.filteredProducts = [];
+        state.currentMainKey = main.key;
+        els.grid.setAttribute("data-view", state.viewMode);
+        const totalCount = main.subs.reduce((a, s) => a + s.codes.size, 0);
+        let html = `<div class="cat-page">
+          <h2 class="cat-page-title">${escapeHtml(main.name)} <span class="cat-sub-count">${totalCount} منتج</span></h2>`;
+        const sections = [];
+        for (const sub of main.subs) {
+          if (!sub.codes || sub.codes.size === 0) continue;
+          const key = sub.key;
+          const limit = state.subCatLimits[key] || 5;
+          const products = (state.allProducts || []).filter(p => sub.codes.has(normalizeCodeKey(p.code)));
+          const available = products.filter(p => !p.isOut);
+          const outOfStock = products.filter(p => p.isOut);
+          const ordered = [...available, ...outOfStock];
+          const visible = ordered.slice(0, limit);
+          let section = `<div class="cat-sub-section">
+            <h3 class="cat-sub-title">${escapeHtml(sub.name)} <span class="cat-sub-count">${ordered.length} منتج</span></h3>
+            <div class="grid cat-sub-grid">`;
+          for (let i = 0; i < visible.length; i++) section += renderCard(visible[i], i < 4);
+          section += `</div>`;
+          if (ordered.length > limit) {
+            section += `<div class="cat-more-wrap"><button class="btn btn-ghost" type="button" onclick="window.__hjyLoadMoreSub('${escapeHtmlAttr(key)}')">عرض المزيد</button></div>`;
+          }
+          section += `</div>`;
+          sections.push(section);
+        }
+        if (!sections.length) html += '<div class="cat-empty" style="text-align:center;padding:40px;color:var(--muted)">لا توجد منتجات في هذه الفئة بعد</div>';
+        else html += sections.join("");
+        html += `</div>`;
+        els.grid.innerHTML = html;
+        hideShopPagination();
+        setStatus("", false);
+      }
+      window.__hjyLoadMoreSub = (key) => {
+        state.subCatLimits[key] = (state.subCatLimits[key] || 5) + 10;
+        const main = (state.mainCategories || []).find(m => m.key === state.currentMainKey);
+        if (main) renderCategoryPage(main);
+      };
+      function hideShopPagination() {
+        try {
+          const ids = ["prevPage", "nextPage", "prevPageBottom", "nextPageBottom"];
+          for (const id of ids) { const el = document.getElementById(id); if (el) el.closest(".pager").style.display = "none"; }
+          const range = document.getElementById("rangeText"); if (range) range.textContent = "—";
+          const total = document.getElementById("totalText"); if (total) total.textContent = "—";
+        } catch {}
+      }
+      function showShopPagination() {
+        try {
+          document.querySelectorAll(".pager").forEach(p => { p.style.display = ""; });
+        } catch {}
       }
       function renderWhatNew() {
         if (!(els.whatNewSection instanceof HTMLElement) || !(els.whatNewText instanceof HTMLElement)) return;
@@ -2990,6 +3095,48 @@ function debounce(fn, ms) {
           key: normalizeCategoryKey(c.name),
           codes: c.codes
         }));
+        // Load the hierarchical subcategories (SubcategoriesA.csv + SubcategoriesB.csv)
+        state.mainCategories = [];
+        try {
+          const resA = await fetchTextCached("data/SubcategoriesA.csv", 60 * 1000);
+          const resB = await fetchTextCached("data/SubcategoriesB.csv", 60 * 1000);
+          const tabA = resA ? parseCsvText(resA.text) : null;
+          const tabB = resB ? parseCsvText(resB.text) : null;
+          const mains = [];
+          if (tabA && tabA.headers && tabA.headers.length) {
+            const width = tabA.headers.length;
+            for (let c = 0; c < width; c++) {
+              const mainName = String(tabA.headers[c] || "").replace(/^\uFEFF/, "").trim();
+              if (!mainName) continue;
+              const subs = [];
+              for (const row of tabA.rows) {
+                const s = String(row[c] || "").trim();
+                if (s && !subs.some(x => x === s)) subs.push(s);
+              }
+              mains.push({ name: mainName, key: normalizeCategoryKey(mainName), subs: subs.map(s => ({ name: s, key: normalizeCategoryKey(s), codes: new Set() })) });
+            }
+          }
+          const subCodes = {};
+          if (tabB && tabB.headers && tabB.headers.length) {
+            const width = tabB.headers.length;
+            for (let c = 0; c < width; c++) {
+              const sname = String(tabB.headers[c] || "").replace(/^\uFEFF/, "").trim();
+              if (!sname) continue;
+              const codes = [];
+              for (const row of tabB.rows) {
+                const v = String(row[c] || "").trim();
+                if (v) codes.push(normalizeCodeKey(v));
+              }
+              subCodes[sname] = codes;
+            }
+          }
+          for (const m of mains) {
+            for (const s of m.subs) {
+              if (subCodes[s.name]) subCodes[s.name].forEach(code => s.codes.add(code));
+            }
+          }
+          state.mainCategories = mains;
+        } catch {}
       }
 
       function renderCategoryPills() {

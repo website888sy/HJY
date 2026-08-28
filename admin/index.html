@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="HJY Admin">
+<title>HJY ADMIN - إدارة المنتجات</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: '#4f46e5',
+          primaryDark: '#4338ca',
+          accent: '#f59e0b',
+          danger: '#e11d48',
+          success: '#10b981',
+        }
+      }
+    }
+  }
+</script>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ============ SIDEBAR ============ -->
+<aside id="appSidebar">
+  <div class="side-head">
+    <div class="side-logo">HJY</div>
+    <div class="side-title">لوحة التحكم</div>
+  </div>
+  <div class="side-body scrollbar">
+
+    <div class="side-section">
+      <div class="side-section-title"><span class="dot"></span>ملفات المنتجات CSV</div>
+      <div class="side-select">
+        <select id="sidebarCsvSelect" onchange="Sidebar.onSelect()" title="اختيار ملف CSV">
+          <option value="">-- اختر ملف CSV --</option>
+        </select>
+      </div>
+      <div class="side-search" style="margin-top:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="csvSearchInput" type="text" placeholder="بحث عن CSV..." oninput="Sidebar.onSearch()" autocomplete="off">
+      </div>
+      <div id="csvSidebarList" class="csv-list" style="margin-top:8px"></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title"><span class="dot"></span>بيانات المنتجات</div>
+      <div id="productDataList" class="csv-list"></div>
+      <div class="hint" style="margin-top:7px">عدد المنتجات في كل ملف CSV، ويمكنك ضبط الاسم البديل (للتنظيم والبحث داخل البرنامج فقط).</div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title"><span class="dot"></span>الفئات ومحتواها</div>
+      <div class="hint" style="margin-top:0;margin-bottom:9px">للاطلاع فقط على توزع الفئات وما تحتويه من منتجات.</div>
+      <div id="sidebarCatsList" class="cat-acc-list"></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title"><span class="dot"></span>أدوات</div>
+      <button class="side-btn primary" onclick="App.pullFromGithub()" title="سحب ملفات CSV والصور من GitHub إلى المجلد المحلي">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        سحب من GitHub
+      </button>
+      <button class="side-btn" onclick="App.openOrphanCleanup()" title="حذف الصور غير المستخدمة في أي CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        تنظيف الصور اليتيمة
+      </button>
+      <button class="side-btn" onclick="LocalSync.rootHandle ? LocalSync.clearDir() : LocalSync.pickDir()" title="المزامنة المحلية مع مجلد المشروع">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        المزامنة المحلية
+      </button>
+      <button class="side-btn" onclick="App.openSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        الإعدادات
+      </button>
+      <button class="side-btn" onclick="App.openCategoriesManager()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+        إدارة الفئات
+      </button>
+      <div id="localSyncStatus2" class="side-status">غير مفعل</div>
+    </div>
+
+  </div>
+</aside>
+
+<div class="layout-main">
+
+<!-- ============ LOCAL SYNC BANNER ============ -->
+<div id="localSyncBanner" class="local-sync-banner" style="display:none">
+  <div style="flex:1">
+    <b>المزامنة المحلية</b> — لكتابة كل تعديل (CSV + صور) تلقائياً في مجلد مشروعك المحلي، اضغط "ربط مجلد" واختر مجلد <span dir="ltr">HJY-LAB-WEB</span> مرة واحدة (يُطلب الإذن من المتصفح مرة واحدة فقط، ثم تصبح تلقائية).
+  </div>
+  <button onclick="LocalSync.pickDir()">ربط مجلد المشروع</button>
+  <button onclick="document.getElementById('localSyncBanner').style.display='none'" style="background:transparent;color:#9a3412;border:0;font-size:20px;cursor:pointer">&times;</button>
+</div>
+
+<!-- ============ TOP BAR ============ -->
+<header id="topbar">
+  <div class="topbar-inner">
+    <button class="btn-hamburger" onclick="Sidebar.toggle()" id="hamburgerBtn" title="إظهار / إخفاء البار الجانبي" aria-label="إظهار / إخفاء البار الجانبي">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+    </button>
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+      </div>
+      <div class="brand-name">
+        <b>HJY</b>
+        <span>ADMIN</span>
+      </div>
+    </div>
+
+    <div class="topbar-file">
+      <div class="select-wrap">
+        <select id="csvSelector">
+          <option value="">-- اختر ملف المنتجات CSV للبدء --</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="App.createNewCsv()" title="إنشاء ملف CSV جديد في المستودع">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2Z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+        ملف جديد
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="App.manualCsvUpload()" title="اختيار ملف CSV من جهازك">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+        يدوي
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="App.reloadCurrentCsv()" title="إعادة تحميل الملف الحالي من القرص">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        تحديث
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="App.renameCurrentFile()" title="إعادة تسمية الملف الحالي">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        تسمية
+      </button>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="App.openCategoriesManager()" title="إدارة الفئات">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+        الفئات
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="LocalSync.rootHandle ? LocalSync.clearDir() : LocalSync.pickDir()" id="localSyncToggle" title="المزامنة المحلية مع مجلد المشروع">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span>المزامنة المحلية: معطلة</span>
+      </button>
+      <button class="btn-icon" onclick="App.openSettings()" title="الإعدادات">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="Products.openEditor()" id="addProductTopBtn" title="إضافة منتج جديد للملف الحالي">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        منتج
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="App.pullFromGithub()" title="سحب الملفات والصور المفقودة من GitHub إلى المجلد المحلي">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        سحب من GitHub
+      </button>
+      <button class="btn btn-success btn-sm pos-rel" onclick="App.publishProducts()" id="saveAllBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+        نشر التعديلات <span id="publishBadge" class="publish-badge"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+  <!-- Welcome state -->
+  <div id="welcomeState" class="empty-state">
+    <div class="empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+    </div>
+    <h2>لوحة إدارة المنتجات</h2>
+    <p>اختر ملف CSV من الشريط العلوي لبدء التعديل على الأسعار والمنتجات.</p>
+  </div>
+
+  <!-- Products Workspace -->
+  <div id="workspace" class="hidden">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchInput" placeholder="ابحث هنا بالكود أو الاسم..." oninput="Products.onSearchInput()">
+        <kbd>Ctrl+K</kbd>
+      </div>
+      <button class="btn btn-primary" onclick="Products.openEditor()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        إضافة منتج جديد
+      </button>
+      <button class="btn btn-ghost" onclick="Products.togglePricesVisibility()" id="togglePricesBtn" title="إخفاء رأس المال والربح (H / P)">
+        <svg id="togglePricesEye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span id="togglePricesLabel">إخفاء H و P</span>
+      </button>
+    </div>
+
+    <!-- Bulk actions bar -->
+    <div id="bulkBar" class="bulkbar hidden">
+      <span id="bulkCount" class="cnt"></span>
+      <span class="spacer"></span>
+      <button onclick="Products.bulkClassify()" class="btn btn-sm btn-soft">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+        تصنيف المحدد
+      </button>
+      <button onclick="Products.bulkMove()" class="btn btn-sm btn-soft" title="نقل أو نسخ المنتجات المحددة إلى ملف CSV آخر">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+        نقل إلى CSV
+      </button>
+      <button onclick="Products.bulkDelete()" class="btn btn-sm btn-danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        حذف المحدد
+      </button>
+      <button onclick="Products.clearSelection()" class="btn btn-sm btn-ghost">إلغاء التحديد</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-wrap scrollbar">
+        <table class="w-full">
+          <thead class="thead">
+            <tr>
+              <th class="cell-center" style="width:44px"><input type="checkbox" id="selectAllChk" class="w-4 h-4 cursor-pointer" title="تحديد الكل" onchange="Products.selectAll(this.checked)"></th>
+              <th>CODE الكود</th>
+              <th>NAME الاسم</th>
+              <th>ABOUT1 الوصف</th>
+              <th class="cell-center">PRICE السعر</th>
+              <th class="cell-center">H رأس المال</th>
+              <th class="cell-center">P الربح</th>
+              <th class="cell-center">الصورة</th>
+              <th class="cell-center">الفئات</th>
+              <th class="cell-center">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+      <div class="table-foot">
+        <span id="tableCountInfo" class="count">0 منتج</span>
+        <span class="inline-hint">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7 8 19l-4 1 1-4L17 3a2.13 2.13 0 0 1 3 3Z"/></svg>
+          دبل كليك على (الكود / الاسم / الوصف / رأس المال / الربح) = تعديل سريع مباشر
+        </span>
+        <button onclick="App.publishProducts()" class="btn btn-success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+          نشر التعديلات
+        </button>
+      </div>
+    </div>
+
+    <!-- Compact bottom stats -->
+    <div class="stat-row">
+      <span class="stat-chip"><span class="dot" style="background:#4f46e5"></span>إجمالي: <b id="statTotal">0</b></span>
+      <span class="stat-chip"><span class="dot" style="background:#f59e0b"></span>رائج: <b id="statHot">0</b></span>
+      <span class="stat-chip"><span class="dot" style="background:#0ea5e9"></span>رئيسية: <b id="statHome">0</b></span>
+      <span class="stat-chip"><span class="dot" style="background:#e11d48"></span>منتهي: <b id="statOut">0</b></span>
+    </div>
+
+  </div>
+</main>
+
+<!-- ============ PRODUCT EDITOR MODAL ============ -->
+<div id="productModal" class="modal-backdrop">
+  <div class="modal-box max-w-6xl">
+    <div class="modal-head">
+      <h3>
+        <span class="h-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7 8 19l-4 1 1-4L17 3a2.13 2.13 0 0 1 3 3Z"/></svg>
+        </span>
+        <span id="productModalTitle">إضافة منتج جديد</span>
+      </h3>
+      <button class="modal-close" onclick="Products.closeEditor()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body scrollbar">
+
+      <!-- Basic -->
+      <div class="fsection">
+        <div class="fsection-title"><span class="bar"></span>بيانات أساسية</div>
+        <div class="grid-2">
+          <div>
+            <label class="field-label">الكود (CODE)</label>
+            <input id="f_code" type="text" dir="ltr" class="input font-bold" style="text-transform:uppercase" oninput="Products.onCodeChange()">
+          </div>
+          <div>
+            <label class="field-label">الاسم (NAME)</label>
+            <input id="f_name" type="text" class="input font-semibold">
+          </div>
+        </div>
+      </div>
+
+      <!-- Abouts -->
+      <div class="fsection">
+        <div class="fsection-title"><span class="bar"></span>الوصف</div>
+        <div class="grid-2">
+          <div>
+            <label class="field-label">الوصف 1 (about1)</label>
+            <textarea id="f_about1" rows="3" class="input" oninput="autoGrow(this)"></textarea>
+          </div>
+          <div>
+            <label class="field-label">الوصف 2 (about2)</label>
+            <textarea id="f_about2" rows="3" class="input" oninput="autoGrow(this)"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price: H + P = PRICE -->
+      <div class="fsection m-emerald">
+        <div class="fsection-title"><span class="bar"></span>الأسعار ( PRICE = H + P )</div>
+        <div class="grid-3">
+          <div>
+            <label class="field-label">رأس المال (H)</label>
+            <input id="f_h" type="number" step="0.01" class="input font-semibold" oninput="Products.calcPrice()">
+          </div>
+          <div>
+            <label class="field-label">الربح (P)</label>
+            <input id="f_p" type="number" step="0.01" class="input font-semibold" oninput="Products.calcPrice()">
+          </div>
+          <div>
+            <label class="field-label">السعر النهائي (PRICE) <span class="sub">— تلقائي</span></label>
+            <input id="f_price" type="number" step="0.01" readonly class="input price-readonly">
+          </div>
+        </div>
+      </div>
+
+      <!-- Classifications -->
+      <div class="fsection m-indigo">
+        <div class="fsection-title"><span class="bar"></span>التصنيفات السريعة</div>
+        <div class="grid-3" style="margin-bottom:14px">
+          <label class="cat-option">
+            <span class="dot" style="background:#f59e0b"></span>
+            <span class="lbl" style="color:#b45309">رائج HOT</span>
+            <input id="cat_hot" type="checkbox">
+          </label>
+          <label class="cat-option">
+            <span class="dot" style="background:#0ea5e9"></span>
+            <span class="lbl" style="color:#0369a1">صفحة رئيسية HOME</span>
+            <input id="cat_home" type="checkbox">
+          </label>
+          <label class="cat-option">
+            <span class="dot" style="background:#e11d48"></span>
+            <span class="lbl" style="color:#be123c">منتهي الكمية OUT</span>
+            <input id="cat_out" type="checkbox">
+          </label>
+        </div>
+        <div class="field-label">الفئات المخصصة <span class="sub">(من الملف الموحد categories.csv)</span></div>
+        <div id="customCatsBox" class="flex flex-wrap gap-2 p-3 bg-white rounded-lg border border-slate-200 min-h-[52px]"></div>
+        <div class="hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          لإضافة فئة جديدة أو تعديل اسمها: اضغط على زر "الفئات" من الشريط العلوي
+        </div>
+      </div>
+
+      <!-- Discounts -->
+      <div class="fsection m-amber">
+        <div class="flex justify-between items-center flex-wrap gap-2 mb-3" style="display:flex">
+          <div class="fsection-title" style="margin-bottom:0"><span class="bar"></span>الخصومات والعروض (DIS)</div>
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="Products.addDiscount('percent')" class="btn btn-sm btn-ghost" style="color:#b45309">+ خصم نسبة %</button>
+            <button onclick="Products.addDiscount('fixed')" class="btn btn-sm btn-ghost" style="color:#b45309">+ خصم سعر ثابت</button>
+          </div>
+        </div>
+        <div id="disBox"></div>
+        <div class="mt-3">
+          <label class="field-label">ملاحظة الخصم <span class="sub">(اختياري)</span></label>
+          <input id="f_dis_note" type="text" class="input font-semibold" placeholder="مثال: العرض ساري حتى نهاية الشهر">
+          <div class="hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            تُحفظ ضمن CSV بين علامتي " ... " وتظهر للموقع كملاحظة
+          </div>
+        </div>
+        <input id="f_dis" type="hidden">
+      </div>
+
+      <!-- Photos -->
+      <div class="fsection">
+        <div class="fsection-title"><span class="bar"></span>صور المنتج <span class="sub" style="text-transform:none">(تحويل تلقائي إلى WEBP)</span></div>
+        <div class="grid-2" style="margin-bottom:14px">
+          <div>
+            <label class="field-label">الصورة الأساسية <span class="sub">(تُسمى تلقائياً باسم الكود: CODE)</span></label>
+            <input id="photoFileInputMain" type="file" accept="image/*" class="input file-input">
+          </div>
+          <div>
+            <label class="field-label">الصور الإضافية الثانوية <span class="sub">(تُسمى تلقائياً: CODE-1, CODE-2 ...)</span></label>
+            <input id="photoFileInputExtra" type="file" accept="image/*" multiple class="input file-input">
+          </div>
+        </div>
+        <div class="hint" style="margin-bottom:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          الأساسية = <span style="color:#4f46e5;font-family:monospace">CODE.webp</span> — الإضافية = <span style="color:#4f46e5;font-family:monospace">CODE-1.webp / CODE-2.webp</span> ...
+        </div>
+        <div id="photoPreview" class="photo-grid p-3 bg-white rounded-xl border border-slate-200" style="min-height:96px"></div>
+        <div class="mt-3">
+          <label class="field-label">أسماء الملفات النهائية <span class="sub">(مفصولة بفاصلة)</span></label>
+          <input id="f_photo" type="text" dir="ltr" class="input font-mono text-left" placeholder="مثال: CODE, CODE-1, CODE-2">
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button onclick="Products.closeEditor()" class="btn btn-ghost">إلغاء</button>
+      <button onclick="Products.saveEditor()" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+        حفظ المنتج
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SUBCATEGORIES MANAGER MODAL ============ -->
+<div id="subCatsModal" class="modal-backdrop">
+  <div class="modal-box max-w-5xl">
+    <div class="modal-head">
+      <div>
+        <h3>
+          <span class="h-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M9 10h6"/><path d="M9 14h3"/></svg>
+          </span>
+          إدارة الفئات الفرعية (Subcategories)
+        </h3>
+        <p>فئة أساسية ← فئة فرعية ← أكواد المنتجات. تُحفظ في SubcategoriesA.csv و SubcategoriesB.csv (مع الفئات الأساسية الثلاث في categories.csv).</p>
+      </div>
+      <button class="modal-close" onclick="SubCat.close()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body scrollbar flex-1">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button onclick="SubCat.addMain()" class="btn btn-soft">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          إضافة فئة أساسية
+        </button>
+        <button onclick="SubCat.save()" class="btn btn-success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+          حفظ (SubcategoriesA + B)
+        </button>
+      </div>
+      <div id="subCatsList" class="scat-list"></div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="SubCat.close()" class="btn btn-ghost">إغلاق</button>
+      <button onclick="SubCat.save()" class="btn btn-primary">حفظ ونشر الفئات الفرعية</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CATEGORIES MANAGER MODAL ============ -->
+<div id="categoriesModal" class="modal-backdrop">
+  <div class="modal-box max-w-7xl">
+    <div class="modal-head">
+      <div>
+        <h3>
+          <span class="h-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+          </span>
+          إدارة الفئات والملف الموحد (categories.csv)
+        </h3>
+        <p>3 أعمدة ثابتة (منتهي كمية / رائج / صفحة رئيسية) + أعمدة الفئات ديناميكية — كل عامود يحتوي على أكواد المنتجات المصنفة تحته</p>
+      </div>
+      <button class="modal-close" onclick="Categories.close()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body scrollbar flex-1">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button onclick="SubCat.open()" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M9 10h6"/><path d="M9 14h3"/></svg>
+          إدارة الفئات الفرعية
+        </button>
+        <button onclick="Categories.addCategoryColumn()" class="btn btn-soft">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          إضافة فئة جديدة (عمود)
+        </button>
+        <button onclick="Categories.save()" class="btn btn-success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+          حفظ categories.csv
+        </button>
+      </div>
+      <div class="overflow-x-auto scrollbar border border-slate-200 rounded-xl bg-white">
+        <table id="categoriesTable" class="w-full text-xs md:text-sm">
+          <thead id="catsHeader"></thead>
+          <tbody id="catsBody"></tbody>
+        </table>
+      </div>
+      <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4 text-xs text-amber-900" style="line-height:1.8">
+        <div class="font-bold mb-1">تعليمات الملف الموحد:</div>
+        أول خلية في كل عامود = اسم الفئة أو التصنيف<br>
+        جميع الخلايا تحت اسم الفئة = أكواد المنتجات (CODE) التابعة لهذه الفئة<br>
+        يسمح بتكرار نفس الكود في أكثر من فئة<br>
+        لا يمكن حذف أو تغيير اسم الأعمدة الثلاثة الثابتة: <b>منتهي كمية</b>، <b>رائج</b>، <b>صفحة رئيسية</b>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div id="settingsModal" class="modal-backdrop">
+  <div class="modal-box max-w-lg">
+    <div class="modal-head">
+      <h3>
+        <span class="h-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </span>
+        إعدادات الصفحة
+      </h3>
+      <button class="modal-close" onclick="App.closeSettings()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body space-y-5">
+
+      <div class="set-group">
+        <div class="set-group-title"><span class="dot"></span>عرض الواجهة</div>
+        <div style="margin-bottom:12px">
+          <label class="field-label">حجم عرض الصفحة</label>
+          <div class="flex gap-2">
+            <button onclick="App.setFontSize('sm')" id="fs-sm" class="btn btn-ghost flex-1">تصغير</button>
+            <button onclick="App.setFontSize('md')" id="fs-md" class="btn btn-ghost flex-1">عادي</button>
+            <button onclick="App.setFontSize('lg')" id="fs-lg" class="btn btn-ghost flex-1">تكبير</button>
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <label class="field-label">رأس المال والربح (H / P)</label>
+          <button onclick="Products.togglePricesVisibility()" id="settingsPricesBtn" class="btn btn-ghost flex-1" style="width:100%">إخفاء رأس المال والربح (H / P)</button>
+          <div class="hint">إخفاء عمودي رأس المال (H) والربح (P) عند تصفح الواجهة فقط (يظهر سعر البيع PRICE).</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <label class="field-label">كثافة الجدول</label>
+          <div class="flex gap-2">
+            <button onclick="Products.setDensity('normal')" id="densityNormal" class="btn btn-ghost flex-1">عادي</button>
+            <button onclick="Products.setDensity('compact')" id="densityCompact" class="btn btn-ghost flex-1">مضغوط</button>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">البار الجانبي عند فتح البرنامج</label>
+          <div class="flex gap-2">
+            <button onclick="Sidebar.setDefault('open')" id="sidebarDefaultOpen" class="btn btn-ghost flex-1">مفتوح</button>
+            <button onclick="Sidebar.setDefault('collapsed')" id="sidebarDefaultClosed" class="btn btn-ghost flex-1">مغلق</button>
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-slate-200">
+
+      <div class="set-group">
+        <div class="set-group-title"><span class="dot"></span>المزامنة المحلية (مجلد المشروع)</div>
+        <div class="hint" style="margin-top:0;margin-bottom:8px">اربط مجلد HJY-LAB-WEB المحلي ليتم كتابة كل تعديل فيه تلقائياً (CSV + الصور) بعد كل نشر.</div>
+        <div class="flex gap-2 flex-wrap">
+          <button onclick="LocalSync.pickDir()" class="btn btn-ghost flex-1">ربط مجلد محلي</button>
+          <button onclick="LocalSync.clearDir()" class="btn btn-ghost flex-1">فك الارتباط</button>
+        </div>
+        <div id="localSyncStatus" class="text-xs font-bold mt-2 text-slate-500">غير مرتبط</div>
+        <div class="hint">يتطلب Chrome/Edge. ستُطلب إذن الوصول للمجلد مرة واحدة.</div>
+      </div>
+
+      <hr class="border-slate-200">
+
+      <div class="set-group">
+        <div class="set-group-title"><span class="dot"></span>بيانات GitHub</div>
+        <div style="margin-bottom:10px">
+          <label class="field-label">Token (GitHub)</label>
+          <div class="flex gap-2">
+            <input id="s_token" type="password" placeholder="ghp_xxxxxxxxxxxx" class="input font-mono" dir="ltr" style="flex:1">
+            <button onclick="App.importTokenFromFile()" class="btn btn-ghost" title="قراءة الرمز من ملف token-github.txt (عبر الخادم المحلي)">استيراد من الملف</button>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="field-label">Repo <span class="sub">(username/repo)</span></label>
+          <input id="s_repo" type="text" placeholder="username/HJY-LAB-WEB" class="input font-mono" dir="ltr">
+        </div>
+        <div>
+          <label class="field-label">Branch</label>
+          <input id="s_branch" type="text" value="main" class="input font-mono" dir="ltr">
+        </div>
+        <button onclick="App.testGithubConnection()" class="btn btn-ghost" style="width:100%;margin-top:10px" title="اختبار صلاحية الرمز والوصول للمستودع">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          اختبار الاتصال
+        </button>
+        <div id="githubTestResult" class="text-xs font-bold mt-2" style="min-height:16px"></div>
+      </div>
+
+      <hr class="border-slate-200">
+
+      <div class="set-group">
+        <div class="set-group-title"><span class="dot"></span>أدوات الصيانة</div>
+        <button onclick="App.pullFromGithub()" class="btn btn-primary" style="width:100%;margin-bottom:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+          سحب من GitHub إلى المحلي
+        </button>
+        <button onclick="App.openOrphanCleanup()" class="btn btn-ghost" style="width:100%">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          تنظيف الصور اليتيمة
+        </button>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button onclick="App.closeSettings()" class="btn btn-ghost">إغلاق</button>
+      <button onclick="App.saveSettings()" class="btn btn-primary">حفظ الإعدادات</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BULK CLASSIFY MODAL ============ -->
+<div id="bulkCatsModal" class="modal-backdrop">
+  <div class="modal-box max-w-md">
+    <div class="modal-head">
+      <h3>
+        <span class="h-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+        </span>
+        تصنيف المنتجات المحددة
+      </h3>
+      <button class="modal-close" onclick="Products.closeBulkCats()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="text-sm text-slate-500 mb-3 font-semibold">اختر الفئة لإضافة المنتجات المحددة إليها</div>
+      <div id="bulkCatsBox" class="flex flex-wrap gap-2"></div>
+      <label class="checkrow mt-4">
+        <input id="bulkReplaceCheck" type="checkbox" class="w-4 h-4">
+        <span>إزالة المنتجات من جميع الفئات الأخرى قبل الإضافة</span>
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button onclick="Products.closeBulkCats()" class="btn btn-ghost">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM DIALOG ============ -->
+<div id="confirmDialog" class="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-head">
+      <span class="h-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      </span>
+      <h3 id="confirmTitle">تأكيد الحذف</h3>
+    </div>
+    <div class="confirm-body">
+      <p id="confirmMsg">هل أنت متأكد من الحذف؟ هذه العملية لا ترجعية.</p>
+      <div id="confirmCheckWrap" class="checkrow" style="display:none;margin-top:12px">
+        <input id="confirmCheck" type="checkbox" class="w-4 h-4">
+        <span>أنا متأكد من الحذف</span>
+      </div>
+    </div>
+    <div class="confirm-foot">
+      <button id="confirmCancel" class="btn btn-ghost">إلغاء</button>
+      <button id="confirmOk" class="btn btn-danger">نعم، احذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROMPT MODAL (in-page) ============ -->
+<div id="promptModal" class="modal-backdrop">
+  <div class="modal-box max-w-sm">
+    <div class="modal-head">
+      <h3>
+        <span class="h-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </span>
+        <span id="promptTitle">أدخل القيمة</span>
+      </h3>
+      <button class="modal-close" onclick="promptModal.close()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input id="promptInput" type="text" class="input font-semibold" dir="ltr">
+    </div>
+    <div class="modal-foot">
+      <button onclick="promptModal.close()" class="btn btn-ghost">إلغاء</button>
+      <button id="promptOk" class="btn btn-primary">موافق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DISCOUNT MODAL (in-page) ============ -->
+<div id="discountModal" class="modal-backdrop">
+  <div class="modal-box max-w-sm">
+    <div class="modal-head">
+      <h3>
+        <span class="h-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><line x1="7" x2="7.01" y1="7" y2="7"/></svg>
+        </span>
+        <span id="discountTitle">إضافة عرض</span>
+      </h3>
+      <button class="modal-close" onclick="discountModal.close()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="display:grid;gap:14px">
+      <div>
+        <label class="field-label">كمية الشراء للتفعيل <span class="sub">(عدد القطع)</span></label>
+        <input id="discQty" type="number" min="1" value="5" class="input font-semibold">
+      </div>
+      <div>
+        <label id="discValueLabel" class="field-label">نسبة الخصم %</label>
+        <input id="discValue" type="number" min="0" step="0.01" value="15" class="input font-semibold">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="discountModal.close()" class="btn btn-ghost">إلغاء</button>
+      <button id="discountOk" class="btn btn-primary">إضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FLOATING LOG BUTTON ============ -->
+<button id="logFloatingBtn" class="log-float" onclick="openLogModal()" title="سجل العمليات">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+  <span id="logFloatBadge" class="log-float-badge"></span>
+</button>
+
+<!-- ============ LOG MODAL (popup) ============ -->
+<div id="logModal" class="modal-backdrop">
+  <div class="modal-box max-w-2xl">
+    <div class="modal-head" style="background:#0f1115;color:#fff;border-color:#27272a">
+      <h3 style="color:#fff">
+        <span class="h-ico" style="background:#27272a;color:#a5b4fc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+        </span>
+        سجل العمليات
+      </h3>
+      <button class="modal-close" onclick="closeLogModal()" style="color:#9ca3af" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div id="opLog" class="log-body log-body-lg"></div>
+  </div>
+</div>
+
+<!-- ============ ALERT MODAL (failure warning) ============ -->
+<div id="alertModal" class="modal-backdrop">
+  <div class="modal-box max-w-md">
+    <div class="modal-head" style="background:#fff1f2;border-color:#fecdd3">
+      <h3 style="color:#be123c">
+        <span class="h-ico" style="background:#ffe4e6;color:#e11d48">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </span>
+        فشل في العملية
+      </h3>
+      <button class="modal-close" onclick="closeAlert()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="alertBox" class="text-sm text-slate-700 font-semibold"></div>
+      <div class="hint" style="margin-top:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+        انظر "سجل العمليات" (زر أسفل يمين الشاشة) للتفاصيل الكاملة.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="closeAlert()" class="btn btn-danger">حسناً</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MOVE PRODUCTS MODAL ============ -->
+<div id="moveModal" class="modal-backdrop">
+  <div class="modal-box max-w-lg">
+    <div class="modal-head">
+      <h3>
+        <span class="h-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+        </span>
+        <span id="moveModalTitle">نقل المنتجات إلى ملف CSV آخر</span>
+      </h3>
+      <button class="modal-close" onclick="MoveProducts.close()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="moveProductsInfo" class="hint" style="margin-bottom:12px"></div>
+      <div class="move-mode">
+        <label><input type="radio" name="moveMode" value="move" checked onclick="MoveProducts.onModeChange()"> نقل (حذف من الملف الحالي)</label>
+        <label><input type="radio" name="moveMode" value="copy" onclick="MoveProducts.onModeChange()"> نسخ (إبقاء في الملف الحالي)</label>
+      </div>
+      <div class="side-search" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="moveTargetSearch" type="text" placeholder="ابحث عن ملف الوجهة..." oninput="MoveProducts.render()" autocomplete="off">
+      </div>
+      <div id="moveTargetList" class="move-target-list"></div>
+      <div class="move-note">
+        الصور تُنقل تلقائياً مع المنتج (الصور مشتركة في مجلد photo). اضغط "نشر التعديلات" بعد النقل لرفع التغيير إلى GitHub والموقع.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="MoveProducts.close()" class="btn btn-ghost">إلغاء</button>
+      <button onclick="MoveProducts.confirm()" id="moveConfirmBtn" class="btn btn-primary">نقل المحدد</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ORPHAN PHOTOS MODAL ============ -->
+<div id="orphanModal" class="modal-backdrop">
+  <div class="modal-box max-w-lg">
+    <div class="modal-head">
+      <h3>
+        <span class="h-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </span>
+        تنظيف الصور اليتيمة
+      </h3>
+      <button class="modal-close" onclick="OrphanCleanup.close()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="orphanStatus" class="text-sm font-bold text-slate-600 mb-2">جارٍ الفحص...</div>
+      <div id="orphanSummary" class="orphan-summary" style="display:none"></div>
+      <div id="orphanList" class="orphan-list"></div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="OrphanCleanup.close()" class="btn btn-ghost">إغلاق</button>
+      <button onclick="OrphanCleanup.run()" id="orphanRunBtn" class="btn btn-danger" style="display:none">حذف الصور اليتيمة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PRODUCT ACTION MENU (popup) ============ -->
+<div id="productActionMenu" class="action-menu"></div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="toast">تم بنجاح</div>
+
+<!-- ============ INLINE LOG (end of page) ============ -->
+<div id="opLogInlineWrap" class="inline-log">
+  <div class="inline-log-header" onclick="toggleInlineLog()">
+    <span>سجل العمليات الأخيرة</span>
+    <span id="inlineLogToggle" class="chev">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </span>
+  </div>
+  <div id="opLogInline" class="inline-log-body"></div>
+</div>
+
+</div><!-- /layout-main -->
+</div><!-- /layout -->
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+  function autoGrow(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.max(66, el.scrollHeight) + 'px';
+  }
+</script>
+<script src="js/admin.js"></script>
+</body>
+</html>

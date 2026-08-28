@@ -1,0 +1,27 @@
+# --- Secrets: NEVER commit these ---
+token-github.txt
+*.token
+*.secret
+.env
+.env.*
+credentials*
+*_key.pem
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Tooling ---
+node_modules/
+.vscode/
+.idea/
+
+# --- Build / cache ---
+*.log
+sw-cache/

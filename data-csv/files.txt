@@ -15,5 +15,5 @@ remote-B.csv
 rx.csv
 smart-home-wifi.csv
 smart-sensor-home.csv
-solar-batt.csv
 wifi-qiachip.csv
+solar-battery.csv

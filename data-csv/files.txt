@@ -7,7 +7,6 @@ cell-bms.csv
 e-bike-battery.csv
 eva-prod.csv
 hjy-code-remote-rx.csv
-home-smart-eq.csv
 inverter.csv
 our-prod.csv
 qiachip-home-smart-eq.csv

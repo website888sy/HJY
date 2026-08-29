@@ -167,8 +167,6 @@ photo/LEP280.webp
 photo/LEP280HOLDAR.webp
 photo/LOCK12V.webp
 photo/NI-10MM.webp
-photo/PC01-1.webp
-photo/PC01.webp
 photo/PS12-1A.jpg
 photo/PS12-3A.webp
 photo/PS5-2A-ORG.webp
@@ -209,7 +207,6 @@ photo/TAPE-5CM-LI.webp
 photo/TDT-AB-8S.webp
 photo/WL101.webp
 photo/WS01.webp
-photo/WS02.jpg
 photo/aurd-nano.jpg
 photo/aurd-uno.webp
 photo/curtainRF.webp

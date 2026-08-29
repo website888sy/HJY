@@ -13,6 +13,5 @@ qiachip-home-smart-eq.csv
 remote-A.csv
 remote-B.csv
 smart-home-wifi.csv
-smart-sensor-home.csv
 solar-battery.csv
 wifi-qiachip.csv

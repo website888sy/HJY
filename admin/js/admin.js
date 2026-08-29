@@ -1187,6 +1187,14 @@ const App = {
     return { A: csvA, B: csvB };
   },
 
+  removeCodeFromAllSubcats(code) {
+    for (const m of (this.mainCats || [])) {
+      for (const s of (m.subs || [])) {
+        s.codes = (s.codes || []).filter(c => c !== code);
+      }
+    }
+  },
+
   buildCsvFromProducts(list) {
     const HEADER_ORDER = ['CODE','NAME','PRICE','ABOUT1','ABOUT2','dis','PHOTO','P','H'];
     const rows = [];
@@ -2395,38 +2403,53 @@ const Products = {
     if (this.selected.size === 0) { toast('اختر منتجات أولاً', false); return; }
     const box = $('bulkCatsBox');
     if (!box) return;
+    if (!App.mainCats || App.mainCats.length === 0) await App.loadSubcategories();
     let html = '';
     const fixedNames = ['منتهي كمية', 'رائج', 'صفحة رئيسية'];
-    const allCats = [];
-    fixedNames.forEach(n => { const c = App.categories.find(x => x.name === n); allCats.push({ name: n, codes: c ? c.codes : [] }); });
-    App.categories.filter(c => !c.fixed).forEach(c => allCats.push({ name: c.name, codes: c.codes }));
-    if (allCats.length === 0) { toast('لا توجد فئات متاحة', false); return; }
-    allCats.forEach(c => {
-      html += `<button onclick="Products.applyBulkCategory(this)" data-cat="${esc(c.name)}" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-3 py-2 rounded-lg text-sm font-bold border border-indigo-200">${esc(c.name)} (${c.codes.length})</button>`;
+    html += `<div class="flex flex-wrap gap-2" style="width:100%">`;
+    fixedNames.forEach(n => {
+      const c = App.categories.find(x => x.name === n);
+      html += `<button onclick="Products.applyBulkCategory(this)" data-cat="${esc(n)}" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-3 py-2 rounded-lg text-sm font-bold border border-indigo-200">${esc(n)} (${c ? c.codes.length : 0})</button>`;
+    });
+    html += `</div>`;
+    (App.mainCats || []).forEach((m, mi) => {
+      html += `<div style="width:100%;margin-top:8px">
+        <div style="font-weight:800;font-size:12px;color:#4338ca;margin-bottom:6px">${esc(m.name)}</div>
+        <div class="flex flex-wrap gap-2">`;
+      (m.subs || []).forEach((s, si) => {
+        html += `<button onclick="Products.applyBulkCategory(this)" data-sub="${mi}:${si}" class="bg-white hover:bg-indigo-50 text-slate-700 px-3 py-2 rounded-lg text-sm font-bold border border-slate-200">${esc(s.name)} (${s.codes.length})</button>`;
+      });
+      html += `</div></div>`;
     });
     box.innerHTML = html || '<div class="text-slate-400 text-sm">لا توجد فئات</div>';
     $('bulkCatsModal').classList.add('open');
   },
   closeBulkCats() { $('bulkCatsModal').classList.remove('open'); },
   applyBulkCategory(btn) {
-    const name = String(btn?.dataset?.cat || '').trim();
-    if (!name) return;
     const replace = $('bulkReplaceCheck')?.checked || false;
-    const target = App.categories.find(c => c.name === name);
     const codes = Array.from(this.selected);
-    if (replace) {
-      // remove all selected codes from every column
-      App.categories.forEach(col => { col.codes = col.codes.filter(c => !codes.includes(c)); });
-    }
-    if (target) {
-      target.codes = target.codes.filter(c => !codes.includes(c));
-      target.codes.push(...codes);
-    }
+    const fixedName = String(btn?.dataset?.cat || '').trim();
+    const subKey = String(btn?.dataset?.sub || '').trim();
+    let label = '';
+    if (subKey) {
+      const [mi, si] = subKey.split(':').map(Number);
+      const sub = App.mainCats[mi]?.subs?.[si];
+      if (!sub) return;
+      if (replace) codes.forEach(c => App.removeCodeFromAllSubcats(c));
+      for (const code of codes) { if (!sub.codes.includes(code)) sub.codes.push(code); }
+      label = sub.name;
+    } else if (fixedName) {
+      const target = App.categories.find(c => c.name === fixedName);
+      if (!target) return;
+      if (replace) App.categories.forEach(col => { if (col.fixed) col.codes = col.codes.filter(c => !codes.includes(c)); });
+      for (const code of codes) { if (!target.codes.includes(code)) target.codes.push(code); }
+      label = fixedName;
+    } else return;
     this.closeBulkCats();
     this.renderTable();
     App.markDirty();
-    toast(`تم تصنيف ${codes.length} منتجات ضمن "${name}" — اضغط نشر التعديلات`);
-    log(`تم تصنيف ${codes.length} منتجات ضمن "${name}" محلياً`, true);
+    toast(`تم تصنيف ${codes.length} منتجات ضمن "${label}" — اضغط نشر التعديلات`);
+    log(`تم تصنيف ${codes.length} منتجات ضمن "${label}" محلياً`, true);
   },
 
   async bulkDelete() {
@@ -2729,6 +2752,7 @@ const Products = {
     this.tempPhotos = [];
     $('productModalTitle').textContent = index < 0 ? 'إضافة منتج جديد' : 'تعديل المنتج';
     if (App.photoIndexMap == null) await App.loadPhotoIndex();
+    if (!App.mainCats || App.mainCats.length === 0) await App.loadSubcategories();
     const p = index >= 0 ? App.products[index] : { code:'', name:'', about1:'', about2:'', price:'', h:'', p:'', photo:'', dis:'' };
     $('f_code').value = p.code || '';
     $('f_name').value = p.name || '';
@@ -2778,12 +2802,18 @@ const Products = {
 
   renderCustomCatsCheckboxes(currentCode) {
     const box = $('customCatsBox');
-    const cols = App.categories.map((c, ci) => ({ c, ci })).filter(x => !x.c.fixed);
-    if (cols.length === 0) { box.innerHTML = '<div class="text-xs text-slate-400">لا توجد فئات مخصصة بعد. أضفها من زر "إدارة الفئات" بالأعلى</div>'; return; }
+    const mains = App.mainCats || [];
+    if (mains.length === 0) { box.innerHTML = '<div class="text-xs text-slate-400">لا توجد فئات بعد. أضفها من زر "إدارة الفئات" في البار الجانبي</div>'; return; }
     let html = '';
-    cols.forEach(({ c, ci }) => {
-      const checked = c.codes.includes(currentCode) ? 'checked' : '';
-      html += `<label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300"><input type="checkbox" data-custom-cat="${ci}" ${checked} class="w-4 h-4 text-indigo-600"><span class="text-sm font-bold text-slate-700">${esc(c.name)}</span></label>`;
+    mains.forEach((m, mi) => {
+      html += `<div style="width:100%">
+        <div style="font-weight:800;font-size:12px;color:#4338ca;margin:2px 0 6px">${esc(m.name)}</div>
+        <div class="flex flex-wrap gap-2">`;
+      (m.subs || []).forEach((s, si) => {
+        const checked = (s.codes || []).includes(currentCode) ? 'checked' : '';
+        html += `<label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300"><input type="checkbox" data-subcat="${mi}:${si}" ${checked} class="w-4 h-4 text-indigo-600"><span class="text-sm font-bold text-slate-700">${esc(s.name)}</span></label>`;
+      });
+      html += `</div></div>`;
     });
     box.innerHTML = html;
   },
@@ -3105,12 +3135,17 @@ const Products = {
     if ($('cat_out').checked) ensureCat('منتهي كمية').codes.push(code);
     if ($('cat_hot').checked) ensureCat('رائج').codes.push(code);
     if ($('cat_home').checked) ensureCat('صفحة رئيسية').codes.push(code);
-    // Custom cats
-    document.querySelectorAll('input[data-custom-cat]').forEach(chk => {
-      const ci = +chk.dataset.customCat;
-      const col = App.categories[ci];
-      if (chk.checked && col) col.codes.push(code);
+    // Subcategories (main -> sub): remove from all, then add to checked ones
+    const checkedSubs = new Set();
+    document.querySelectorAll('input[data-subcat]').forEach(chk => {
+      if (chk.checked) checkedSubs.add(chk.dataset.subcat);
     });
+    App.removeCodeFromAllSubcats(code);
+    for (const key of checkedSubs) {
+      const [mi, si] = String(key).split(':').map(Number);
+      const sub = App.mainCats[mi]?.subs?.[si];
+      if (sub) { if (!sub.codes.includes(code)) sub.codes.push(code); }
+    }
 
     // Queue photos to be uploaded on publish (manual)
     for (const ph of this.tempPhotos) {

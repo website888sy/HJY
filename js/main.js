@@ -2533,6 +2533,7 @@ function debounce(fn, ms) {
       }
       function render() {
         showShopPagination();
+        els.grid.style.display = "";   // restore grid display (for normal grid/list views)
         const list = Array.isArray(state.filteredProducts) ? state.filteredProducts : [];
         const slice = paginate(list);
         els.grid.setAttribute("data-view", state.viewMode);
@@ -2554,6 +2555,7 @@ function debounce(fn, ms) {
         state.filteredProducts = [];
         state.currentMainKey = main.key;
         els.grid.setAttribute("data-view", state.viewMode);
+        els.grid.style.display = "block";   // make the container full-width block so nested grids fill properly
         const totalCount = main.subs.reduce((a, s) => a + s.codes.size, 0);
         let html = `<div class="cat-page">
           <h2 class="cat-page-title">${escapeHtml(main.name)} <span class="cat-sub-count">${totalCount} منتج</span></h2>`;
@@ -2569,7 +2571,7 @@ function debounce(fn, ms) {
           const visible = ordered.slice(0, limit);
           let section = `<div class="cat-sub-section">
             <h3 class="cat-sub-title">${escapeHtml(sub.name)} <span class="cat-sub-count">${ordered.length} منتج</span></h3>
-            <div class="grid cat-sub-grid">`;
+            <div class="grid cat-sub-grid" data-view="${escapeHtmlAttr(state.viewMode)}">`;
           for (let i = 0; i < visible.length; i++) section += renderCard(visible[i], i < 4);
           section += `</div>`;
           if (ordered.length > limit) {

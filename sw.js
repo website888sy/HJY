@@ -1,5 +1,5 @@
 /* HJY site service worker - cache-first for static assets & photos */
-const VERSION = "hjy-site-v1";
+const VERSION = "hjy-site-v2";
 const STATIC_CACHE = VERSION + "-static";
 const PHOTO_CACHE = VERSION + "-photo";
 

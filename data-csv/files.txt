@@ -5,7 +5,6 @@ battery-accessories.csv
 bike-charger.csv
 cell-bms.csv
 e-bike-battery.csv
-eva-prod.csv
 hjy-code-remote-rx.csv
 inverter.csv
 qiachip-home-smart-eq.csv

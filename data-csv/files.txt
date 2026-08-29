@@ -8,7 +8,6 @@ e-bike-battery.csv
 eva-prod.csv
 hjy-code-remote-rx.csv
 inverter.csv
-our-prod.csv
 qiachip-home-smart-eq.csv
 remote-A.csv
 remote-B.csv

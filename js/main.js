@@ -1316,18 +1316,29 @@ function debounce(fn, ms) {
         return out;
       }
       async function resolveDataFiles() {
+        const dir = String(CONFIG.DATA_DIR ?? "data-csv").trim() || "data-csv";
+        const seen = new Set();
+        const out = [];
+        const add = (urls) => {
+          for (const u of (Array.isArray(urls) ? urls : [])) {
+            const key = String(u || "").trim();
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            out.push(key);
+          }
+        };
+        // 1) manifest (files.txt)
         const manifestUrls = Array.isArray(CONFIG.DATA_MANIFEST_URLS) ? CONFIG.DATA_MANIFEST_URLS : [];
         const res = await fetchTextFirstAvailable(manifestUrls, 60 * 1000);
-        if (res) {
-          const files = parseDataManifestText(res.text);
-          if (files.length) return files;
-        }
+        if (res) add(parseDataManifestText(res.text));
+        // 2) GitHub actual directory listing (union — never miss a renamed/new file)
         if (CONFIG.GITHUB_AUTO_LIST) {
-          const files = await listGithubCsvFiles();
-          if (files.length) return files;
+          try { add(await listGithubCsvFiles()); } catch {}
         }
+        // 3) static fallback list
         const fallback = Array.isArray(CONFIG.DATA_FILES) ? CONFIG.DATA_FILES : [];
-        return fallback;
+        add(fallback);
+        return out.length ? out : fallback;
       }
       function parsePhotoList(raw) {
         const s = String(raw ?? "").trim();

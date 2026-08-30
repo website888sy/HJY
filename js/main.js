@@ -27,7 +27,7 @@ function debounce(fn, ms) {
         MIN_ORDER_TOTAL: 5,
         PHOTO_AUTO_LIST: true,
         PHOTO_DIR: "photo",
-        PHOTO_EXTS: ["webp", "png", "jpg", "jpeg", "gif"],
+        PHOTO_EXTS: ["webp", "png", "jpg", "jpeg", "gif", "avif"],
         PHOTO_INDEX_CACHE_MS: 30 * 60 * 1000,
         PHOTO_MAX_FILES: 4000,
         PHOTO_DIRS: [

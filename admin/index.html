@@ -63,7 +63,7 @@
     <div class="side-section">
       <div class="side-section-title"><span class="dot"></span>بيانات المنتجات</div>
       <div id="productDataList" class="csv-list"></div>
-      <div class="hint" style="margin-top:7px">عدد المنتجات في كل ملف CSV، ويمكنك ضبط الاسم البديل (للتنظيم والبحث داخل البرنامج فقط).</div>
+      <div class="hint" style="margin-top:7px">عدد المنتجات في كل ملف CSV.</div>
     </div>
 
     <div class="side-section">
@@ -77,6 +77,10 @@
       <button class="side-btn primary" onclick="App.pullFromGithub()" title="سحب ملفات CSV والصور من GitHub إلى المجلد المحلي">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
         سحب من GitHub
+      </button>
+      <button class="side-btn" onclick="CompatTest.open()" title="فحص توافق: كل كود له صورة وكل صورة لها كود ولا شيء يتيم">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+        اختبار التوافق
       </button>
       <button class="side-btn" onclick="App.openOrphanCleanup()" title="حذف الصور غير المستخدمة في أي CSV">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
@@ -811,6 +815,32 @@
     <div class="modal-foot">
       <button onclick="MoveProducts.close()" class="btn btn-ghost">إلغاء</button>
       <button onclick="MoveProducts.confirm()" id="moveConfirmBtn" class="btn btn-primary">نقل المحدد</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMPATIBILITY TEST MODAL ============ -->
+<div id="compatModal" class="modal-backdrop">
+  <div class="modal-box max-w-3xl">
+    <div class="modal-head">
+      <h3>
+        <span class="h-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        اختبار التوافق (كود ↔ صورة ↔ CSV)
+      </h3>
+      <button class="modal-close" onclick="CompatTest.close()" title="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="compatStatus" class="text-sm font-bold text-slate-600 mb-3">جارٍ الفحص...</div>
+      <div id="compatSummary" class="flex flex-wrap gap-2 mb-3"></div>
+      <div id="compatBody"></div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="CompatTest.close()" class="btn btn-ghost">إغلاق</button>
+      <button onclick="CompatTest.cleanup()" id="compatCleanupBtn" class="btn btn-danger" style="display:none">حذف الصور اليتيمة</button>
     </div>
   </div>
 </div>

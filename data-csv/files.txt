@@ -1,7 +1,6 @@
 Doorbell-qiaship.csv
 Elevators.csv
 ReceiverRF.csv
-add.csv
 battery-accessories.csv
 bike-charger.csv
 cell-bms.csv
@@ -15,3 +14,4 @@ smart-home-wifi.csv
 solar-battery.csv
 water-sensor.csv
 wifi-qiachip.csv
+powre-supply.csv

@@ -1294,6 +1294,7 @@ const App = {
     toast('جاري حفظ التعديلات ونشرها...');
     log('بدء نشر التعديلات...', true);
     const pendingPhotos = this.photoUploads.slice();
+    const photosChanged = pendingPhotos.length > 0 || this.photoDeletions.length > 0;
     // upload pending photos first (they were queued on save)
     if (this.photoUploads.length) {
       let okP = 0, failP = 0;
@@ -1385,8 +1386,8 @@ const App = {
       }
       if (delOk) log(`تم حذف ${delOk} صورة من GitHub` + (delFail ? `، فشل ${delFail}` : ''), delFail === 0);
     }
-    // always regenerate photo/customer_photo manifests so the site shows every uploaded photo
-    await GH.regenerateManifests();
+    // regenerate photo/customer_photo manifests ONLY if photos actually changed
+    if (photosChanged) await GH.regenerateManifests();
     // reload categories from GitHub so the admin always reflects the latest state
     try { await this.loadCategories(); } catch {}
     this.resetDirty();
@@ -1396,8 +1397,10 @@ const App = {
     CsvSidebar.render();
     // local sync: write the same changes into the local project folder (auto server or linked folder)
     if (LocalSync.isActive()) {
-      try { const mf = await GH.getFile('photo/files.txt'); if (mf != null) await LocalSync.writeText('photo/files.txt', mf); } catch {}
-      try { const cf = await GH.getFile('customer_photo/files.txt'); if (cf != null) await LocalSync.writeText('customer_photo/files.txt', cf); } catch {}
+      if (photosChanged) {
+        try { const mf = await GH.getFile('photo/files.txt'); if (mf != null) await LocalSync.writeText('photo/files.txt', mf); } catch {}
+        try { const cf = await GH.getFile('customer_photo/files.txt'); if (cf != null) await LocalSync.writeText('customer_photo/files.txt', cf); } catch {}
+      }
       await LocalSync.syncAll(pendingPhotos);
     }
     toast('تم نشر التعديلات بنجاح');

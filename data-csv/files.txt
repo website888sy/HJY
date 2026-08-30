@@ -7,9 +7,9 @@ cell-bms.csv
 e-bike-battery.csv
 inverter.csv
 qiachip-home-smart-eq.csv
-remote-B.csv
 smart-home-wifi.csv
 solar-battery.csv
 wifi-qiachip.csv
 receiver-with-antena.csv
 remote-short-range.csv
+remote-long-range.csv

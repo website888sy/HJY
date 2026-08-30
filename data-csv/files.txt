@@ -2,7 +2,6 @@ Doorbell-qiaship.csv
 Elevators.csv
 ReceiverRF.csv
 add.csv
-aurd-elec.csv
 battery-accessories.csv
 bike-charger.csv
 cell-bms.csv

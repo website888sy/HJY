@@ -123,6 +123,12 @@ photo/JSK-30-72-2.webp
 photo/JSK-30-72-3.webp
 photo/JSK-30-72-4.webp
 photo/JSK-30-72.webp
+photo/JSK48-30-1.webp
+photo/JSK48-30-2.webp
+photo/JSK48-30.webp
+photo/JSK60-30-2.webp
+photo/JSK60-30-3.webp
+photo/JSK60-30.webp
 photo/JSK72-30-1.webp
 photo/JSK72-30-2.webp
 photo/JSK72-30-3.webp

@@ -523,7 +523,6 @@ const App = {
   photoIndexMap: null, // basename(lower) -> photo paths from photo/files.txt
   dirtyCount: 0,      // number of unpublished local edits
   csvFiles: [],       // list of CSV basenames in data-csv
-  csvAliases: {},     // basename -> display alias (localStorage only, never pushed)
   csvStats: {},       // basename -> { count, loaded }
   globalIndex: null,  // Map lower(code) -> { code, name, price, about1, photo, csv }
   otherCsvDrafts: {}, // path -> csv text for CSVs modified by move/copy (pending publish)
@@ -540,22 +539,6 @@ const App = {
       }
     }
     return paths;
-  },
-
-  /* ---------- CSV ALIASES (local only) ---------- */
-  loadAliases() {
-    try { this.csvAliases = JSON.parse(localStorage.getItem('hjy_csv_aliases') || '{}') || {}; }
-    catch { this.csvAliases = {}; }
-  },
-  aliasOf(basename) { return String(this.csvAliases[basename] || '').trim(); },
-  setAlias(basename, name) {
-    const n = String(name || '').trim();
-    if (n) this.csvAliases[basename] = n; else delete this.csvAliases[basename];
-    try { localStorage.setItem('hjy_csv_aliases', JSON.stringify(this.csvAliases)); } catch {}
-  },
-  csvLabel(basename) {
-    const alias = this.aliasOf(basename);
-    return alias ? `${basename} — ${alias}` : basename;
   },
 
   /* ---------- CSV FILES LIST ---------- */
@@ -633,18 +616,6 @@ const App = {
     this.globalIndex = map;
     this.csvStats = stats;
     return map;
-  },
-
-  async setAliasPrompt(basename) {
-    const current = this.aliasOf(basename);
-    const name = await promptModal.open(`الاسم البديل الافتراضي للملف ${basename}\n(للبحث والتنظيم داخل البرنامج فقط — لا يُرفع للمستودع):`, current);
-    if (name === null) return;
-    this.setAlias(basename, name);
-    this.populateCsvSelector();
-    CsvSidebar.render();
-    ProductData.render();
-    toast(name ? `تم ضبط الاسم البديل: ${name}` : 'تم إزالة الاسم البديل');
-    log(name ? `الاسم البديل للملف ${basename}: ${name}` : `إزالة الاسم البديل للملف ${basename}`, true);
   },
 
   /* ---------- PHOTO MANIFEST SYNC ---------- */
@@ -763,7 +734,6 @@ const App = {
 
   init() {
     this.loadSettings();
-    this.loadAliases();
     this.applyFontSize(localStorage.getItem('hjy_admin_font') || 'md');
     Sidebar.init();
     this.refreshCsvList().then(() => { try { CatView.refresh(); } catch {} });
@@ -908,7 +878,7 @@ const App = {
     const sel = $('csvSelector');
     const files = (this.csvFiles && this.csvFiles.length) ? this.csvFiles : [];
     sel.innerHTML = '<option value="">-- اختر ملف المنتجات CSV للبدء --</option>' +
-      files.map(f => `<option value="data-csv/${f}">${esc(this.csvLabel(f))}</option>`).join('');
+      files.map(f => `<option value="data-csv/${f}">${esc(f)}</option>`).join('');
     if (this.currentCsv) sel.value = this.currentCsv;
     const prevVal = sel.value;
     sel.onclick = () => { sel.dataset.prev = sel.value; };
@@ -1008,6 +978,7 @@ const App = {
     $('workspace').classList.remove('hidden');
     this.resetDirty();
     await this.loadCategories();
+    if (!this.mainCats || this.mainCats.length === 0) await this.loadSubcategories();
     Products.renderTable();
     // selection belongs to a single file — clear it when switching
     Products.selected = new Set();
@@ -1077,7 +1048,7 @@ const App = {
     const sel = $('csvSelector');
     if (![...sel.options].some(o => o.value === this.currentCsv)) {
       const opt = document.createElement('option');
-      opt.value = this.currentCsv; opt.textContent = this.csvLabel(n);
+      opt.value = this.currentCsv; opt.textContent = n;
       sel.appendChild(opt);
     }
     sel.value = this.currentCsv;
@@ -1193,6 +1164,16 @@ const App = {
         s.codes = (s.codes || []).filter(c => c !== code);
       }
     }
+  },
+
+  categoriesOf(code) {
+    const out = [];
+    for (const m of (this.mainCats || [])) {
+      for (const s of (m.subs || [])) {
+        if ((s.codes || []).includes(code)) out.push({ main: m.name, sub: s.name });
+      }
+    }
+    return out;
   },
 
   buildCsvFromProducts(list) {
@@ -1545,8 +1526,7 @@ const Sidebar = {
   matches(basename) {
     const q = this.currentQuery();
     if (!q) return true;
-    const alias = App.aliasOf(basename);
-    return basename.toLowerCase().includes(q) || String(alias || '').toLowerCase().includes(q);
+    return basename.toLowerCase().includes(q);
   },
   onSearch() {
     CsvSidebar.render();
@@ -1561,7 +1541,7 @@ const CsvSidebar = {
     const sel = $('sidebarCsvSelect');
     if (sel) {
       sel.innerHTML = '<option value="">-- اختر ملف CSV --</option>' +
-        App.csvFiles.map(f => `<option value="${esc(f)}"${App.currentCsvBasename === f ? ' selected' : ''}>${esc(App.csvLabel(f))}</option>`).join('');
+        App.csvFiles.map(f => `<option value="${esc(f)}"${App.currentCsvBasename === f ? ' selected' : ''}>${esc(f)}</option>`).join('');
     }
     if (!box) return;
     const list = App.csvFiles.filter(f => Sidebar.matches(f));
@@ -1570,20 +1550,15 @@ const CsvSidebar = {
   },
   item(basename) {
     const current = App.currentCsvBasename === basename;
-    const alias = App.aliasOf(basename);
     const st = App.csvStats[basename];
     const count = st ? st.count : '';
     return `<div class="csv-item ${current ? 'active' : ''}">
       <div class="csv-item-row">
         <div class="csv-item-main" onclick="App.loadCsvByName(this)" data-basename="${esc(basename)}" title="فتح ${esc(basename)}">
           <span class="csv-item-name">${esc(basename)}</span>
-          ${alias ? `<span class="csv-item-alias">${esc(alias)}</span>` : ''}
         </div>
         ${count !== '' ? `<span class="csv-item-badge">${count} منتج</span>` : ''}
         <div class="csv-item-actions">
-          <button class="btn-icon alias" onclick="App.setAliasPrompt('${esc(basename)}')" title="تعيين اسم بديل">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-          </button>
           <button class="btn-icon del" onclick="App.deleteCsv('${esc(basename)}')" title="حذف الملف من المحلي و GitHub">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
@@ -1593,7 +1568,7 @@ const CsvSidebar = {
   }
 };
 
-/* ======================= PRODUCT DATA (counts + aliases) ======================= */
+/* ======================= PRODUCT DATA (counts) ======================= */
 const ProductData = {
   async refresh() {
     await App.buildGlobalIndex();
@@ -1605,13 +1580,11 @@ const ProductData = {
     const list = App.csvFiles.filter(f => Sidebar.matches(f));
     if (!list.length) { box.innerHTML = '<div class="csv-empty">لا توجد ملفات مطابقة</div>'; return; }
     box.innerHTML = list.map(f => {
-      const alias = App.aliasOf(f);
       const st = App.csvStats[f] || { count: 0 };
       return `<div class="csv-item">
         <div class="csv-item-row">
           <div class="csv-item-main" onclick="App.loadCsvByName(this)" data-basename="${esc(f)}" title="فتح ${esc(f)}">
             <span class="csv-item-name">${esc(f)}</span>
-            ${alias ? `<span class="csv-item-alias">${esc(alias)}</span>` : `<span class="csv-item-alias" style="color:#c0c4cc">بدون اسم بديل</span>`}
           </div>
           <span class="csv-item-badge">${st.count} منتج</span>
         </div>
@@ -1754,16 +1727,14 @@ const MoveProducts = {
     const box = $('moveTargetList');
     if (!box) return;
     const q = String($('moveTargetSearch')?.value || '').trim().toLowerCase();
-    const list = App.csvFiles.filter(f => f !== App.currentCsvBasename && (!q || f.toLowerCase().includes(q) || App.aliasOf(f).toLowerCase().includes(q)));
+    const list = App.csvFiles.filter(f => f !== App.currentCsvBasename && (!q || f.toLowerCase().includes(q)));
     if (!list.length) { box.innerHTML = '<div class="csv-empty">لا توجد ملفات وجهة</div>'; return; }
     box.innerHTML = list.map(f => {
       const st = App.csvStats[f] || { count: 0 };
-      const alias = App.aliasOf(f);
       const sel = f === this.target ? ' sel' : '';
       return `<div class="move-target${sel}" onclick="MoveProducts.pick('${esc(f)}')">
         <div class="mt-main">
           <span class="mt-name">${esc(f)}</span>
-          ${alias ? `<span class="mt-alias">${esc(alias)}</span>` : ''}
         </div>
         <span class="mt-count">${st.count} منتج</span>
       </div>`;
@@ -1835,6 +1806,122 @@ const MoveProducts = {
     toast(msg);
     log(`تمت ${mode === 'move' ? 'نقل' : 'نسخ'} ${mode === 'move' ? movedSrc : added}/${this.codes.length} منتجات إلى ${targetBasename} محلياً (بانتظار النشر)`, true);
     ProductData.refresh();
+  }
+};
+
+/* ======================= COMPATIBILITY TEST (code <-> photo <-> csv) ======================= */
+const CompatTest = {
+  orphanPhotos: [],   // photo paths with no matching code
+  noPhotoCodes: [],   // codes that have no photo file
+  async open() {
+    $('compatModal').classList.add('open');
+    $('compatStatus').textContent = 'جارٍ الفحص...';
+    $('compatSummary').innerHTML = '';
+    $('compatBody').innerHTML = '';
+    $('compatCleanupBtn').style.display = 'none';
+    if (App.photoIndexMap == null) await App.loadPhotoIndex();
+    if (!App.globalIndex) await App.buildGlobalIndex();
+    await this.run();
+  },
+  close() { $('compatModal').classList.remove('open'); },
+  async run() {
+    // gather codes + photo references from all CSVs + categories + subcategories
+    const codes = new Set();
+    const photoRefs = new Set();
+    const prefixes = [];
+    for (const [, p] of App.globalIndex) {
+      const code = String(p.code || '').trim().toLowerCase();
+      if (code) { codes.add(code); prefixes.push(code); photoRefs.add(code); }
+      String(p.photo || '').split(',').map(s => s.trim()).filter(Boolean).forEach(n => {
+        const k = n.replace(/\.[^./]+$/, '').toLowerCase();
+        if (k) photoRefs.add(k);
+      });
+    }
+    for (const c of (App.categories || [])) for (const code of (c.codes || [])) codes.add(String(code).toLowerCase());
+    for (const m of (App.mainCats || [])) for (const s of (m.subs || [])) for (const code of (s.codes || [])) codes.add(String(code).toLowerCase());
+
+    const photoKeys = App.photoIndexMap instanceof Map ? new Set(App.photoIndexMap.keys()) : new Set();
+
+    const isRef = (key) => {
+      if (photoRefs.has(key)) return true;
+      for (const pre of prefixes) {
+        if (key === pre) return true;
+        if (key.startsWith(pre + '-') && /^\d+$/.test(key.slice(pre.length + 1))) return true;
+      }
+      return false;
+    };
+
+    // 1) orphan photos
+    const orphanKeys = [];
+    for (const key of photoKeys) if (!isRef(key)) orphanKeys.push(key);
+    orphanKeys.sort();
+    this.orphanPhotos = [];
+    for (const key of orphanKeys) {
+      const arr = App.photoIndexMap.get(key) || [];
+      for (const p of arr) if (!this.orphanPhotos.includes(p)) this.orphanPhotos.push(p);
+    }
+
+    // 2) codes with no photo
+    this.noPhotoCodes = [];
+    for (const code of codes) {
+      let has = false;
+      for (const key of photoKeys) {
+        if (key === code || (key.startsWith(code + '-') && /^\d+$/.test(key.slice(code.length + 1)))) { has = true; break; }
+      }
+      if (!has) this.noPhotoCodes.push(code);
+    }
+    this.noPhotoCodes.sort();
+
+    // render
+    const ok = this.orphanPhotos.length === 0 && this.noPhotoCodes.length === 0;
+    $('compatStatus').textContent = ok ? 'النظام متوافق ✓ — كل كود له صورة، وكل صورة لها كود' : 'توجد ملاحظات يجب معالجتها:';
+    const chips = [];
+    chips.push(`<span class="stat-chip">منتجات (أكواد): <b>${codes.size}</b></span>`);
+    chips.push(`<span class="stat-chip">صور: <b>${photoKeys.size}</b></span>`);
+    chips.push(`<span class="stat-chip" style="border-color:#fecdd3;color:#be123c">صور يتيمة: <b>${this.orphanPhotos.length}</b></span>`);
+    chips.push(`<span class="stat-chip" style="border-color:#fde68a;color:#b45309">أكواد بلا صورة: <b>${this.noPhotoCodes.length}</b></span>`);
+    $('compatSummary').innerHTML = chips.join('');
+
+    let body = '';
+    if (this.noPhotoCodes.length) {
+      body += `<div class="set-group"><div class="set-group-title"><span class="dot"></span>أكواد بدون صورة (${this.noPhotoCodes.length})</div>
+        <div class="orphan-list" style="max-height:220px"><div class="orphan-item"><div class="oi-name" style="white-space:normal">${esc(this.noPhotoCodes.slice(0, 80).join('، '))}${this.noPhotoCodes.length > 80 ? ' ...' : ''}</div></div></div></div>`;
+    }
+    if (this.orphanPhotos.length) {
+      body += `<div class="set-group" style="margin-top:12px"><div class="set-group-title"><span class="dot"></span>صور يتيمة بدون كود (${this.orphanPhotos.length})</div>
+        <div class="orphan-list" style="max-height:220px">${this.orphanPhotos.slice(0, 60).map(p => {
+          const name = p.split('/').pop();
+          return `<div class="orphan-item"><div style="flex:1;min-width:0"><div class="oi-name">${esc(name)}</div><div class="oi-path">${esc(p)}</div></div></div>`;
+        }).join('')}</div>${this.orphanPhotos.length > 60 ? `<div class="text-xs text-slate-400 mt-1">و ${this.orphanPhotos.length - 60} أخرى...</div>` : ''}</div>`;
+    }
+    if (!body) body = '<div class="csv-empty">لا توجد أي ملاحظات — كل شيء متوافق تماماً ✓</div>';
+    $('compatBody').innerHTML = body;
+    $('compatCleanupBtn').style.display = this.orphanPhotos.length ? 'inline-flex' : 'none';
+    $('compatCleanupBtn').textContent = `حذف ${this.orphanPhotos.length} صورة يتيمة`;
+  },
+  async cleanup() {
+    const list = this.orphanPhotos.slice();
+    if (!list.length) { toast('لا توجد صور يتيمة', false); return; }
+    const ok = await confirmAsync('حذف الصور اليتيمة', `سيتم حذف ${list.length} صورة من مجلد photo المحلي ومن GitHub، ثم تحديث فهرس الصور.\n\nهل أنت متأكد؟`, 'نعم، احذف', true);
+    if (!ok) return;
+    toast('جارٍ حذف الصور اليتيمة...');
+    let okN = 0, failN = 0;
+    for (const p of list) {
+      const a = await GH.deleteFile(p);
+      const b = LocalSync.isActive() ? await LocalSync.deleteFile(p) : true;
+      if (a && b) okN++; else failN++;
+    }
+    await App.syncPhotoManifests();
+    if (App.photoIndexMap instanceof Map) {
+      for (const p of list) {
+        const key = p.split('/').pop().replace(/\.[^./]+$/, '').toLowerCase();
+        const arr = App.photoIndexMap.get(key);
+        if (Array.isArray(arr)) { const i = arr.indexOf(p); if (i >= 0) arr.splice(i, 1); if (!arr.length) App.photoIndexMap.delete(key); }
+      }
+    }
+    this.close();
+    toast(failN ? `تم حذف ${okN}، فشل ${failN}` : `تم حذف ${okN} صورة يتيمة`);
+    log(`اختبار التوافق: حذف ${okN} صورة يتيمة` + (failN ? `، فشل ${failN}` : ''), failN === 0);
   }
 };
 
@@ -2707,9 +2794,9 @@ const Products = {
       if (colOut.includes(code)) cats.push('<span class="chip chip-rose">منتهي</span>');
       if (colHot.includes(code)) cats.push('<span class="chip chip-amber">HOT</span>');
       if (colHome.includes(code)) cats.push('<span class="chip chip-sky">رئيسية</span>');
-      // Custom categories
-      App.categories.filter(c => !c.fixed).forEach(c => {
-        if (c.codes.includes(code)) cats.push(`<span class="chip chip-indigo">${esc(c.name)}</span>`);
+      // Subcategories (main -> sub)
+      App.categoriesOf(code).forEach(x => {
+        cats.push(`<span class="chip chip-indigo" title="${esc(x.main)}">${esc(x.sub)}</span>`);
       });
       const isSel = this.selected.has(code) ? ' checked' : '';
       const isOut = colOut.includes(code);

@@ -6,7 +6,6 @@ bike-charger.csv
 cell-bms.csv
 e-bike-battery.csv
 inverter.csv
-qiachip-home-smart-eq.csv
 receiver-with-antena.csv
 remote-long-range.csv
 remote-short-range.csv

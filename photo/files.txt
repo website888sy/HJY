@@ -112,6 +112,8 @@ photo/JK-APK1.webp
 photo/JK-V.webp
 photo/JK420100C.webp
 photo/JK48100.webp
+photo/JK48200-1.webp
+photo/JK48200.webp
 photo/JK4840.webp
 photo/JK816100C.webp
 photo/JK82440.webp

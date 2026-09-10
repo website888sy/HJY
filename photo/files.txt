@@ -171,6 +171,8 @@ photo/LEP20A-GP-1.webp
 photo/LEP20A-GP.webp
 photo/LEP280.webp
 photo/LEP280HOLDAR.webp
+photo/LEP300-GREE-1.webp
+photo/LEP300-GREE.webp
 photo/LOCK12V.webp
 photo/NI-10MM.webp
 photo/PS12-1A.jpg

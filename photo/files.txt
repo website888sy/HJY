@@ -106,6 +106,15 @@ photo/GP60-20.webp
 photo/GP72-20-1.webp
 photo/GP72-20-2.webp
 photo/GP72-20.webp
+photo/GREE12300-1.webp
+photo/GREE12300-2.webp
+photo/GREE12300-3.webp
+photo/GREE24300-1.webp
+photo/GREE24300-2.webp
+photo/GREE24300-3.webp
+photo/GREE48300-1.webp
+photo/GREE48300-2.webp
+photo/GREE48300-3.webp
 photo/INV-AST-4K-5G-1.webp
 photo/INV-AST-4K-5G.webp
 photo/JK-APK1.webp

@@ -46,6 +46,7 @@ photo/CB-60-8.webp
 photo/CB-72-10.webp
 photo/CB-72-5.webp
 photo/CB-72-8.webp
+photo/DALY1240.webp
 photo/DATA-206.webp
 photo/DESAY-DATA.webp
 photo/DFR0756.webp
@@ -139,6 +140,7 @@ photo/JK48200-1.webp
 photo/JK48200.webp
 photo/JK4840.webp
 photo/JK816100C.webp
+photo/JK816150.webp
 photo/JK82440.webp
 photo/JKLCD23.webp
 photo/JKLCD23C.webp

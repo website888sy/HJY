@@ -53,6 +53,7 @@ photo/DESAY-DATA.webp
 photo/DFR0756.webp
 photo/DIMMER-DC-1.webp
 photo/DIMMER01.webp
+photo/DIMMER4000.webp
 photo/DRX1K-315.webp
 photo/DY1260.jpg
 photo/ESP32-30P.webp
@@ -223,6 +224,7 @@ photo/KT68C-S-1.webp
 photo/KT68C-S-2.webp
 photo/KT68C-S-3.webp
 photo/KT68C-S.webp
+photo/LASER01.webp
 photo/LEP100-GP.webp
 photo/LEP15A-JSK-1.webp
 photo/LEP15A-JSK-2.webp
@@ -273,6 +275,7 @@ photo/SZ01-1.webp
 photo/SZ01.webp
 photo/TAPE-5CM-LI.webp
 photo/TDT-AB-8S.webp
+photo/VM-5-100.webp
 photo/WL101.webp
 photo/WS01.webp
 photo/aurd-nano.jpg

@@ -276,6 +276,7 @@ photo/SZ01.webp
 photo/TAPE-5CM-LI.webp
 photo/TDT-AB-8S.webp
 photo/VM-5-100.webp
+photo/W196-113.webp
 photo/WL101.webp
 photo/WS01.webp
 photo/aurd-nano.jpg

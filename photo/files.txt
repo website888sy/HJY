@@ -62,10 +62,12 @@ photo/ESP32-CH-30P.webp
 photo/ESP32-SH-38P.webp
 photo/ETC-12-206-1.webp
 photo/ETC-12-206-2.webp
+photo/ETC-12-206-3.webp
 photo/ETC-12-206.webp
 photo/ETC-24-206-1.webp
 photo/ETC-24-206-2.webp
 photo/ETC-24-206-3.webp
+photo/ETC-24-206.webp
 photo/ETC206LEP-1.webp
 photo/ETC206LEP-2.webp
 photo/ETC206LEP-3.webp
@@ -269,6 +271,7 @@ photo/QSS053RF.webp
 photo/RX480E.webp
 photo/SB100-12-A.webp
 photo/SB100-12-AN-1.webp
+photo/SB100-12-AN-2.webp
 photo/SB100-12-AN.webp
 photo/SB100-24-A-1.webp
 photo/SB100-24-A.webp

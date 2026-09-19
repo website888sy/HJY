@@ -155,6 +155,7 @@ photo/JK816100C.webp
 photo/JK816150-43.webp
 photo/JK816150.webp
 photo/JK82440.webp
+photo/JKCARDRS-1.webp
 photo/JKLCD23.webp
 photo/JKLCD23C.webp
 photo/JKLCD32.webp

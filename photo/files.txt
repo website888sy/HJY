@@ -63,6 +63,7 @@ photo/ESP32-SH-38P.webp
 photo/ETC-12-206-1.webp
 photo/ETC-12-206-2.webp
 photo/ETC-12-206-3.webp
+photo/ETC-12-206-4.webp
 photo/ETC-12-206.webp
 photo/ETC-24-206-1.webp
 photo/ETC-24-206-2.webp

@@ -269,6 +269,7 @@ photo/QAR.webp
 photo/QR-206.webp
 photo/QSS052RF.webp
 photo/QSS053RF.webp
+photo/REP-V1.webp
 photo/RX480E.webp
 photo/SB100-12-A.webp
 photo/SB100-12-AN-1.webp

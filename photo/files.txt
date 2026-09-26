@@ -50,6 +50,7 @@ photo/DALY-24-LEP-60A.webp
 photo/DALY1240.webp
 photo/DATA-206.webp
 photo/DESAY-DATA.webp
+photo/DF01.webp
 photo/DFR0756.webp
 photo/DIMMER-DC-1.webp
 photo/DIMMER01.webp

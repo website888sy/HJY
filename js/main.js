@@ -167,6 +167,12 @@ function debounce(fn, ms) {
         infoText: document.getElementById("infoText"),
         customerGalleryWrap: document.getElementById("customerGalleryWrap"),
         customerGallery: document.getElementById("customerGallery"),
+        homeCatsStrip: document.getElementById("homeCatsStrip"),
+        homeReviewsSection: document.getElementById("homeReviewsSection"),
+        homeReviewsImg: document.getElementById("homeReviewsImg"),
+        homeReviewsDots: document.getElementById("homeReviewsDots"),
+        homeReviewsMoreBtn: document.getElementById("homeReviewsMoreBtn"),
+        qaCopyBtn: document.getElementById("qaCopyBtn"),
         backFromInfoBtn: document.getElementById("backFromInfoBtn"),
         complaintForm: document.getElementById("complaintForm"),
         complaintContact: document.getElementById("complaintContact"),
@@ -207,7 +213,7 @@ function debounce(fn, ms) {
         query: "",
         page: 1,
         sortMode: "PRICE_ASC",
-        viewMode: "brief",
+        viewMode: "default",
         lastMainRoute: "shop",
         lastProductCode: "",
         lastInvoiceText: "",
@@ -228,6 +234,9 @@ function debounce(fn, ms) {
         ordersSelectedId: "",
         whatNewText: "",
         newOfferText: "",
+        governorates: [],
+        carriers: [],
+        branches: [],
       };
 
       const USER_LOAD_ERROR_MSG =
@@ -351,7 +360,7 @@ function debounce(fn, ms) {
         });
         return html.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[+i] || m);
       }
-      function formatAboutTextPlain(raw) {
+      function formatAboutTextPlain(raw, alignOverride) {
         let cleaned = String(raw ?? "").replace(/^\uFEFF/, "");
         let lines = cleaned.split(/\r?\n/);
         let htmlParts = [];
@@ -389,7 +398,9 @@ function debounce(fn, ms) {
           escapedLine = escapedLine.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
           escapedLine = escapedLine.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[+i] || m);
           
-          if (hasUrl) {
+          if (alignOverride === "center") {
+            htmlParts.push(`<div style="direction: rtl; text-align: center; overflow-wrap: break-word; word-wrap: break-word;">${escapedLine}</div>`);
+          } else if (hasUrl) {
             htmlParts.push(`<div style="direction: ltr; text-align: left; overflow-wrap: break-word; word-wrap: break-word; text-overflow: ellipsis; white-space: pre-wrap;">${escapedLine}</div>`);
           } else {
             htmlParts.push(`<div style="direction: rtl; text-align: right; overflow-wrap: break-word; word-wrap: break-word;">${escapedLine}</div>`);
@@ -626,94 +637,138 @@ function debounce(fn, ms) {
         html += `</div>`;
         return html;
       }
+      function galleryItemCard(type, item, groupName) {
+        const searchKey = safeLower(`${item.title} ${item.description} ${item.url}`);
+        const common = `data-gal-item data-cat="${escapeHtmlAttr(groupName)}" data-search="${escapeHtmlAttr(searchKey)}"`;
+        if (type === "videos") {
+          const yt = extractYoutubeId(item.url);
+          const thumb = yt ? `https://img.youtube.com/vi/${encodeURIComponent(yt)}/hqdefault.jpg` : "";
+          return `<a ${common} href="${escapeHtmlAttr(item.url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">
+              <div style="border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.7);overflow:hidden;height:100%">
+                <div style="aspect-ratio:16/9;background:#000;display:grid;place-items:center;position:relative">
+                  ${thumb ? `<img src="${escapeHtmlAttr(thumb)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()" />` : `<div style="color:#fff;font-weight:900;opacity:0.9">VIDEO</div>`}
+                  <div style="position:absolute;inset-inline-start:10px;inset-block-end:10px;background:rgba(0,0,0,0.6);color:#fff;border-radius:999px;padding:6px 10px;font-weight:900;font-size:12px">تشغيل</div>
+                </div>
+                <div style="padding:10px;display:grid;gap:4px">
+                  ${item.title ? `<div style="font-weight:900;font-size:16px;line-height:1.35">${escapeHtml(item.title)}</div>` : ""}
+                  ${item.description ? `<div class="mini-note" style="white-space:pre-wrap">${escapeHtml(item.description)}</div>` : ""}
+                  <div class="mini-note" style="direction:ltr;unicode-bidi:plaintext;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(item.url)}</div>
+                </div>
+              </div>
+            </a>`;
+        }
+        return `<a ${common} href="${escapeHtmlAttr(item.url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit" onclick="window.openImgModal && window.openImgModal(this.href); return false;">
+            <div style="border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.7);overflow:hidden;height:100%">
+              <div style="aspect-ratio:1/1;background:#fff;display:grid;place-items:center;position:relative">
+                <img src="${escapeHtmlAttr(item.url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()" />
+              </div>
+              <div style="padding:10px;display:grid;gap:4px">
+                ${item.title ? `<div style="font-weight:900;font-size:14px;line-height:1.35;text-align:center">${escapeHtml(item.title)}</div>` : ""}
+                ${item.description ? `<div class="mini-note" style="white-space:pre-wrap;text-align:center">${escapeHtml(item.description)}</div>` : ""}
+              </div>
+            </div>
+          </a>`;
+      }
+      window.__hjyFilterGallery = function() {
+        const q = safeLower(String(document.getElementById("gallerySearchInput")?.value || "").trim());
+        const cat = String(document.getElementById("galleryCatSelect")?.value || "");
+        let shown = 0;
+        document.querySelectorAll("[data-gal-item]").forEach((el) => {
+          const okQ = !q || String(el.getAttribute("data-search") || "").includes(q);
+          const okC = !cat || el.getAttribute("data-cat") === cat;
+          const on = okQ && okC;
+          el.style.display = on ? "" : "none";
+          if (on) shown++;
+        });
+        document.querySelectorAll("details[data-gal-group]").forEach((d) => {
+          const any = Array.from(d.querySelectorAll("[data-gal-item]")).some((x) => x.style.display !== "none");
+          d.style.display = any ? "" : "none";
+          if (cat && d.getAttribute("data-gal-group") === cat) d.open = true;
+        });
+        const c = document.getElementById("galleryCount");
+        if (c) c.textContent = `${shown} عنصر`;
+      };
       async function renderGalleryGrouped(type, introContent) {
         els.infoText.innerHTML = `<div class="status" aria-hidden="false">جاري تحميل البيانات...</div>`;
         try {
           const listRes = await fetchTextCached(`data/${type}_list.csv`, 10 * 60 * 1000);
           const catRes = await fetchTextCached(`data/${type}_categories.csv`, 10 * 60 * 1000);
-          
           if (!listRes || !listRes.text) {
             els.infoText.innerHTML = `<div class="panel-sub" style="font-weight:900;color:#d11">لا يوجد ملف ${type}_list.csv</div>`;
             return;
           }
-          
           const listTable = parseCsvText(listRes.text);
           const listMap = new Map();
           if (listTable.headers && listTable.rows) {
-            const idCol = listTable.headers.findIndex(h => h.trim() === "#");
-            const titleCol = listTable.headers.findIndex(h => h.trim().toLowerCase() === (type === "videos" ? "title" : "name"));
-            const urlCol = listTable.headers.findIndex(h => h.trim().toLowerCase() === "url");
-            
+            const findCol = (opts) => {
+              for (let i = 0; i < listTable.headers.length; i++) {
+                const h = safeLower(String(listTable.headers[i] ?? "").trim());
+                for (const o of opts) { const k = safeLower(o); if (k && (h === k || h.includes(k))) return i; }
+              }
+              return -1;
+            };
+            const idCol = listTable.headers.findIndex((h) => String(h).trim() === "#");
+            const titleCol = findCol([type === "videos" ? "title" : "name", "title", "name", "عنوان", "اسم"]);
+            const urlCol = findCol(["url", "link", "رابط"]);
+            const descCol = findCol(["description", "desc", "about", "وصف"]);
+            const orderCol = findCol(["order", "sort", "ترتيب"]);
             if (idCol >= 0 && urlCol >= 0) {
               for (const row of listTable.rows) {
-                const id = row[idCol]?.trim();
-                if (id) {
-                  listMap.set(id, {
-                    title: titleCol >= 0 ? row[titleCol]?.trim() : "",
-                    url: row[urlCol]?.trim()
-                  });
-                }
+                const id = String(row[idCol] ?? "").trim();
+                if (!id) continue;
+                listMap.set(id, {
+                  title: titleCol >= 0 ? String(row[titleCol] ?? "").trim() : "",
+                  url: urlCol >= 0 ? String(row[urlCol] ?? "").trim() : "",
+                  description: descCol >= 0 ? String(row[descCol] ?? "").trim() : "",
+                  order: orderCol >= 0 ? (Number(String(row[orderCol] ?? "").trim()) || 0) : 0,
+                });
               }
             }
           }
-          
-          let html = `<div style="display:grid;gap:10px">`;
-          if (introContent) {
-            html += `<div class="panel-sub">${formatAboutTextPlain(introContent)}</div>`;
-          }
-          
+          const groups = [];
+          const usedIds = new Set();
           if (catRes && catRes.text) {
             const catTable = parseCsvText(catRes.text);
             if (catTable.headers && catTable.rows) {
-              html += `<div class="about-acc-list">`;
               for (let i = 0; i < catTable.headers.length; i++) {
-                const catName = catTable.headers[i].trim();
+                const catName = String(catTable.headers[i] ?? "").trim();
                 if (!catName) continue;
-                
-                const ids = catTable.rows.map(r => r[i]?.trim()).filter(Boolean);
-                if (ids.length > 0) {
-                  let itemsHtml = `<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">`;
-                  for (const id of ids) {
-                    const item = listMap.get(id);
-                    if (item && item.url) {
-                      if (type === "videos") {
-                        const yt = extractYoutubeId(item.url);
-                        const thumb = yt ? `https://img.youtube.com/vi/${encodeURIComponent(yt)}/hqdefault.jpg` : "";
-                        itemsHtml += `<a href="${escapeHtmlAttr(item.url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">
-                          <div style="border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.7);overflow:hidden">
-                            <div style="aspect-ratio:16/9;background:#000;display:grid;place-items:center;position:relative">
-                              ${thumb ? `<img src="${escapeHtmlAttr(thumb)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()" />` : `<div style="color:#fff;font-weight:900;opacity:0.9">VIDEO</div>`}
-                              <div style="position:absolute;inset-inline-start:10px;inset-block-end:10px;background:rgba(0,0,0,0.6);color:#fff;border-radius:999px;padding:6px 10px;font-weight:900;font-size:12px">تشغيل</div>
-                            </div>
-                            <div style="padding:10px;display:grid;gap:4px">
-                              ${item.title ? `<div style="font-weight:900;font-size:16px;line-height:1.35">${escapeHtml(item.title)}</div>` : ""}
-                              <div class="mini-note" style="direction:ltr;unicode-bidi:plaintext;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(item.url)}</div>
-                            </div>
-                          </div>
-                        </a>`;
-                      } else {
-                        itemsHtml += `<a href="${escapeHtmlAttr(item.url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit" onclick="window.openImgModal && window.openImgModal(this.href); return false;">
-                          <div style="border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,0.7);overflow:hidden">
-                            <div style="aspect-ratio:1/1;background:#fff;display:grid;place-items:center;position:relative">
-                              <img src="${escapeHtmlAttr(item.url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()" />
-                            </div>
-                            <div style="padding:10px;display:grid;gap:4px">
-                              ${item.title ? `<div style="font-weight:900;font-size:14px;line-height:1.35;text-align:center">${escapeHtml(item.title)}</div>` : ""}
-                            </div>
-                          </div>
-                        </a>`;
-                      }
-                    }
-                  }
-                  itemsHtml += `</div>`;
-                  html += `<details class="about-acc"><summary class="about-acc-sum">${formatAboutTextPlain(catName)}</summary><div class="about-acc-body panel-sub" style="padding:12px">${itemsHtml}</div></details>`;
-                }
+                const ids = catTable.rows.map((r) => String(r[i] ?? "").trim()).filter(Boolean);
+                const items = [];
+                for (const id of ids) { usedIds.add(id); const it = listMap.get(id); if (it && it.url) items.push(it); }
+                if (items.length) groups.push({ name: catName, items });
               }
-              html += `</div>`;
             }
           }
-          html += `</div>`;
+          const un = [];
+          for (const [id, it] of listMap) { if (!usedIds.has(id) && it.url) un.push(it); }
+          if (un.length) groups.push({ name: "غير مصنّف", items: un });
+          const total = groups.reduce((a, g) => a + g.items.length, 0);
+          let html = `<div style="display:grid;gap:10px">`;
+          if (introContent) html += `<div class="panel-sub">${formatAboutTextPlain(introContent)}</div>`;
+          const catOptions = groups.map((g) => `<option value="${escapeHtmlAttr(g.name)}">${escapeHtml(g.name)}</option>`).join("");
+          html += `<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <div class="search" style="flex:1;min-width:220px;padding:8px 10px">
+                <input id="gallerySearchInput" class="search-input" placeholder="${type === "videos" ? "بحث عن فيديو..." : "بحث في الصور..."}" />
+              </div>
+              <select id="galleryCatSelect" class="select" style="padding:10px;border-radius:12px;width:auto"><option value="">كل الأقسام</option>${catOptions}</select>
+              <span class="mini-note" id="galleryCount">${total} عنصر</span>
+            </div>`;
+          html += `<div class="about-acc-list">`;
+          for (const g of groups) {
+            const sorted = g.items.slice().sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+            let itemsHtml = `<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">`;
+            for (const item of sorted) itemsHtml += galleryItemCard(type, item, g.name);
+            itemsHtml += `</div>`;
+            html += `<details class="about-acc" data-gal-group="${escapeHtmlAttr(g.name)}"><summary class="about-acc-sum">${escapeHtml(g.name)}</summary><div class="about-acc-body panel-sub" style="padding:12px">${itemsHtml}</div></details>`;
+          }
+          html += `</div></div>`;
           els.infoText.innerHTML = html;
+          const si = document.getElementById("gallerySearchInput");
+          if (si) si.addEventListener("input", window.__hjyFilterGallery);
+          const cs = document.getElementById("galleryCatSelect");
+          if (cs) cs.addEventListener("change", window.__hjyFilterGallery);
+          window.__hjyFilterGallery();
         } catch (e) {
           els.infoText.innerHTML = `<div class="panel-sub" style="color:red">خطأ في تحميل البيانات</div>`;
         }
@@ -1399,7 +1454,7 @@ function debounce(fn, ms) {
         let cacheMs = Math.max(0, Number(CONFIG.PHOTO_INDEX_CACHE_MS) || 30 * 60 * 1000);
         const ghPages = String(location.hostname || "").toLowerCase().endsWith(".github.io");
         if (ghPages && !wantsNoCache()) cacheMs = Math.min(cacheMs, 60 * 1000);
-        const cacheKey = `hjy_photo_index_v1::${dir}`;
+        const cacheKey = `hjy_photo_index_v2::${dir}`;
         const prev = cacheMs ? getCachedText(cacheKey, cacheMs) : null;
         let list = [];
         if (prev) {
@@ -1471,7 +1526,9 @@ function debounce(fn, ms) {
               }
             }
           }
-          return out;
+          // If the (possibly cached/incomplete) index has nothing for this product,
+          // fall through to direct path guessing so images still show.
+          if (out.length) return out;
         }
 
         for (const dir of CONFIG.PHOTO_DIRS) {
@@ -1575,6 +1632,17 @@ function debounce(fn, ms) {
         if (note) out += (out ? "\n" : "") + note;
         return out.trim();
       }
+      function disShortForProduct(product) {
+        const rules = Array.isArray(product?.disRules) ? product.disRules : [];
+        if (!rules.length) return "";
+        const lines = [];
+        for (const r of rules) {
+          if (!r) continue;
+          if (r.type === "PERCENT") lines.push(`خصم ${formatMoney(r.value)}% لـ ${r.qty} قطع`);
+          else if (r.type === "PRICE") lines.push(`سعر ${formatMoney(r.value)}$ شراء فوق ${r.qty} قطع`);
+        }
+        return lines.join("\n");
+      }
       function setRoute(route) {
         const r = String(route ?? "").trim() || "home";
         els.appRoot.setAttribute("data-route", r);
@@ -1587,7 +1655,7 @@ function debounce(fn, ms) {
         const urls = Array.isArray(CONFIG.PROMO_URLS) ? CONFIG.PROMO_URLS : [];
         const res = await fetchTextFirstAvailable(urls, 10 * 60 * 1000);
         const text = String(res?.text ?? "").trim();
-        els.promoText.innerHTML = formatAboutTextPlain(text);
+        els.promoText.innerHTML = formatAboutTextPlain(text, "center");
       }
       function setPromoVisible(visible) {
         if (!(els.promoBar instanceof HTMLElement)) return;
@@ -1737,8 +1805,163 @@ function debounce(fn, ms) {
         renderOrdersView();
         animateIn(els.ordersView);
       }
+      const HJY_HASH_EN = {
+        qa: {
+          "برمجة حسب الطلب": "custom-programming",
+          "بطارية دراجات": "bike-battery",
+          "بطارية ليثيوم": "lithium-battery",
+          "تحكم عن بعد": "remote-control",
+          "شروط كفالة بطارية ليثيوم": "lithium-battery-warranty",
+          "تحكم وايفاي": "wifi-control",
+        },
+        info: {
+          "أشيع الأسئلة": "faq",
+          "المطور": "developer",
+          "تفاصيل الشحن": "shipping-details",
+          "تقييمات عملاء": "customer-reviews",
+          "تقييمات العملاء": "customer-reviews",
+          "توصيل مجاني": "free-delivery",
+          "سياسية الاستخدام": "usage-policy",
+          "سياسة الاستخدام": "usage-policy",
+          "شحن خارج سوريا": "shipping-outside-syria",
+          "شحن محافظات شرقية": "eastern-governorates-shipping",
+          "صور": "photos",
+          "ألبوم الصور": "photo-album",
+          "فرص عمل": "jobs",
+          "فروع قدموس": "qadmous-branches",
+          "فروع مسارات": "masarat-branches",
+          "فيديوهات": "videos",
+          "موقعنا": "our-location",
+          "SHAM CASH": "sham-cash",
+          "المفضلة": "favorites",
+          "التقييم": "rating",
+          "الشكاوي": "complaints",
+        },
+        cat: {
+          "بطاريات ليثيوم": "lithium-batteries",
+          "بطاريات دراجات": "bike-batteries",
+          "تحكم عن بعد": "remote-control",
+          "تحكم وايفاي": "wifi-control",
+          "انفيرتر شمسي": "solar-inverter",
+          "شرائح إلكترونية": "electronic-chips",
+          "لوازم بطاريات ليثيوم": "lithium-battery-accessories",
+          "خلايا ليثيوم": "lithium-cells",
+          "منتجات للمصاعد": "elevator-products",
+          "حساسات": "sensors",
+          "لوازم كهرباء": "electrical-supplies",
+          "منتهي كمية": "out-of-stock",
+          "رائج": "trending",
+          "صفحة رئيسية": "home",
+        },
+        sub: {
+          "نظام 12 فولت": "12v-system",
+          "نظام 24 فولت": "24v-system",
+          "نظام 48 فولت": "48v-system",
+          "نظام 60 فولت": "60v-system",
+          "نظام 72 فولت": "72v-system",
+          "شواحن ليثيوم دراجات": "bike-lithium-chargers",
+          "ريموتات صغيرة مدى 50 متر": "short-range-remotes-50m",
+          "ريموتات كبيرة مدى 100 لـ 3000 متر": "long-range-remotes-100-3000m",
+          "مستقبل تحكم عن بعد": "remote-receiver",
+          "تحكم ريموت + وايفاي": "remote-wifi-control",
+          "ريموتات فاخرة": "premium-remotes",
+          "جرس لاسلكي": "wireless-doorbell",
+          "شرائح RF للبرمجة وتطوير": "rf-programming-chips",
+          "مستقبل قطع محروفة": "burnt-parts-receiver",
+          "مستقبل رفع وتنزيل": "up-down-receiver",
+          "تحكم وايفاي + ريموت": "wifi-remote-control",
+          "انفيرتر 24": "inverter-24",
+          "انفيرتر 48": "inverter-48",
+          "عائلة esp + اوردينو": "esp-arduino-family",
+          "شرائح إلكترونية متنوعة": "misc-electronic-chips",
+          "bms": "bms",
+          "شاشات نسبة وفولت": "level-voltage-meters",
+          "لوازم تجميع بطاريات": "battery-assembly-accessories",
+          "موازن نشط": "active-balancer",
+          "خلايا طاقة شمسية منزلية": "home-solar-cells",
+          "خلايا اسطوانية للدراجات": "bike-cylindrical-cells",
+          "منتجات للمصاعد مميزة": "featured-elevator-products",
+          "ترنس تغذية بورسبلاي": "power-supply-transformer",
+        },
+      };
+      const HJY_HASH_AR = (function () {
+        const out = { qa: {}, info: {}, cat: {}, sub: {} };
+        for (const kind of Object.keys(out)) {
+          const m = HJY_HASH_EN[kind] || {};
+          for (const ar of Object.keys(m)) {
+            const key = kind === "cat" || kind === "sub" ? normalizeCategoryKey(ar) : String(ar).trim();
+            out[kind][m[ar]] = key;
+          }
+        }
+        return out;
+      })();
+      function hjyDecodeHashPart(s) {
+        try {
+          return decodeURIComponent(String(s ?? ""));
+        } catch {
+          return String(s ?? "");
+        }
+      }
+      function hjyHashSlug(kind, value) {
+        const map = HJY_HASH_EN[kind];
+        if (!map) return "";
+        const k = kind === "cat" || kind === "sub" ? normalizeCategoryKey(value) : String(value ?? "").trim();
+        return map[k] || "";
+      }
+      function hjyHashValue(kind, slug) {
+        const map = HJY_HASH_AR[kind];
+        if (!map) return "";
+        return map[String(slug ?? "").trim()] || "";
+      }
+      function translateHashToEnglish(h) {
+        const raw = String(h ?? "").trim();
+        if (raw.startsWith("qa=")) {
+          const v = hjyDecodeHashPart(raw.slice(3));
+          const slug = hjyHashSlug("qa", v);
+          return slug ? `qa=${slug}` : `qa=${encodeURIComponent(v)}`;
+        }
+        if (raw.startsWith("info=")) {
+          const v = hjyDecodeHashPart(raw.slice(5));
+          const slug = hjyHashSlug("info", v);
+          return slug ? `info=${slug}` : `info=${encodeURIComponent(v)}`;
+        }
+        const m = raw.match(/^shop&cat=(.+)$/);
+        if (m) {
+          const c = hjyDecodeHashPart(m[1]);
+          if (c.startsWith("CAT:")) {
+            const slug = hjyHashSlug("cat", c.slice(4));
+            if (slug) return `shop&cat=CAT:${slug}`;
+          } else if (c.startsWith("SUB:")) {
+            const rest = c.slice(4);
+            const idx = rest.indexOf(":");
+            if (idx > -1) {
+              const mainSlug = hjyHashSlug("cat", rest.slice(0, idx));
+              const subSlug = hjyHashSlug("sub", rest.slice(idx + 1));
+              if (mainSlug && subSlug) return `shop&cat=SUB:${mainSlug}:${subSlug}`;
+            }
+          }
+        }
+        return raw;
+      }
+      function translateCatParamToArabic(c) {
+        const s = String(c ?? "");
+        if (s.startsWith("CAT:")) {
+          const name = hjyHashValue("cat", s.slice(4));
+          return name ? `CAT:${name}` : s;
+        }
+        if (s.startsWith("SUB:")) {
+          const rest = s.slice(4);
+          const idx = rest.indexOf(":");
+          if (idx > -1) {
+            const mainName = hjyHashValue("cat", rest.slice(0, idx)) || rest.slice(0, idx);
+            const subName = hjyHashValue("sub", rest.slice(idx + 1)) || rest.slice(idx + 1);
+            return `SUB:${mainName}:${subName}`;
+          }
+        }
+        return s;
+      }
       function setHash(hash) {
-        const h = String(hash ?? "").trim();
+        const h = translateHashToEnglish(String(hash ?? "").trim());
         location.hash = h ? `#${h}` : "";
       }
       function parseHashParams(raw) {
@@ -1759,7 +1982,7 @@ function debounce(fn, ms) {
         const parsed = parseHashParams(raw);
         const route = parsed.route;
         const params = parsed.params;
-        const catParam = String(params.get("cat") || "").trim();
+        const catParam = translateCatParamToArabic(String(params.get("cat") || "").trim());
         try {
           window.scrollTo(0, 0);
         } catch {}
@@ -1797,7 +2020,8 @@ function debounce(fn, ms) {
           return;
         }
         if (route.startsWith("info=")) {
-          const key = decodeURIComponent(route.slice("info=".length));
+          const rawKey = hjyDecodeHashPart(route.slice("info=".length));
+          const key = hjyHashValue("info", rawKey) || rawKey;
           showInfoView(key);
           return;
         }
@@ -1806,7 +2030,8 @@ function debounce(fn, ms) {
           return;
         }
         if (route.startsWith("qa=")) {
-          const key = decodeURIComponent(route.slice("qa=".length));
+          const rawKey = hjyDecodeHashPart(route.slice("qa=".length));
+          const key = hjyHashValue("qa", rawKey) || rawKey;
           showQaView(key);
           return;
         }
@@ -1947,6 +2172,7 @@ function debounce(fn, ms) {
                 <div class="mini-note" style="font-size:12px">${escapeHtml(when)} — ${escapeHtml(String(count))} قطعة — $${escapeHtml(formatMoney(total))}${phone ? ` — ${escapeHtml(phone)}` : ""}</div>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
+                ${Array.isArray(it?.items) && it.items.length ? `<button class="btn btn-primary" type="button" data-order-readd="${escapeHtmlAttr(id)}">أضف للسلة مجدداً</button>` : ""}
                 <button class="btn btn-ghost" type="button" data-order-view="${escapeHtmlAttr(id)}">عرض التفاصيل</button>
                 <button class="btn btn-danger" type="button" data-order-del="${escapeHtmlAttr(id)}">حذف</button>
               </div>
@@ -2496,8 +2722,9 @@ function debounce(fn, ms) {
         const cand = buildPhotoCandidates(uniqueCodes[0], uniqueCodes.slice(1), true);
         const src = cand[0] || PLACEHOLDER_IMG;
         
-        const disText = disTextForProduct(p);
-        const showDis = (view === "grid" || view === "list") && disText;
+        const isDefaultView = view === "default";
+        const disText = isDefaultView ? disShortForProduct(p) : disTextForProduct(p);
+        const showDis = (view === "grid" || view === "list" || isDefaultView) && disText;
         const showCode = view === "grid" || view === "list";
         const showAbout1 = view === "grid" || view === "list" || view === "compact";
         const btn =
@@ -2628,8 +2855,20 @@ function debounce(fn, ms) {
         els.whatNewText.style.whiteSpace = "pre-wrap";
         els.whatNewText.innerHTML = formatWhatNewText(t);
       }
+      function renderHomeCatsStrip() {
+        if (!(els.homeCatsStrip instanceof HTMLElement)) return;
+        const allCats = Array.isArray(state.mainCategories) && state.mainCategories.length ? state.mainCategories : (Array.isArray(state.categories) ? state.categories : []);
+        let html = "";
+        for (const cat of allCats) {
+          if (!cat || !cat.key || !cat.name) continue;
+          html += `<button class="pill" type="button" data-home-cat="CAT:${escapeHtmlAttr(cat.key)}">${escapeHtml(cat.name)}</button>`;
+        }
+        els.homeCatsStrip.innerHTML = html;
+      }
       function renderHome() {
         els.homeGrid.setAttribute("data-view", state.viewMode);
+        renderHomeCatsStrip();
+        initHomeReviews();
         if (!Array.isArray(state.homeProducts) || state.homeProducts.length === 0) {
           els.homeGrid.innerHTML = "";
           renderNewOffer();
@@ -2637,7 +2876,7 @@ function debounce(fn, ms) {
           return;
         }
         
-        state.homeLimit = state.homeLimit || 5;
+        state.homeLimit = state.homeLimit || 25;
         const visibleProducts = state.homeProducts.slice(0, state.homeLimit);
         
         let html = "";
@@ -3116,6 +3355,7 @@ function debounce(fn, ms) {
           const tabA = resA ? parseCsvText(resA.text) : null;
           const tabB = resB ? parseCsvText(resB.text) : null;
           const mains = [];
+          const mainByName = {};
           if (tabA && tabA.headers && tabA.headers.length) {
             const width = tabA.headers.length;
             for (let c = 0; c < width; c++) {
@@ -3126,7 +3366,17 @@ function debounce(fn, ms) {
                 const s = String(row[c] || "").trim();
                 if (s && !subs.some(x => x === s)) subs.push(s);
               }
-              mains.push({ name: mainName, key: normalizeCategoryKey(mainName), subs: subs.map(s => ({ name: s, key: normalizeCategoryKey(s), codes: new Set() })) });
+              const key = normalizeCategoryKey(mainName);
+              if (!mainByName[key]) {
+                mainByName[key] = { name: mainName, key, subs: subs.map(s => ({ name: s, key: normalizeCategoryKey(s), codes: new Set() })) };
+                mains.push(mainByName[key]);
+              } else {
+                for (const s of subs) {
+                  if (!mainByName[key].subs.some(x => x.name === s)) {
+                    mainByName[key].subs.push({ name: s, key: normalizeCategoryKey(s), codes: new Set() });
+                  }
+                }
+              }
             }
           }
           const subCodes = {};
@@ -3140,7 +3390,8 @@ function debounce(fn, ms) {
                 const v = String(row[c] || "").trim();
                 if (v) codes.push(normalizeCodeKey(v));
               }
-              subCodes[sname] = codes;
+              subCodes[sname] = subCodes[sname] || [];
+              for (const code of codes) if (subCodes[sname].indexOf(code) === -1) subCodes[sname].push(code);
             }
           }
           for (const m of mains) {
@@ -3154,6 +3405,7 @@ function debounce(fn, ms) {
 
       function renderCategoryPills() {
         updatePills();
+        renderHomeCatsStrip();
       }
 
       function matchingCategoriesForProduct(p) {
@@ -3712,6 +3964,67 @@ function debounce(fn, ms) {
         }
         return out;
       }
+      let homeReviewsPhotos = null;
+      let homeReviewsTimer = null;
+      let homeReviewsIdx = 0;
+      function homeReviewsList() {
+        return (Array.isArray(homeReviewsPhotos) ? homeReviewsPhotos : []).slice(0, 10);
+      }
+      function showHomeReviewAt(i) {
+        const list = homeReviewsList();
+        if (!list.length) return;
+        const img = els.homeReviewsImg;
+        if (!(img instanceof HTMLImageElement)) return;
+        const len = list.length;
+        const idx = (((Number(i) || 0) % len) + len) % len;
+        const url = list[idx];
+        img.classList.add("fading");
+        const pre = new Image();
+        const swap = () => {
+          img.src = url;
+          img.classList.remove("fading");
+        };
+        pre.onload = swap;
+        pre.onerror = swap;
+        pre.src = url;
+        const dots = els.homeReviewsDots;
+        if (dots instanceof HTMLElement) {
+          const children = Array.from(dots.children);
+          for (let d = 0; d < children.length; d++) children[d].classList.toggle("on", d === idx);
+        }
+      }
+      async function initHomeReviews() {
+        if (!(els.homeReviewsSection instanceof HTMLElement)) return;
+        try {
+          if (!Array.isArray(homeReviewsPhotos)) homeReviewsPhotos = await loadCustomerPhotos();
+        } catch {
+          homeReviewsPhotos = [];
+        }
+        const list = homeReviewsList();
+        if (!list.length) {
+          els.homeReviewsSection.style.display = "none";
+          return;
+        }
+        els.homeReviewsSection.style.display = "";
+        if (els.homeReviewsImg instanceof HTMLImageElement) {
+          els.homeReviewsImg.onclick = () => openImgModal(els.homeReviewsImg.src);
+        }
+        if (els.homeReviewsDots instanceof HTMLElement) {
+          els.homeReviewsDots.innerHTML = list.map((_, i) => `<span data-home-review-dot="${i}"></span>`).join("");
+        }
+        if (homeReviewsIdx >= list.length) homeReviewsIdx = 0;
+        showHomeReviewAt(homeReviewsIdx);
+        if (!homeReviewsTimer) {
+          homeReviewsTimer = setInterval(() => {
+            homeReviewsIdx += 1;
+            showHomeReviewAt(homeReviewsIdx);
+          }, 3000);
+        }
+      }
+      function stepHomeReview(step) {
+        homeReviewsIdx += Number(step) || 1;
+        showHomeReviewAt(homeReviewsIdx);
+      }
       let customerReviewsCurrentPage = 1;
       let customerReviewsUrls = [];
       function renderCustomerGallery(urls) {
@@ -3962,6 +4275,94 @@ function debounce(fn, ms) {
           if (drag && drag.mode === "EDGE" && drag.id === e.pointerId) drag = null;
         });
       }
+      async function loadShippingData() {
+        try {
+          const res = await fetchTextCached("data/governorates.csv", 60 * 60 * 1000);
+          if (res && res.text) {
+            state.governorates = String(res.text).split(/\r?\n/).map((l) => l.trim())
+              .filter((l) => l && !l.startsWith("#") && !/^(name|governorate|محافظة)$/i.test(l));
+          }
+        } catch {}
+        if (!state.governorates.length) {
+          state.governorates = ["دمشق", "حمص", "لاذقية", "حماة", "طرطوس", "حلب", "إدلب", "سويداء", "درعا", "ريف طرطوس", "ريف لاذقية", "ريف حمص", "ريف إدلب", "ريف حلب", "ريف دمشق", "ريف حماة"];
+        }
+        try {
+          const res = await fetchTextCached("data/carriers.csv", 60 * 60 * 1000);
+          if (res && res.text) {
+            state.carriers = String(res.text).split(/\r?\n/).map((l) => l.trim())
+              .filter((l) => l && !l.startsWith("#") && !/^(name|carrier|شركة)$/i.test(l));
+          }
+        } catch {}
+        if (!state.carriers.length) state.carriers = ["مسارات", "قدموس"];
+        state.branches = [];
+        try {
+          const res = await fetchTextCached("data/branches.csv", 60 * 60 * 1000);
+          if (res && res.text) {
+            const table = parseCsvText(res.text);
+            if (table.headers && table.rows) {
+              const find = (opts) => {
+                for (let i = 0; i < table.headers.length; i++) {
+                  const h = safeLower(String(table.headers[i] ?? "").trim());
+                  for (const o of opts) if (h === safeLower(o)) return i;
+                }
+                return -1;
+              };
+              const cCol = find(["company", "carrier", "شركة"]);
+              const gCol = find(["governorate", "gov", "محافظة"]);
+              const bCol = find(["branch", "center", "فرع", "مركز"]);
+              for (const row of table.rows) {
+                const branch = bCol >= 0 ? String(row[bCol] ?? "").trim() : "";
+                if (!branch) continue;
+                state.branches.push({
+                  company: cCol >= 0 ? String(row[cCol] ?? "").trim() : "",
+                  gov: gCol >= 0 ? String(row[gCol] ?? "").trim() : "",
+                  branch,
+                });
+              }
+            }
+          }
+        } catch {}
+      }
+      function renderGovernorateOptions() {
+        if (!(els.govInput instanceof HTMLSelectElement)) return;
+        const cur = String(els.govInput.value ?? "").trim();
+        let html = `<option value="">اختر المحافظة</option>`;
+        for (const g of state.governorates) html += `<option value="${escapeHtmlAttr(g)}">${escapeHtml(g)}</option>`;
+        html += `<option value="أخرى">أخرى</option>`;
+        els.govInput.innerHTML = html;
+        if (cur && Array.from(els.govInput.options).some((o) => o.value === cur)) els.govInput.value = cur;
+      }
+      function renderCarrierOptions() {
+        const box = document.getElementById("carrierOptions");
+        if (!(box instanceof HTMLElement)) return;
+        const prevEl = box.querySelector('input[name="carrier"]:checked');
+        const prev = prevEl ? String(prevEl.value ?? "") : "";
+        const list = state.carriers.length ? state.carriers : ["مسارات", "قدموس"];
+        let html = "";
+        list.forEach((c, i) => {
+          const checked = prev ? prev === c : i === 0;
+          html += `<label class="checkrow" style="flex:1;align-items:center">
+            <input type="radio" name="carrier" value="${escapeHtmlAttr(c)}" ${checked ? "checked" : ""} />
+            <div style="font-weight:900">${escapeHtml(c)}</div>
+          </label>`;
+        });
+        html += `<label class="checkrow" style="flex:1;align-items:center">
+            <input type="radio" name="carrier" value="__OTHER__" ${prev === "__OTHER__" ? "checked" : ""} />
+            <div style="display:grid;gap:2px">
+              <div style="font-weight:900">آخر</div>
+              <div class="mini-note">شوفير أو شحن بغير شركة ..الخ</div>
+            </div>
+          </label>`;
+        box.innerHTML = html;
+      }
+      function getSelectedCarrier() {
+        const box = document.getElementById("carrierOptions");
+        if (!box) return "";
+        const el = box.querySelector('input[name="carrier"]:checked');
+        if (!el) return "";
+        const v = String(el.value ?? "");
+        return v === "__OTHER__" ? "آخر" : v;
+      }
       function wireEvents() {
         wireCartGestures();
         els.cartToggle.addEventListener("click", () => openCart());
@@ -3997,7 +4398,7 @@ function debounce(fn, ms) {
           });
         }
         els.viewSelect.addEventListener("change", () => {
-          state.viewMode = String(els.viewSelect.value ?? "compact");
+          state.viewMode = String(els.viewSelect.value ?? "default");
           try {
             localStorage.setItem("hjy_view_mode_v1", state.viewMode);
           } catch {}
@@ -4006,6 +4407,45 @@ function debounce(fn, ms) {
           applyFilters();
           renderHome();
         });
+        if (els.homeCatsStrip instanceof HTMLElement) {
+          els.homeCatsStrip.addEventListener("click", (e) => {
+            const t = e.target;
+            if (!(t instanceof HTMLElement)) return;
+            const b = t.closest("[data-home-cat]");
+            if (!(b instanceof HTMLElement)) return;
+            const cat = String(b.getAttribute("data-home-cat") ?? "");
+            state.category = cat || "ALL";
+            state.page = 1;
+            updatePills();
+            setShopHashWithCategory(state.category);
+            applyFilters();
+          });
+        }
+        if (els.homeReviewsMoreBtn instanceof HTMLElement) {
+          els.homeReviewsMoreBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("تقييمات عملاء")}`));
+        }
+        if (els.homeReviewsDots instanceof HTMLElement) {
+          els.homeReviewsDots.addEventListener("click", (e) => {
+            const t = e.target;
+            if (!(t instanceof HTMLElement)) return;
+            const dot = t.closest("[data-home-review-dot]");
+            if (!(dot instanceof HTMLElement)) return;
+            homeReviewsIdx = Number(dot.getAttribute("data-home-review-dot")) || 0;
+            showHomeReviewAt(homeReviewsIdx);
+          });
+        }
+        document.querySelectorAll("[data-home-review-step]").forEach((btn) => {
+          btn.addEventListener("click", () => stepHomeReview(Number(btn.getAttribute("data-home-review-step")) || 1));
+        });
+        if (els.qaCopyBtn instanceof HTMLElement) {
+          els.qaCopyBtn.addEventListener("click", async () => {
+            const title = String(els.qaTitle?.textContent ?? "").trim();
+            const body = String(els.qaText?.innerText ?? els.qaText?.textContent ?? "").trim();
+            const text = [title, body].filter(Boolean).join("\n\n");
+            if (!text) return showToast("لا يوجد محتوى للنسخ", 1600);
+            await copyText(text);
+          });
+        }
         els.sortSelect.addEventListener("change", () => {
           state.sortMode = String(els.sortSelect.value ?? "DEFAULT");
           try {
@@ -4444,6 +4884,28 @@ function debounce(fn, ms) {
           els.ordersView.addEventListener("click", async (e) => {
             const t = e.target;
             if (!(t instanceof HTMLElement)) return;
+            const readd = t.closest("[data-order-readd]");
+            if (readd instanceof HTMLElement) {
+              const id = String(readd.getAttribute("data-order-readd") ?? "").trim();
+              const found = loadOrdersHistory().find((x) => String(x?.id ?? "") === id);
+              const items = Array.isArray(found?.items) ? found.items : [];
+              if (!items.length) return showToast("لا تتوفر تفاصيل لهذا الطلب", 1800);
+              let missing = 0;
+              for (const line of items) {
+                const p = state.allProducts.find((x) => normalizeCodeKey(x.code) === normalizeCodeKey(String(line?.code ?? "")));
+                const qty = Math.max(1, Number(line?.qty) || 1);
+                if (!p || p.isOut) { missing++; continue; }
+                const k = cartKey(p);
+                const cur = state.cart.get(k);
+                const nextQty = cur ? Math.max(1, Math.min(999, Number(cur.qty) + qty)) : Math.min(999, qty);
+                state.cart.set(k, { product: p, qty: nextQty });
+              }
+              saveCart();
+              renderCart();
+              openCart(true);
+              showToast(missing ? `تمت الإضافة للسلة (تعذّر ${missing} منتج)` : "تمت إضافة المنتجات للسلة", 2200);
+              return;
+            }
             const view = t.closest("[data-order-view]");
             if (view instanceof HTMLElement) {
               const id = String(view.getAttribute("data-order-view") ?? "").trim();
@@ -4664,30 +5126,17 @@ function debounce(fn, ms) {
         els.govInput.addEventListener("input", syncGovOther);
         els.govInput.addEventListener("change", syncGovOther);
         syncGovOther();
-        
-        let branchesData = null;
-        async function fetchBranches() {
-          if (branchesData) return branchesData;
-          try {
-            const [mRes, qRes] = await Promise.all([
-              fetchTextCached(resolveAboutPath("masarat.csv"), 60*60*1000),
-              fetchTextCached(resolveAboutPath("kadmous.csv"), 60*60*1000)
-            ]);
-            let branches = [];
-            const parseCSV = (text, company) => {
-              if(!text) return [];
-              const lines = text.split('\n').slice(1);
-              return lines.map(line => {
-                const parts = line.split(',');
-                return { gov: parts[0]?.trim(), branch: parts[1]?.trim(), company };
-              }).filter(b => b.branch);
-            };
-            branches = branches.concat(parseCSV(mRes?.text, "مسارات"));
-            branches = branches.concat(parseCSV(qRes?.text, "قدموس"));
-            branchesData = branches;
-            return branches;
-          } catch(e) { return []; }
-        }
+        loadShippingData().then(() => {
+          renderGovernorateOptions();
+          renderCarrierOptions();
+          try { loadSavedCustomer(); } catch {}
+          syncGovOther();
+          const box = document.getElementById("carrierOptions");
+          if (box) box.addEventListener("change", () => {
+            const ev = new Event("input", { bubbles: true });
+            if (els.shipCenterInput) els.shipCenterInput.dispatchEvent(ev);
+          });
+        });
 
         if (els.shipCenterInput) {
           els.shipCenterInput.addEventListener("input", async (e) => {
@@ -4698,12 +5147,13 @@ function debounce(fn, ms) {
               sugs.style.display = "none";
               return;
             }
-            const branches = await fetchBranches();
+            const branches = state.branches || [];
             if(!branches || branches.length === 0) return;
-            // only suggest branches of the selected carrier (مسارات/قدموس), or all for "آخر"
-            const carrier = els.carrierQadmous?.checked ? "قدموس" : (els.carrierOther?.checked ? "all" : "مسارات");
+            // only suggest branches of the selected carrier, or all for "آخر"
+            const carrier = getSelectedCarrier();
+            const isOther = !carrier || carrier === "آخر";
             let pool = branches;
-            if (carrier !== "all") pool = branches.filter(b => b.company === carrier);
+            if (!isOther) pool = branches.filter(b => b.company === carrier);
             const filtered = pool.filter(b => b.branch.toLowerCase().includes(val)).slice(0, 8);
             if (filtered.length > 0) {
               sugs.innerHTML = filtered.map(b => `
@@ -4718,21 +5168,17 @@ function debounce(fn, ms) {
                   els.shipCenterInput.value = el.getAttribute('data-branch');
                   sugs.style.display = "none";
                   const company = el.getAttribute('data-company');
-                  if(company === "مسارات" && els.carrierMasarat) els.carrierMasarat.checked = true;
-                  if(company === "قدموس" && els.carrierQadmous) els.carrierQadmous.checked = true;
+                  const box = document.getElementById('carrierOptions');
+                  if (box && company) {
+                    const rd = Array.from(box.querySelectorAll('input[name="carrier"]')).find(x => x.value === company);
+                    if (rd) rd.checked = true;
+                  }
                   if (typeof saveCustomer === 'function') saveCustomer();
                 });
               });
             } else {
               sugs.style.display = "none";
             }
-          });
-          // re-render suggestions when the carrier changes
-          [els.carrierMasarat, els.carrierQadmous, els.carrierOther].forEach(rd => {
-            if (rd) rd.addEventListener("change", () => {
-              const ev = new Event("input", { bubbles: true });
-              if (els.shipCenterInput) els.shipCenterInput.dispatchEvent(ev);
-            });
           });
           document.addEventListener('click', (e) => {
             if (els.shipCenterSuggestions && !els.shipCenterInput.contains(e.target) && !els.shipCenterSuggestions.contains(e.target)) {
@@ -4834,7 +5280,7 @@ function debounce(fn, ms) {
           if (shipType === "GOV") {
             fullName = String(els.fullNameGovInput.value ?? "").trim();
             shipCenter = String(els.shipCenterInput.value ?? "").trim();
-            carrier = els.carrierOther?.checked ? "آخر" : els.carrierMasarat.checked ? "مسارات" : "قدموس";
+            carrier = getSelectedCarrier() || "آخر";
           } else {
             fullName = String(els.fullNameDamascusInput.value ?? "").trim();
             damascusType = els.damascusFreeDelivery.checked ? "توصيل مجاني" : "استلام ضمن موقعنا";
@@ -4883,6 +5329,7 @@ function debounce(fn, ms) {
             total: totalNow,
             invoice,
             details: invoiceDetails,
+            items: Array.from(state.cart.values()).map((it) => ({ code: it.product.code, qty: Math.max(1, Number(it.qty) || 1) })),
           };
           try {
             await sendToTelegramKind("orders", invoice);
@@ -5046,7 +5493,7 @@ function debounce(fn, ms) {
         } catch {}
       }
       window.__hjyLoadMoreHome = function() {
-        state.homeLimit = (state.homeLimit || 5) + 5;
+        state.homeLimit = (state.homeLimit || 25) + 25;
         renderHome();
       };
       
@@ -5060,7 +5507,7 @@ function debounce(fn, ms) {
       });
       try {
         const savedView = String(localStorage.getItem("hjy_view_mode_v1") ?? "").trim();
-        state.viewMode = savedView || "compact";
+        state.viewMode = savedView || "default";
       } catch {}
       try {
         const savedSort = String(localStorage.getItem("hjy_sort_mode_v1") ?? "").trim();

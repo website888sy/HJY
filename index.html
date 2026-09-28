@@ -42,7 +42,7 @@
       gtag('js', new Date());
       gtag('config', 'G-R0TNDNSFXQ');
     </script>
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/main.css?v=6">
   </head>
   <body>
     <div class="cats-sidebar-backdrop" id="catsSidebarBackdrop"></div>
@@ -78,9 +78,10 @@
               </select>
             </div>
             <select class="select" id="viewSelect" aria-label="طريقة العرض">
+              <option value="default" selected>افتراضي</option>
               <option value="grid">شبكي</option>
               <option value="compact">مضغوط</option>
-              <option value="brief" selected>مختصر</option>
+              <option value="brief">مختصر</option>
               <option value="list">قائمة</option>
             </select>
           </div>
@@ -111,7 +112,8 @@
           <div class="panel-header">
             <div>
               <h2>الرئيسية</h2>
-              <p class="panel-sub">منتجات مختارة</p>
+              <p class="panel-sub">انقر على صور المنتج لعرض التفاصيل</p>
+              <p class="panel-sub">يمكنك اختيار وضع العرض المنتجات من زاوية العلوية اليسرى</p>
             </div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
               <button class="btn btn-ghost" id="goShopBtn" type="button">التسوق</button>
@@ -130,6 +132,26 @@
             <div style="border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,0.7)">
               <div style="font-weight:900;margin-bottom:6px">ما الجديد , أخر الأخبار !؟</div>
               <div class="panel-sub" id="whatNewText"></div>
+            </div>
+          </div>
+          <div id="homeCatsSection" style="padding:0 14px 14px">
+            <div style="border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,0.7)">
+              <div style="font-weight:900;margin-bottom:8px">الفئات</div>
+              <div id="homeCatsStrip" class="home-cats-strip" role="group" aria-label="الفئات"></div>
+            </div>
+          </div>
+          <div id="homeReviewsSection" style="padding:0 14px 14px;display:none">
+            <div style="border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,0.7)">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                <div style="font-weight:900">تقييمات العملاء</div>
+                <button class="btn btn-ghost" id="homeReviewsMoreBtn" type="button" style="padding:6px 10px;font-size:12px">عرض المزيد</button>
+              </div>
+              <div class="home-reviews-stage">
+                <img id="homeReviewsImg" class="home-reviews-img" alt="تقييم عميل" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+                <button class="gallery-nav" type="button" data-home-review-step="-1" data-dir="prev" aria-label="السابق">▶</button>
+                <button class="gallery-nav" type="button" data-home-review-step="1" data-dir="next" aria-label="التالي">◀</button>
+                <div id="homeReviewsDots" class="home-reviews-dots"></div>
+              </div>
             </div>
           </div>
         </section>
@@ -192,7 +214,7 @@
             <form id="checkoutForm" style="display:grid;gap:10px;max-width:520px;margin-inline:auto">
               <div style="background:rgba(25,183,255,0.1);color:var(--primary-3);padding:10px;border-radius:12px;margin-bottom:12px;font-size:14px;font-weight:bold;text-align:center;border:1px solid rgba(25,183,255,0.3)">الرجاء تعبئة بيانات الطلب أدناه</div>
               <label style="display:grid;gap:6px">
-                <span style="font-weight:800">رقم هاتف</span>
+                <span style="font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap">رقم هاتف<span class="mini-note" style="font-size:11px">يرجى كتابة رقم بدول رمز الدولة +963 ويبدأ ب 09</span></span>
                 <div class="field-row">
                   <input
                     id="phoneInput"
@@ -284,23 +306,7 @@
                   <div class="panel-sub" style="font-weight:900;color:var(--text)">شركة الشحن</div>
                   <div class="mini-note">يفضل اختيار مسارات</div>
                   <div class="mini-note">شحن سهل وبسيط وخلال يومين ورخيص</div>
-                  <div style="display:flex;gap:10px;flex-wrap:wrap">
-                    <label class="checkrow" style="flex:1;align-items:center">
-                      <input id="carrierMasarat" type="radio" name="carrier" value="MASARAT" checked />
-                      <div style="font-weight:900">مسارات</div>
-                    </label>
-                    <label class="checkrow" style="flex:1;align-items:center">
-                      <input id="carrierQadmous" type="radio" name="carrier" value="QADMOUS" />
-                      <div style="font-weight:900">قدموس</div>
-                    </label>
-                    <label class="checkrow" style="flex:1;align-items:center">
-                      <input id="carrierOther" type="radio" name="carrier" value="OTHER" />
-                      <div style="display:grid;gap:2px">
-                        <div style="font-weight:900">آخر</div>
-                        <div class="mini-note">شوفير أو شحن بغير شركة ..الخ</div>
-                      </div>
-                    </label>
-                  </div>
+                  <div id="carrierOptions" style="display:flex;gap:10px;flex-wrap:wrap"></div>
                   <div style="display:flex;gap:10px;flex-wrap:wrap">
                     <button class="btn btn-ghost" id="masaratBranchesBtn" type="button" style="flex:1">فروع مسارات</button>
                     <button class="btn btn-ghost" id="qadmousBranchesBtn" type="button" style="flex:1">فروع قدموس</button>
@@ -330,7 +336,7 @@
                 </div>
                 <div class="checkrow">
                   <input id="agreePolicyInput" type="checkbox" checked />
-                  <div style="font-weight:900">انا مطلع على كافة تفاصيل المنتج وموافق على سياسة متجركم</div>
+                  <div style="font-weight:900">انا مطلع على كافة تفاصيل المنتج وشروط كفالة وموافق على سياسة متجركم</div>
                 </div>
               </div>
               <div id="shipDamascusBlock" style="display:grid;gap:10px">
@@ -521,7 +527,7 @@
           <section class="panel" id="qaView" style="display:none">
           <div class="panel-header">
             <div>
-              <h2 id="qaTitle">أسئلة شائعة للمنتجات</h2>
+              <h2 id="qaTitle">أكثر الأسئلة شيوعاً وكامل تفاصيل المنتجات والاستفسارات المكررة</h2>
               <p class="panel-sub" id="qaMeta" style="white-space:pre-wrap">
 هنا قسم هام لأن:
 أكثر من 95% من الأسئلة هي مكررة ومجاب عنها مسبقاً - تكرار جميع الأجوبة بشكل يدوي يشكل إرهاق لنا , يمكنكم هنا معرفة إجابة لجميع أسئلتكم
@@ -529,6 +535,7 @@
               </p>
             </div>
             <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-ghost" id="qaCopyBtn" type="button" title="نسخ محتوى هذا القسم">📋 نسخ</button>
               <button class="btn btn-ghost" id="backFromQaBtn" type="button">رجوع</button>
             </div>
           </div>
@@ -536,10 +543,6 @@
             <div class="status" id="qaStatus" aria-hidden="true"></div>
             <div id="qaButtons" class="pillbar" role="group" aria-label="أسئلة شائعة"></div>
             <div id="qaText" class="panel-sub"></div>
-            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-              <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('شكاوي'))">شكاوي 📞</button>
-              <button class="btn btn-ghost" type="button" onclick="setHash('info='+encodeURIComponent('تقييمات عملاء'))">التقييم</button>
-            </div>
             <div style="display:flex;justify-content:center; margin-top: 20px;">
               <button class="btn btn-ghost" id="backFromQaBtnBottom" type="button">رجوع</button>
             </div>
@@ -621,6 +624,6 @@
         window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
       }
     </script>
-    <script src="js/main.js"></script>
+    <script src="js/main.js?v=6"></script>
   </body>
 </html>

@@ -229,6 +229,7 @@ function debounce(fn, ms) {
         hotPrefixes: [],
         qaFiles: [],
         qaSelected: "",
+        qaRawText: "",
         aboutFiles: [],
         inlineQaSelected: "",
         ordersSelectedId: "",
@@ -3656,6 +3657,7 @@ function debounce(fn, ms) {
       async function renderQa(selected) {
         const want = String(selected ?? "").trim();
         if (want) state.qaSelected = want;
+        state.qaRawText = "";
         setQaStatus("جاري تحميل أسئلة شائعة...", false);
         if (!Array.isArray(state.qaFiles) || state.qaFiles.length === 0) {
           try {
@@ -3685,6 +3687,7 @@ function debounce(fn, ms) {
             els.qaText.style.whiteSpace = "pre-wrap";
             els.qaText.innerHTML = formatAboutText(res.text);
           }
+          state.qaRawText = String(res.text ?? "");
           setQaStatus("", false);
           renderTopQaBarButtons();
         } catch {
@@ -4147,6 +4150,30 @@ function debounce(fn, ms) {
           els.infoText.innerHTML = html;
           return;
         }
+        const isCustomerReviews =
+          normalizeAboutKey(k) === normalizeAboutKey("تقييمات عملاء") ||
+          normalizeAboutKey(k) === normalizeAboutKey("تقييمات العملاء");
+        if (isCustomerReviews) {
+          els.infoTitle.textContent = "تقييمات العملاء";
+          els.infoMeta.textContent = "";
+          els.infoText.innerHTML = "";
+          setInfoStatus("جاري التحميل...", false);
+          const aboutRes = await fetchTextFirstAvailable(
+            [resolveAboutPath(k), resolveAboutPath("تقييمات عملاء"), resolveAboutPath("تقييمات العملاء")],
+            10 * 60 * 1000
+          );
+          if (aboutRes && String(aboutRes.text ?? "").trim()) {
+            els.infoText.innerHTML = formatAboutText(String(aboutRes.text).trim());
+          } else {
+            els.infoText.textContent = "هنا بعض تقييمات عملائنا الكرام";
+          }
+          setInfoStatus("", false);
+          try {
+            const urls = await loadCustomerPhotos();
+            renderCustomerGallery(urls);
+          } catch {}
+          return;
+        }
         const fileUrl = resolveAboutPath(k);
         setInfoStatus("جاري التحميل...", false);
         const res = await fetchTextCached(fileUrl, 10 * 60 * 1000);
@@ -4439,9 +4466,9 @@ function debounce(fn, ms) {
         });
         if (els.qaCopyBtn instanceof HTMLElement) {
           els.qaCopyBtn.addEventListener("click", async () => {
-            const title = String(els.qaTitle?.textContent ?? "").trim();
-            const body = String(els.qaText?.innerText ?? els.qaText?.textContent ?? "").trim();
-            const text = [title, body].filter(Boolean).join("\n\n");
+            const raw = String(state.qaRawText ?? "").trim();
+            const body = raw || String(els.qaText?.innerText ?? els.qaText?.textContent ?? "").trim();
+            const text = [String(state.qaSelected ?? "").trim(), body].filter(Boolean).join("\n\n");
             if (!text) return showToast("لا يوجد محتوى للنسخ", 1600);
             await copyText(text);
           });

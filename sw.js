@@ -1,5 +1,5 @@
-/* HJY site service worker - cache-first for static assets & photos */
-const VERSION = "hjy-site-v4";
+/* HJY site service worker - network-first for app code, cache-first for photos */
+const VERSION = "hjy-site-v6";
 const STATIC_CACHE = VERSION + "-static";
 const PHOTO_CACHE = VERSION + "-photo";
 
@@ -49,8 +49,26 @@ self.addEventListener("fetch", (e) => {
   }
 
   const path = url.pathname;
-  const isPhoto = /^\/(photo|customer_photo|photo-stouk)\//.test(path);
-  const isStatic = /\.(css|js|webp|png|jpg|jpeg|gif|svg|ico)$/i.test(path);
+
+  // App code (html/js/css) -> network-first so fixes always reach the browser.
+  const isAppCode = /\.(html|js|css)$/i.test(path);
+  if (isAppCode) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(STATIC_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  const isPhoto = /^\/(photo|customer_photo|photo-stouk|gallery)\//.test(path);
+  const isStatic = /\.(webp|png|jpg|jpeg|gif|svg|ico|avif)$/i.test(path);
   if (isPhoto || isStatic) {
     e.respondWith(
       caches.open(isPhoto ? PHOTO_CACHE : STATIC_CACHE).then(async (cache) => {

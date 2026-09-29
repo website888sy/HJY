@@ -261,6 +261,8 @@ photo/LOCK12-L.webp
 photo/LOCK12-MINI.webp
 photo/LOCK12V.webp
 photo/NI-10MM.webp
+photo/POINTS12V-1.webp
+photo/POINTS12V.webp
 photo/PS12-1A.jpg
 photo/PS12-2A.webp
 photo/PS12-3A.webp

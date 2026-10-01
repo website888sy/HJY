@@ -98,6 +98,8 @@ photo/EVE60-20-3.webp
 photo/EVE60-20-4.webp
 photo/EVE60-20.webp
 photo/EVE72-100-1.webp
+photo/EVE72-100-2.webp
+photo/EVE72-100-3.webp
 photo/EVE72-100.webp
 photo/EVE72-20-1.webp
 photo/EVE72-20-2.webp

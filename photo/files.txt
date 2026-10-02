@@ -86,6 +86,8 @@ photo/EV1527-Y.webp
 photo/EVA02.webp
 photo/EVA03-1.jpg
 photo/EVA03.jpg
+photo/EVE-20A-C40-1.webp
+photo/EVE-20A-C40.webp
 photo/EVE40-72-1.webp
 photo/EVE40-72-2.webp
 photo/EVE40-72-3.webp

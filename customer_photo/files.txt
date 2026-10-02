@@ -34,4 +34,8 @@ customer_photo/cust-1790856442295-9xmz.webp
 customer_photo/cust-1790856442324-wu4t.webp
 customer_photo/cust-1790856442446-8bzs.webp
 customer_photo/cust-1790856442547-0ksr.webp
+customer_photo/cust-1790902164342-1uzs.webp
+customer_photo/cust-1790902164402-2whi.webp
+customer_photo/cust-1790902164454-rdcz.webp
+customer_photo/cust-1790902164519-9na8.webp
 customer_photo/‏‏لقطة الشاشة (701).webp

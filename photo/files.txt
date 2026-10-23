@@ -57,6 +57,7 @@ photo/DIMMER01.webp
 photo/DIMMER4000.webp
 photo/DRX1K-315.webp
 photo/DY1260.jpg
+photo/DY2460-1.webp
 photo/ESP32-30P.webp
 photo/ESP32-38PIN.webp
 photo/ESP32-CH-30P.webp

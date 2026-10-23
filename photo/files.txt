@@ -93,6 +93,7 @@ photo/EVA04-2.webp
 photo/EVA04-3.webp
 photo/EVA04.webp
 photo/EVE-20A-C40-1.webp
+photo/EVE-20A-C40-2.webp
 photo/EVE-20A-C40.webp
 photo/EVE40-72-1.webp
 photo/EVE40-72-2.webp
@@ -201,7 +202,9 @@ photo/JK816150-43.webp
 photo/JK816150.webp
 photo/JK82440-1.webp
 photo/JK82440.webp
+photo/JK82440M.webp
 photo/JKCARDRS-1.webp
+photo/JKCARDRS-2.webp
 photo/JKLCD23.webp
 photo/JKLCD23C.webp
 photo/JKLCD32.webp

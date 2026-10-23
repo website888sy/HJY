@@ -35,6 +35,7 @@ photo/BIWO50-72-4.webp
 photo/BIWO50-72-5.webp
 photo/BIWO50-72-6.webp
 photo/BIWO50-72.webp
+photo/BS-25CM-1.webp
 photo/BS-30CM.webp
 photo/BS-35CM.webp
 photo/BS-40CM.webp

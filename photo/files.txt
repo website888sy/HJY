@@ -338,6 +338,9 @@ photo/SB100-24-A-1.webp
 photo/SB100-24-A-2.webp
 photo/SB100-24-A-3.webp
 photo/SB100-24-A.webp
+photo/SB100-24-AN-1.webp
+photo/SB100-24-AN.webp
+photo/SB100-48-A.webp
 photo/SB200-12-A.webp
 photo/SB200-24-A.webp
 photo/SB300-12-A.webp

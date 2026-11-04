@@ -166,10 +166,13 @@ photo/FEB-S.webp
 photo/FIBER-B.webp
 photo/GOTION-12-314-1.webp
 photo/GOTION-12-314-2.webp
+photo/GOTION-12-314-3.webp
 photo/GOTION-24-314-1.webp
 photo/GOTION-24-314-2.webp
+photo/GOTION-24-314-3.webp
 photo/GOTION-48-314-1.webp
 photo/GOTION-48-314-2.webp
+photo/GOTION-48-314-3.webp
 photo/GP100-12-A-1.webp
 photo/GP100-12-A-2.webp
 photo/GP100-12-A.webp

@@ -173,6 +173,9 @@ photo/GOTION-24-314-3.webp
 photo/GOTION-48-314-1.webp
 photo/GOTION-48-314-2.webp
 photo/GOTION-48-314-3.webp
+photo/GOTION314-1.webp
+photo/GOTION314-2.webp
+photo/GOTION314-3.webp
 photo/GP100-12-A-1.webp
 photo/GP100-12-A-2.webp
 photo/GP100-12-A.webp

@@ -1,11 +1,12 @@
-const CACHE_NAME = 'hjy-admin-cache-v22';
+﻿const CACHE_NAME = 'hjy-admin-cache-v29';
 const urlsToCache = [
   './',
   './index.html',
+  './site.html',
   './manifest.json',
   './css/admin.css',
   './js/admin.js',
-  './logo.webp',
+  './logo.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   'https://cdn.tailwindcss.com',
@@ -15,20 +16,9 @@ const urlsToCache = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        return Promise.allSettled(urlsToCache.map(url => cache.add(url)));
-      })
+      .then(cache => Promise.allSettled(urlsToCache.map(url => cache.add(url))))
   );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
-      })
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
@@ -42,6 +32,32 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  let url;
+  try { url = new URL(req.url); } catch { return; }
+
+  // Network-first for the app's own code (html/js/css) so fixes reach the browser
+  // without having to clear the service worker cache. Everything else (data CSV,
+  // images, CDN libs) falls back to cache-first as before.
+  const isAppCode = url.origin === location.origin && /\.(html|js|css)$/.test(url.pathname);
+  if (isAppCode) {
+    event.respondWith(
+      fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(req, copy));
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(req).then(response => response || fetch(req))
   );
 });

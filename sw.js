@@ -1,5 +1,5 @@
 /* HJY site service worker - network-first for app code, cache-first for photos */
-const VERSION = "hjy-site-v6";
+const VERSION = "hjy-site-v9";
 const STATIC_CACHE = VERSION + "-static";
 const PHOTO_CACHE = VERSION + "-photo";
 

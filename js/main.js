@@ -128,14 +128,13 @@ function debounce(fn, ms) {
         shipDamascusBlock: document.getElementById("shipDamascusBlock"),
         fullNameGovInput: document.getElementById("fullNameGovInput"),
         shipCenterInput: document.getElementById("shipCenterInput"),
-        shipCenterSuggestions: document.getElementById("shipCenterSuggestions"),
-        carrierMasarat: document.getElementById("carrierMasarat"),
-        carrierQadmous: document.getElementById("carrierQadmous"),
-        carrierOther: document.getElementById("carrierOther"),
-        masaratBranchesBtn: document.getElementById("masaratBranchesBtn"),
-        qadmousBranchesBtn: document.getElementById("qadmousBranchesBtn"),
+        manualCenterWrap: document.getElementById("manualCenterWrap"),
+        manualCenterHint: document.getElementById("manualCenterHint"),
+        carrierSelect: document.getElementById("carrierSelect"),
+        branchSelect: document.getElementById("branchSelect"),
+        branchPickBlock: document.getElementById("branchPickBlock"),
+        branchNote: document.getElementById("branchNote"),
         readShippingAgree: document.getElementById("readShippingAgree"),
-        payAdvanceInput: document.getElementById("payAdvanceInput"),
         fullNameDamascusInput: document.getElementById("fullNameDamascusInput"),
         damascusFreeDelivery: document.getElementById("damascusFreeDelivery"),
         damascusPickup: document.getElementById("damascusPickup"),
@@ -158,6 +157,7 @@ function debounce(fn, ms) {
         afterCustomerReviewsBtn: document.getElementById("afterCustomerReviewsBtn"),
         afterOrdersBtn: document.getElementById("afterOrdersBtn"),
         footerExtrasCol: document.getElementById("footerExtrasCol"),
+        footerCompanyLinks: document.getElementById("footerCompanyLinks"),
         footerPrevBtn: document.getElementById("footerPrevBtn"),
         footerNextBtn: document.getElementById("footerNextBtn"),
         footerMoreBtn: document.getElementById("footerMoreBtn"),
@@ -1509,6 +1509,16 @@ function debounce(fn, ms) {
             uniqueVariants.push(v);
           }
         }
+        // صور ثانوية: NAME-1 تُستخدم تلقائيًا إذا كانت الصورة الأصلية مفقودة.
+        const secondaryVariants = [];
+        for (const v of uniqueVariants) {
+          if (String(v).startsWith("thumb_")) continue;
+          const sec = `${v}-1`;
+          if (!seen.has(sec)) {
+            seen.add(sec);
+            secondaryVariants.push(sec);
+          }
+        }
         
         const out = [];
         const extList = Array.isArray(CONFIG.PHOTO_EXTS) ? CONFIG.PHOTO_EXTS : ["webp"];
@@ -1527,9 +1537,23 @@ function debounce(fn, ms) {
               }
             }
           }
-          // If the (possibly cached/incomplete) index has nothing for this product,
-          // fall through to direct path guessing so images still show.
-          if (out.length) return out;
+          // الصورة الثانوية -1 تأتي بعد الأصلية مباشرة
+          for (const v of secondaryVariants) {
+            const indexed = photoIndexMap.get(safeLower(v));
+            if (Array.isArray(indexed) && indexed.length) {
+              for (const p of indexed) {
+                if (!seenPaths.has(p)) {
+                  seenPaths.add(p);
+                  out.push(p);
+                }
+              }
+            }
+          }
+          // The index is authoritative: when it is available and a product has
+          // no indexed photo, return an empty list instead of probing dozens of
+          // missing folders/extensions (that caused a storm of 404s).
+          // Direct path guessing below is only used when the index is unavailable.
+          return out;
         }
 
         for (const dir of CONFIG.PHOTO_DIRS) {
@@ -1537,6 +1561,16 @@ function debounce(fn, ms) {
             for (const v of uniqueVariants) {
               const e = String(ext ?? "").trim().replace(/^\./, "");
               if (!e) continue;
+              out.push(`${dir}/${encodeURIComponent(v)}.${e}`);
+            }
+          }
+        }
+        // fallback عند غياب الفهرس: جرّب NAME-1 أيضًا
+        for (const dir of CONFIG.PHOTO_DIRS) {
+          for (const ext of extList) {
+            const e = String(ext ?? "").trim().replace(/^\./, "");
+            if (!e) continue;
+            for (const v of secondaryVariants) {
               out.push(`${dir}/${encodeURIComponent(v)}.${e}`);
             }
           }
@@ -2651,41 +2685,47 @@ function debounce(fn, ms) {
       function applyFilters() {
         const q = String(state.query ?? "").trim();
         const tokens = buildSearchTokens(q);
+        const hasQuery = q.length >= CONFIG.SEARCH_MIN_CHARS;
         let list = state.allProducts.slice();
-        if (state.category === "FAVORITES") list = list.filter((p) => isFavorite(p.code));
-        if (state.category === "HOT") list = list.filter((p) => isHotCode(p.code));
-        if (state.category === "OUT") list = list.filter((p) => p.isOut);
-        if (String(state.category || "").startsWith("SUB:")) {
-          // filter to a specific subcategory (flat list with pagination)
-          const parts = String(state.category || "").split(":");
-          if (parts.length >= 3) {
-            const mainKey = normalizeCategoryKey(parts[1]);
-            const subKey = normalizeCategoryKey(parts[2]);
-            const main = (state.mainCategories || []).find(m => m && m.key === mainKey);
-            const sub = main ? (main.subs || []).find(s => s && s.key === subKey) : null;
-            if (sub) list = list.filter(p => sub.codes.has(normalizeCodeKey(p.code)));
+
+        // البحث عام دائمًا: عند وجود كلمة بحث نتجاهل القسم/القائمة المختارة
+        // ونبحث في كل المنتجات. تصفية الأقسام تُطبّق فقط عند غياب البحث.
+        if (!hasQuery) {
+          if (state.category === "FAVORITES") list = list.filter((p) => isFavorite(p.code));
+          if (state.category === "HOT") list = list.filter((p) => isHotCode(p.code));
+          if (state.category === "OUT") list = list.filter((p) => p.isOut);
+          if (String(state.category || "").startsWith("SUB:")) {
+            // filter to a specific subcategory (flat list with pagination)
+            const parts = String(state.category || "").split(":");
+            if (parts.length >= 3) {
+              const mainKey = normalizeCategoryKey(parts[1]);
+              const subKey = normalizeCategoryKey(parts[2]);
+              const main = (state.mainCategories || []).find(m => m && m.key === mainKey);
+              const sub = main ? (main.subs || []).find(s => s && s.key === subKey) : null;
+              if (sub) list = list.filter(p => sub.codes.has(normalizeCodeKey(p.code)));
+            }
           }
-        }
-        if (String(state.category || "").startsWith("CAT:")) {
-          const key = normalizeCategoryKey(String(state.category || "").slice("CAT:".length));
-          // Hierarchical main category -> render the subcategory page
-          const main = (state.mainCategories || []).find((m) => m && m.key === key);
-          if (main) {
-            showShopView();
-            renderCategoryPage(main);
+          if (String(state.category || "").startsWith("CAT:")) {
+            const key = normalizeCategoryKey(String(state.category || "").slice("CAT:".length));
+            // Hierarchical main category -> render the subcategory page
+            const main = (state.mainCategories || []).find((m) => m && m.key === key);
+            if (main) {
+              showShopView();
+              renderCategoryPage(main);
+              return;
+            }
+            // fallback: legacy flat category
+            const cat = (Array.isArray(state.categories) ? state.categories : []).find((c) => c && c.key === key);
+            if (cat) list = list.filter((p) => cat.codes.has(normalizeCodeKey(p.code)));
+          }
+          if (state.category === "HOME") {
+            showHomeView();
+            renderHome();
             return;
           }
-          // fallback: legacy flat category
-          const cat = (Array.isArray(state.categories) ? state.categories : []).find((c) => c && c.key === key);
-          if (cat) list = list.filter((p) => cat.codes.has(normalizeCodeKey(p.code)));
         }
-        if (state.category === "HOME") {
-          showHomeView();
-          renderHome();
-          return;
-        }
+
         showShopView();
-        const hasQuery = q.length >= CONFIG.SEARCH_MIN_CHARS;
         if (hasQuery) {
           const scored = [];
           for (const p of list) {
@@ -3229,6 +3269,20 @@ function debounce(fn, ms) {
            throw new Error("فشل إرسال الطلب (Network Error). تأكد من إيقاف الـ VPN والمحاولة مجدداً.");
         }
       }
+      function buildMapLink(details) {
+        if (!details) return "";
+        // للشحن: الموقع المهم هو فرع/مركز الشحن حسب المحافظة.
+        if (details.shipType === "GOV") {
+          const q = [details.gov, details.shipCenter].filter(Boolean).join(" ").trim();
+          return q ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}` : "";
+        }
+        // للاستلام ضمن دمشق: GPS أولًا ثم العنوان المكتوب.
+        if (details.gpsLocation) return String(details.gpsLocation);
+        const q = [details.gov, details.locGeneral, details.locDetail].filter(Boolean).join(" ").trim();
+        return (details.locGeneral || details.locDetail) && q
+          ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
+          : "";
+      }
       function buildInvoiceText(details) {
         const lines = [];
         lines.push(`HJY.co`);
@@ -3240,7 +3294,7 @@ function debounce(fn, ms) {
           lines.push(`الاسم الثلاثي: ${String(details.fullName || "—")}`);
           lines.push(`عنوان مركز الشحن: ${String(details.shipCenter || "—")}`);
           lines.push(`شركة الشحن: ${String(details.carrier || "—")}`);
-          lines.push(`دفع مسبقاً: ${details.payAdvance ? "نعم" : "لا"}`);
+          if (details.branchNote) lines.push(`ملاحظة الفرع: ${String(details.branchNote)}`);
         } else if (details.shipType === "DAMASCUS") {
           lines.push(`الاسم الثلاثي: ${String(details.fullName || "—")}`);
           lines.push(`الخيار: ${String(details.damascusType || "—")}`);
@@ -3250,6 +3304,7 @@ function debounce(fn, ms) {
             lines.push(`نطاق الوقت المفضل: ${String(details.timeRange || "—")}`);
           }
         }
+        lines.push(`موقع على الخريطة: ${String(details.mapLink || "—")}`);
         lines.push(`الدفع: ${String(details.payCurrency || "—")}`);
         lines.push(`ملاحظات: ${String(details.notes || "—")}`);
         lines.push(``);
@@ -3538,10 +3593,16 @@ function debounce(fn, ms) {
         );
         const list = Array.isArray(state.aboutFiles) ? state.aboutFiles : [];
         let currentCol = els.footerExtrasCol;
+        // صفحات الفروع أصبحت ديناميكية من بيانات شركات الشحن.
+        const companyPageKeys = new Set(
+          (state.carriers || []).map((c) => normalizeAboutKey(`فروع ${c}`))
+        );
+        const legacyCompanyPages = new Set([normalizeAboutKey("فروع مسارات"), normalizeAboutKey("فروع قدموس")]);
         
         for (const it of list) {
           if (!it || !it.name || !it.key) continue;
           if (existing.has(it.key)) continue;
+          if (companyPageKeys.has(it.key) || legacyCompanyPages.has(it.key)) continue;
           
           // If the current column has too many items (e.g. > 5), create a new column
           if (currentCol.children.length >= 6) {
@@ -3799,15 +3860,12 @@ function debounce(fn, ms) {
           loadNewOffer();
           loadWhatNew();
           loadHomeCodes();
+          // Load the photo index BEFORE the first render so the page uses
+          // real filenames instead of probing thumb_*.webp files that may not
+          // exist (that probing caused hundreds of harmless 404s).
+          await loadPhotoIndex().catch(() => {});
           renderHome();
           applyHashRoute();
-          loadPhotoIndex()
-            .then(() => {
-              if (els.homeView.style.display !== "none") renderHome();
-              if (els.shopView.style.display !== "none") render();
-              if (els.productView.style.display !== "none") renderProductDetails(state.lastProductCode);
-            })
-            .catch(() => {});
           setBootProgress(100);
           hideBootOverlay();
           if (!location.hash) setHash("home");
@@ -4111,6 +4169,50 @@ function debounce(fn, ms) {
           els.imgModalImg.removeAttribute("src");
         } catch {}
       }
+      function companyFromInfoKey(key) {
+        const s = String(key ?? "").trim();
+        return s.startsWith("فروع ") ? s.slice(5).trim() : "";
+      }
+      async function renderCompanyBranchesPage(company) {
+        const name = String(company || "").trim();
+        els.infoTitle.textContent = `فروع ${name}`;
+        els.infoText.innerHTML = "";
+        setInfoStatus("", false);
+        if (!state.branches || !state.branches.length) {
+          try { await loadShippingData(); } catch {}
+        }
+        const list = (state.branches || []).filter((b) => String(b.company || "").trim() === name);
+        els.infoMeta.textContent = list.length ? `${list.length} فرع` : "لا توجد فروع مضافة";
+        if (!list.length) {
+          els.infoText.innerHTML = `<div class="panel-sub" style="line-height:1.8">لا توجد فروع مضافة لهذه الشركة حالياً. يمكن إضافتها من لوحة الإدارة ← المحافظات والشحن.</div>
+            <div style="margin-top:12px"><button class="btn btn-ghost" type="button" onclick="setHash('info=${encodeURIComponent("تفاصيل الشحن")}')">رجوع لتفاصيل الشحن</button></div>`;
+          return;
+        }
+        const groups = new Map();
+        for (const b of list) {
+          const gov = String(b.gov || "").trim() || "بدون محافظة";
+          if (!groups.has(gov)) groups.set(gov, []);
+          groups.get(gov).push(b);
+        }
+        let html = `<div style="display:grid;gap:14px">`;
+        for (const [gov, rows] of groups) {
+          html += `<div style="border:1px solid var(--border);border-radius:12px;padding:10px;background:var(--surface)">
+            <div style="font-weight:900;color:var(--primary-3);margin-bottom:8px">${escapeHtml(gov)}</div>
+            <div style="display:grid;gap:8px">`;
+          for (const b of rows) {
+            html += `<div style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#fff">
+              <div style="font-weight:800">${escapeHtml(b.branch)}</div>
+              ${b.note ? `<div class="mini-note" style="margin-top:4px;color:#b45309;font-weight:700">${escapeHtml(b.note)}</div>` : ""}
+            </div>`;
+          }
+          html += `</div></div>`;
+        }
+        html += `</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+            <button class="btn btn-ghost" type="button" onclick="setHash('info=${encodeURIComponent("تفاصيل الشحن")}')">رجوع لتفاصيل الشحن</button>
+          </div>`;
+        els.infoText.innerHTML = html;
+      }
       async function renderInfo(key) {
         const k = String(key ?? "").trim();
         els.infoTitle.textContent = k || "—";
@@ -4118,6 +4220,11 @@ function debounce(fn, ms) {
         els.infoText.textContent = "";
         if (els.customerGalleryWrap instanceof HTMLElement) els.customerGalleryWrap.style.display = "none";
         if (els.customerGallery instanceof HTMLElement) els.customerGallery.innerHTML = "";
+        const companyName = companyFromInfoKey(k);
+        if (companyName) {
+          await renderCompanyBranchesPage(companyName);
+          return;
+        }
         if (k === "الشكاوي") {
           els.infoMeta.textContent =
             "يمكنك إرسال شكوى أو مشكلة بالتفصيل : أخطاء برمجية بالموقع - موقع يعرض على شاشة هاتفي بطريقة سيئة - حجم خطوط كبيرة وغير متناسبة مع هاتفي - لقيت أرخص : مقارنة بمن؟ + دليل مادي مباشر عن المواصفات كاملة!! ";
@@ -4186,12 +4293,14 @@ function debounce(fn, ms) {
         let content = String(res.text ?? "").trim();
         if (!content) content = "";
         if (k === "تفاصيل الشحن") {
-          const buttons = `
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-              <button class="btn btn-ghost" type="button" data-info-btn="فروع مسارات" style="flex:1">فروع مسارات</button>
-              <button class="btn btn-ghost" type="button" data-info-btn="فروع قدموس" style="flex:1">فروع قدموس</button>
-            </div>
-          `;
+          if (!state.carriers.length) {
+            try { await loadShippingData(); } catch {}
+          }
+          const buttons = (state.carriers || []).length
+            ? `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+                ${state.carriers.map((c) => `<button class="btn btn-ghost" type="button" data-info-btn="فروع ${escapeHtmlAttr(c)}" style="flex:1;min-width:150px">فروع ${escapeHtml(c)}</button>`).join("")}
+              </div>`
+            : "";
           els.infoText.innerHTML = `${formatAboutText(content)}${buttons}`;
           return;
         }
@@ -4337,6 +4446,7 @@ function debounce(fn, ms) {
               const cCol = find(["company", "carrier", "شركة"]);
               const gCol = find(["governorate", "gov", "محافظة"]);
               const bCol = find(["branch", "center", "فرع", "مركز"]);
+              const nCol = find(["note", "notes", "ملاحظة", "ملاحظات"]);
               for (const row of table.rows) {
                 const branch = bCol >= 0 ? String(row[bCol] ?? "").trim() : "";
                 if (!branch) continue;
@@ -4344,6 +4454,7 @@ function debounce(fn, ms) {
                   company: cCol >= 0 ? String(row[cCol] ?? "").trim() : "",
                   gov: gCol >= 0 ? String(row[gCol] ?? "").trim() : "",
                   branch,
+                  note: nCol >= 0 ? String(row[nCol] ?? "").trim() : "",
                 });
               }
             }
@@ -4359,36 +4470,104 @@ function debounce(fn, ms) {
         els.govInput.innerHTML = html;
         if (cur && Array.from(els.govInput.options).some((o) => o.value === cur)) els.govInput.value = cur;
       }
+      function normalizeGovName(value) {
+        return safeLower(String(value ?? "").replace(/^ال/, "").replace(/\s+/g, " ").trim());
+      }
+      function currentGovName() {
+        let gov = String(els.govInput?.value ?? "").trim();
+        if (gov === "أخرى") gov = String(els.govOtherInput?.value ?? "").trim();
+        return gov;
+      }
       function renderCarrierOptions() {
-        const box = document.getElementById("carrierOptions");
-        if (!(box instanceof HTMLElement)) return;
-        const prevEl = box.querySelector('input[name="carrier"]:checked');
-        const prev = prevEl ? String(prevEl.value ?? "") : "";
+        const sel = els.carrierSelect;
+        if (!(sel instanceof HTMLSelectElement)) return;
+        const prev = String(sel.value ?? "");
         const list = state.carriers.length ? state.carriers : ["مسارات", "قدموس"];
-        let html = "";
-        list.forEach((c, i) => {
-          const checked = prev ? prev === c : i === 0;
-          html += `<label class="checkrow" style="flex:1;align-items:center">
-            <input type="radio" name="carrier" value="${escapeHtmlAttr(c)}" ${checked ? "checked" : ""} />
-            <div style="font-weight:900">${escapeHtml(c)}</div>
-          </label>`;
-        });
-        html += `<label class="checkrow" style="flex:1;align-items:center">
-            <input type="radio" name="carrier" value="__OTHER__" ${prev === "__OTHER__" ? "checked" : ""} />
-            <div style="display:grid;gap:2px">
-              <div style="font-weight:900">آخر</div>
-              <div class="mini-note">شوفير أو شحن بغير شركة ..الخ</div>
-            </div>
-          </label>`;
-        box.innerHTML = html;
+        let html = `<option value="">اختر شركة الشحن</option>`;
+        for (const c of list) html += `<option value="${escapeHtmlAttr(c)}">${escapeHtml(c)}</option>`;
+        html += `<option value="__OTHER__">آخر / شوفير (شركة غير مضافة)</option>`;
+        sel.innerHTML = html;
+        if (prev && Array.from(sel.options).some((o) => o.value === prev)) sel.value = prev;
       }
       function getSelectedCarrier() {
-        const box = document.getElementById("carrierOptions");
-        if (!box) return "";
-        const el = box.querySelector('input[name="carrier"]:checked');
-        if (!el) return "";
-        const v = String(el.value ?? "");
+        const v = String(els.carrierSelect?.value ?? "");
         return v === "__OTHER__" ? "آخر" : v;
+      }
+      function getSelectedBranch() {
+        return String(els.branchSelect?.value ?? "").trim();
+      }
+      function updateBranchNote() {
+        if (!(els.branchNote instanceof HTMLElement)) return;
+        const opt = els.branchSelect?.selectedOptions?.[0];
+        els.branchNote.textContent = opt ? String(opt.getAttribute("data-note") || "").trim() : "";
+      }
+      function renderBranchOptions() {
+        if (!(els.branchPickBlock instanceof HTMLElement) || !(els.manualCenterWrap instanceof HTMLElement)) return;
+        const carrier = getSelectedCarrier();
+        const gov = currentGovName();
+        const isOther = !carrier || carrier === "آخر";
+        const branches = (!isOther && gov)
+          ? (state.branches || []).filter((b) => String(b.company || "").trim() === carrier && normalizeGovName(b.gov) === normalizeGovName(gov))
+          : [];
+
+        if (!carrier) {
+          els.branchPickBlock.style.display = "none";
+          els.manualCenterWrap.style.display = "none";
+          return;
+        }
+
+        if (isOther) {
+          els.branchPickBlock.style.display = "none";
+          els.manualCenterWrap.style.display = "grid";
+          if (els.manualCenterHint) els.manualCenterHint.textContent = "اكتب اسم وموقع الشوفير أو الشركة غير المضافة.";
+          return;
+        }
+
+        if (!gov) {
+          els.branchPickBlock.style.display = "none";
+          els.manualCenterWrap.style.display = "grid";
+          if (els.manualCenterHint) els.manualCenterHint.textContent = "اختر المحافظة أولاً لعرض فروع الشركة، أو اكتب العنوان يدويًا.";
+          return;
+        }
+
+        if (!branches.length) {
+          els.branchPickBlock.style.display = "none";
+          els.manualCenterWrap.style.display = "grid";
+          if (els.manualCenterHint) els.manualCenterHint.textContent = "لا يوجد فرع مسجّل لهذه الشركة في هذه المحافظة. اكتب أقرب مركز/عنوان يدويًا.";
+          return;
+        }
+
+        const prev = getSelectedBranch();
+        let html = `<option value="">اختر الفرع/المركز</option>`;
+        for (const b of branches) {
+          html += `<option value="${escapeHtmlAttr(b.branch)}" data-note="${escapeHtmlAttr(b.note || "")}">${escapeHtml(b.branch)}${b.note ? ` — ${escapeHtml(b.note)}` : ""}</option>`;
+        }
+        if (els.branchSelect) {
+          els.branchSelect.innerHTML = html;
+          if (prev && branches.some((b) => b.branch === prev)) els.branchSelect.value = prev;
+        }
+        els.branchPickBlock.style.display = "grid";
+        els.manualCenterWrap.style.display = "none";
+        if (els.shipCenterInput) els.shipCenterInput.value = "";
+        updateBranchNote();
+      }
+      function renderCompanyFooterLinks() {
+        const box = els.footerCompanyLinks;
+        if (!(box instanceof HTMLElement)) return;
+        const list = state.carriers.length ? state.carriers : [];
+        if (!list.length) {
+          box.innerHTML = "";
+          return;
+        }
+        box.innerHTML = list.map((c) => (
+          `<button class="footer-link" type="button" data-company-branches="${escapeHtmlAttr(c)}">فروع ${escapeHtml(c)}</button>`
+        )).join("");
+        for (const btn of Array.from(box.querySelectorAll("[data-company-branches]"))) {
+          btn.addEventListener("click", () => {
+            const company = String(btn.getAttribute("data-company-branches") || "").trim();
+            if (company) setHash(`info=${encodeURIComponent("فروع " + company)}`);
+          });
+        }
       }
       function wireEvents() {
         wireCartGestures();
@@ -4533,7 +4712,8 @@ function debounce(fn, ms) {
           els.searchBtn.addEventListener("click", () => {
             state.query = String(els.search.value ?? "");
             state.page = 1;
-            if (state.category === "HOME") {
+            // البحث عام دائمًا: لا يبقى محصورًا في القسم المختار.
+            if (state.query.trim().length > 0 && state.category !== "ALL") {
               state.category = "ALL";
               updatePills();
             }
@@ -4559,7 +4739,7 @@ function debounce(fn, ms) {
           e.preventDefault();
           state.query = String(els.search.value ?? "");
           state.page = 1;
-          if (state.category === "HOME") {
+          if (state.query.trim().length > 0 && state.category !== "ALL") {
             state.category = "ALL";
             updatePills();
           }
@@ -5131,6 +5311,7 @@ function debounce(fn, ms) {
           const gov = Boolean(els.shipGovRadio.checked);
           els.shipGovBlock.style.display = gov ? "grid" : "none";
           els.shipDamascusBlock.style.display = gov ? "none" : "grid";
+          if (gov) { try { renderBranchOptions(); } catch {} }
         };
         els.shipDamascusRadio.addEventListener("change", syncShipBlocks);
         els.shipGovRadio.addEventListener("change", syncShipBlocks);
@@ -5149,73 +5330,32 @@ function debounce(fn, ms) {
           if (els.govOtherInput) {
             if (!on) els.govOtherInput.value = "";
           }
+          try { renderBranchOptions(); } catch {}
         };
         els.govInput.addEventListener("input", syncGovOther);
         els.govInput.addEventListener("change", syncGovOther);
+        els.govOtherInput?.addEventListener("input", syncGovOther);
         syncGovOther();
         loadShippingData().then(() => {
           renderGovernorateOptions();
           renderCarrierOptions();
+          renderCompanyFooterLinks();
           try { loadSavedCustomer(); } catch {}
           syncGovOther();
-          const box = document.getElementById("carrierOptions");
-          if (box) box.addEventListener("change", () => {
-            const ev = new Event("input", { bubbles: true });
-            if (els.shipCenterInput) els.shipCenterInput.dispatchEvent(ev);
+          renderBranchOptions();
+          els.carrierSelect?.addEventListener("change", () => {
+            renderBranchOptions();
+            try { saveCustomer(); } catch {}
+          });
+          els.branchSelect?.addEventListener("change", () => {
+            updateBranchNote();
+            try { saveCustomer(); } catch {}
+          });
+          els.shipCenterInput?.addEventListener("input", () => {
+            try { saveCustomer(); } catch {}
           });
         });
 
-        if (els.shipCenterInput) {
-          els.shipCenterInput.addEventListener("input", async (e) => {
-            const val = e.target.value.trim().toLowerCase();
-            const sugs = els.shipCenterSuggestions;
-            if (!sugs) return;
-            if (!val) {
-              sugs.style.display = "none";
-              return;
-            }
-            const branches = state.branches || [];
-            if(!branches || branches.length === 0) return;
-            // only suggest branches of the selected carrier, or all for "آخر"
-            const carrier = getSelectedCarrier();
-            const isOther = !carrier || carrier === "آخر";
-            let pool = branches;
-            if (!isOther) pool = branches.filter(b => b.company === carrier);
-            const filtered = pool.filter(b => b.branch.toLowerCase().includes(val)).slice(0, 8);
-            if (filtered.length > 0) {
-              sugs.innerHTML = filtered.map(b => `
-                <div class="branch-suggestion" style="padding:8px; border-bottom:1px solid var(--border); cursor:pointer; font-size:13px;" data-branch="${escapeHtmlAttr(b.branch)}" data-company="${escapeHtmlAttr(b.company)}">
-                  <span style="font-weight:bold; color:var(--primary)">${escapeHtml(b.company)}</span> - ${escapeHtml(b.branch)} (${escapeHtml(b.gov)})
-                </div>
-              `).join('');
-              sugs.style.display = "flex";
-              
-              Array.from(sugs.querySelectorAll('.branch-suggestion')).forEach(el => {
-                el.addEventListener('click', () => {
-                  els.shipCenterInput.value = el.getAttribute('data-branch');
-                  sugs.style.display = "none";
-                  const company = el.getAttribute('data-company');
-                  const box = document.getElementById('carrierOptions');
-                  if (box && company) {
-                    const rd = Array.from(box.querySelectorAll('input[name="carrier"]')).find(x => x.value === company);
-                    if (rd) rd.checked = true;
-                  }
-                  if (typeof saveCustomer === 'function') saveCustomer();
-                });
-              });
-            } else {
-              sugs.style.display = "none";
-            }
-          });
-          document.addEventListener('click', (e) => {
-            if (els.shipCenterSuggestions && !els.shipCenterInput.contains(e.target) && !els.shipCenterSuggestions.contains(e.target)) {
-              els.shipCenterSuggestions.style.display = "none";
-            }
-          });
-        }
-
-        els.masaratBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع مسارات")}`));
-        els.qadmousBranchesBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("فروع قدموس")}`));
         els.openShippingBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("تفاصيل الشحن")}`));
         if (els.openPolicyBtn instanceof HTMLElement) els.openPolicyBtn.addEventListener("click", () => setHash(`info=${encodeURIComponent("سياسية الاستخدام")}`));
         if (els.clearCustomerBtn instanceof HTMLElement)
@@ -5230,6 +5370,11 @@ function debounce(fn, ms) {
             if (els.govOtherInput) els.govOtherInput.value = "";
             if (els.fullNameDamascusInput) els.fullNameDamascusInput.value = "";
             if (els.fullNameGovInput) els.fullNameGovInput.value = "";
+            if (els.carrierSelect) els.carrierSelect.value = "";
+            if (els.branchSelect) els.branchSelect.value = "";
+            if (els.shipCenterInput) els.shipCenterInput.value = "";
+            window.__hjyGpsLocation = "";
+            try { renderBranchOptions(); } catch {}
             syncGovOther();
             showToast("تم حذف كامل البيانات", 1800);
           });
@@ -5250,8 +5395,8 @@ function debounce(fn, ms) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 const link = `https://www.google.com/maps?q=${lat},${lng}`;
-                locGeneralInput.value = locGeneralInput.value ? locGeneralInput.value + " | " + link : link;
-                locationStatusText.textContent = "تم إرفاق الموقع بنجاح.";
+                window.__hjyGpsLocation = link;
+                locationStatusText.textContent = "تم إرفاق الموقع بنجاح — سيُضاف كسطر مستقل في الطلب.";
                 locationStatusText.style.color = "green";
               },
               (error) => {
@@ -5290,13 +5435,12 @@ function debounce(fn, ms) {
           let fullName = "";
           let shipCenter = "";
           let carrier = "";
-          let shipTypeLabel = shipType === "GOV" ? "شحن للمحافظات" : "استلام ضمن دمشق";
-          let payAdvance = false;
+          let branchNote = "";
+          let shipTypeLabel = shipType === "GOV" ? "الشحن" : "استلام ضمن دمشق";
           let damascusType = "";
           let locGeneral = "";
           let locDetail = "";
           let timeRange = "";
-          let urgentOrder = false;
           let distantRural = false;
           let gpsLocation = window.__hjyGpsLocation || "";
           let gov = String(els.govInput.value ?? "").trim();
@@ -5305,9 +5449,16 @@ function debounce(fn, ms) {
             gov = other || "أخرى";
           }
           if (shipType === "GOV") {
+            if (!gov) return setCheckoutStatus("اختر المحافظة أولاً.", true);
             fullName = String(els.fullNameGovInput.value ?? "").trim();
-            shipCenter = String(els.shipCenterInput.value ?? "").trim();
-            carrier = getSelectedCarrier() || "آخر";
+            if (!fullName) return setCheckoutStatus("اكتب الاسم الثلاثي — أصبح إجباريًا عند اختيار الشحن.", true);
+            carrier = getSelectedCarrier();
+            if (!carrier) return setCheckoutStatus("اختر شركة الشحن أولاً.", true);
+            const selectedBranch = getSelectedBranch();
+            shipCenter = selectedBranch || String(els.shipCenterInput.value ?? "").trim();
+            if (!shipCenter) return setCheckoutStatus("اختر فرع/مركز الشحن أو اكتب العنوان يدويًا.", true);
+            const opt = els.branchSelect?.selectedOptions?.[0];
+            branchNote = opt ? String(opt.getAttribute("data-note") || "").trim() : "";
           } else {
             fullName = String(els.fullNameDamascusInput.value ?? "").trim();
             damascusType = els.damascusFreeDelivery.checked ? "توصيل مجاني" : "استلام ضمن موقعنا";
@@ -5316,12 +5467,12 @@ function debounce(fn, ms) {
               locGeneral = String(els.locGeneralInput.value ?? "").trim();
               locDetail = String(els.locDetailInput.value ?? "").trim();
               timeRange = String(els.timeRangeInput.value ?? "").trim();
-              urgentOrder = document.getElementById("urgentOrderInput")?.checked || false;
               distantRural = document.getElementById("distantRuralInput")?.checked || false;
             }
           }
           const payCurrency = els.paySypInput.checked ? "سوري" : "الدولار";
           const notes = String(els.orderNotesInput.value ?? "").trim();
+          const mapLink = buildMapLink({ gpsLocation, gov, shipType, shipCenter, locGeneral, locDetail });
           const invoiceDetails = {
             phone,
             gov,
@@ -5330,9 +5481,10 @@ function debounce(fn, ms) {
             fullName,
             shipCenter,
             carrier,
-            urgentOrder,
+            branchNote,
             distantRural,
             gpsLocation,
+            mapLink,
             damascusType,
             locGeneral,
             locDetail,
@@ -5451,6 +5603,17 @@ function debounce(fn, ms) {
           }
           if (els.fullNameDamascusInput) els.fullNameDamascusInput.value = String(obj.fullNameDamascus || "");
           if (els.fullNameGovInput) els.fullNameGovInput.value = String(obj.fullNameGov || "");
+          const savedCarrier = String(obj.carrier || "").trim();
+          if (els.carrierSelect && savedCarrier && Array.from(els.carrierSelect.options).some((o) => o.value === savedCarrier)) {
+            els.carrierSelect.value = savedCarrier;
+          }
+          if (els.shipCenterInput) els.shipCenterInput.value = String(obj.shipCenter || "");
+          try { renderBranchOptions(); } catch {}
+          const savedBranch = String(obj.branch || "").trim();
+          if (els.branchSelect && savedBranch && Array.from(els.branchSelect.options).some((o) => o.value === savedBranch)) {
+            els.branchSelect.value = savedBranch;
+          }
+          try { updateBranchNote(); } catch {}
         } catch {}
       }
       function saveCustomer() {
@@ -5461,6 +5624,9 @@ function debounce(fn, ms) {
             govOther: String(els.govOtherInput?.value || ""),
             fullNameDamascus: String(els.fullNameDamascusInput?.value || ""),
             fullNameGov: String(els.fullNameGovInput?.value || ""),
+            carrier: String(els.carrierSelect?.value || ""),
+            branch: String(els.branchSelect?.value || ""),
+            shipCenter: String(els.shipCenterInput?.value || ""),
           };
           localStorage.setItem("hjy_customer_v1", JSON.stringify(obj));
         } catch {}

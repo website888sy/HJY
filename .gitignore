@@ -1,27 +1,9 @@
-# --- Secrets: NEVER commit these ---
 token-github.txt
+admin/github-settings.json
 *.token
-*.secret
-.env
-.env.*
-credentials*
-*_key.pem
-
-# --- Python ---
+admin/logo-192.png
+admin/venv/
+admin/browser-profile/
+admin/.runtime/
+admin/.cache/
 __pycache__/
-*.pyc
-*.pyo
-
-# --- OS ---
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# --- Tooling ---
-node_modules/
-.vscode/
-.idea/
-
-# --- Build / cache ---
-*.log
-sw-cache/

@@ -1,0 +1,397 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HJY Site">
+<title>HJY ADMIN - تفاصيل الموقع</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: { primary: '#4f46e5', primaryDark: '#4338ca', accent: '#f59e0b', danger: '#e11d48', success: '#10b981' } } }
+  }
+</script>
+<link rel="stylesheet" href="css/admin.css?v=29">
+<style>
+  .site-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
+  .site-card { text-align:right; cursor:pointer; border:1px solid var(--border); background:#fff; border-radius:16px; padding:18px; display:flex; gap:12px; align-items:flex-start; transition:all .15s ease; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .site-card:hover { border-color:#4f46e5; box-shadow:0 6px 18px rgba(79,70,229,.12); transform:translateY(-2px); }
+  .site-card .ico { width:44px; height:44px; border-radius:12px; display:grid; place-items:center; flex:none; background:#eef2ff; color:#4f46e5; }
+  .site-card .ico svg { width:22px; height:22px; }
+  .site-card h3 { margin:0 0 3px; font-size:15px; font-weight:800; }
+  .site-card p { margin:0; font-size:12px; color:#64748b; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <div class="layout-main">
+
+    <div id="localSyncBanner" class="local-sync-banner" style="display:none">
+      <div style="flex:1">
+        <b>المزامنة المحلية</b> — لكتابة كل تعديل (نصوص + صور + CSV) تلقائياً في مجلد مشروعك المحلي، اضغط "ربط مجلد" واختر مجلد <span dir="ltr">HJY-LAB-WEB</span> مرة واحدة.
+      </div>
+      <button onclick="LocalSync.pickDir()">ربط مجلد المشروع</button>
+      <button onclick="document.getElementById('localSyncBanner').style.display='none'" style="background:transparent;color:#9a3412;border:0;font-size:20px;cursor:pointer">&times;</button>
+    </div>
+
+    <header id="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2Z"/><path d="M14 2v6h6"/></svg>
+          </div>
+          <div class="brand-name"><b>HJY</b><span>تفاصيل الموقع</span></div>
+        </div>
+
+        <div class="topbar-file" style="flex:1">
+          <a class="btn btn-soft btn-sm" href="index.html" style="text-decoration:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            إدارة المنتجات والفئات
+          </a>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="LocalSync.rootHandle || LocalSync.serverMode ? LocalSync.clearDir() : LocalSync.pickDir()" id="localSyncToggle" title="المزامنة المحلية">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>المزامنة المحلية</span>
+          </button>
+          <button class="btn-icon" onclick="App.openSettings()" title="الإعدادات">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="btn btn-success btn-sm pos-rel" onclick="App.publishProducts()" id="saveAllBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            نشر التعديلات <span id="publishBadge" class="publish-badge"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div id="pendingBanner" class="pending-banner hidden">
+      <div style="flex:1;display:flex;flex-direction:column;gap:3px;min-width:0;line-height:1.6">
+        <b>تعديلات محلية غير منشورة</b>
+        <span class="pending-banner-txt"></span>
+      </div>
+      <button onclick="App.discardPendingLocal()" class="btn btn-sm btn-ghost" style="white-space:nowrap">تجاهل المحلي</button>
+      <button onclick="App.publishProducts()" class="btn btn-sm btn-success" style="white-space:nowrap">نشر التعديلات</button>
+    </div>
+
+    <main>
+      <div class="empty-state" style="padding:6px 0 18px">
+        <h2 style="margin:0 0 6px">تفاصيل الموقع</h2>
+        <p style="margin:0">اختر القسم الذي تريد تعديله. كل تعديل يُحفظ محلياً، ثم اضغط "نشر التعديلات" لرفعه للجميع.</p>
+      </div>
+
+      <div class="site-grid">
+        <button class="site-card" onclick="SiteText.open('الشريط الترويجي','data/promo.txt','النص الذي يظهر في الشريط الأعلى للموقع (يُعرض في الوسط).')">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8-8-2Z"/></svg></span>
+          <span><h3>الشريط الترويجي</h3><p>نص البار الأعلى (promo)</p></span>
+        </button>
+
+        <button class="site-card" onclick="SiteText.open('ما الجديد - آخر الأخبار','data/what_new.txt','النص الذي يظهر في قسم ما الجديد بالصفحة الرئيسية.')">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V9"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span>
+          <span><h3>ما الجديد - آخر الأخبار</h3><p>قسم ما الجديد في الرئيسية</p></span>
+        </button>
+
+        <button class="site-card" onclick="SiteText.open('عرض جديد','data/new_offer.txt','النص الذي يظهر في قسم عرض جديد بالصفحة الرئيسية.')">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><line x1="7" x2="7.01" y1="7" y2="7"/></svg></span>
+          <span><h3>عرض جديد</h3><p>قسم العروض في الرئيسية</p></span>
+        </button>
+
+        <button class="site-card" onclick="SitePages.open('about')">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2Z"/><path d="M14 2v6h6"/></svg></span>
+          <span><h3>صفحات about</h3><p>توصيل مجاني، تفاصيل الشحن، وغيرها — إضافة/حذف/تعديل</p></span>
+        </button>
+
+        <button class="site-card" onclick="SitePages.open('qa')">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+          <span><h3>الأسئلة الشائعة (QA)</h3><p>أقسام الأسئلة — إضافة/حذف/تعديل</p></span>
+        </button>
+
+        <button class="site-card" onclick="CustomerPhotos.open()">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span>
+          <span><h3>صور تقييمات العملاء</h3><p>رفع (WEBP تلقائي) / عرض / حذف</p></span>
+        </button>
+
+        <button class="site-card" onclick="GalleryManager.open()">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></span>
+          <span><h3>معرض الصور والفيديو</h3><p>عنوان + وصف + رابط + قسم + ترتيب</p></span>
+        </button>
+
+        <button class="site-card" onclick="ShippingManager.open()">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span>
+          <span><h3>المحافظات والشحن</h3><p>محافظات + شركات شحن + فروع ومراكز</p></span>
+        </button>
+      </div>
+    </main>
+
+    <!-- SITE TEXT MODAL -->
+    <div id="siteTextModal" class="modal-backdrop">
+      <div class="modal-box max-w-3xl">
+        <div class="modal-head">
+          <h3><span class="h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><span id="siteTextTitle">تحرير النص</span></h3>
+          <button class="modal-close" onclick="SiteText.close()" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div class="modal-body">
+          <div class="hint" id="siteTextHint" style="margin-top:0"></div>
+          <textarea id="siteTextArea" class="input" dir="rtl" style="min-height:300px;font-family:inherit;line-height:1.8"></textarea>
+          <div class="hint" style="margin-top:8px">يُحفظ محلياً الآن، ثم يُرفع للجميع عند الضغط على "نشر التعديلات".</div>
+        </div>
+        <div class="modal-foot">
+          <button onclick="SiteText.close()" class="btn btn-ghost">إغلاق</button>
+          <button onclick="SiteText.save()" class="btn btn-primary">حفظ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SITE PAGES MODAL -->
+    <div id="sitePagesModal" class="modal-backdrop">
+      <div class="modal-box max-w-4xl">
+        <div class="modal-head">
+          <div>
+            <h3><span class="h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2Z"/><path d="M14 2v6h6"/></svg></span><span id="sitePagesTitle">إدارة الصفحات</span></h3>
+            <p id="sitePagesSub" style="font-size:12px;color:#64748b"></p>
+          </div>
+          <button class="modal-close" onclick="SitePages.close()" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div class="modal-body scrollbar flex-1">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <button onclick="SitePages.addNew()" class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> إضافة صفحة/قسم جديد</button>
+            <button onclick="SitePages.reload()" class="btn btn-ghost">تحديث القائمة</button>
+          </div>
+          <div id="sitePagesList" class="move-target-list"></div>
+        </div>
+        <div class="modal-foot"><button onclick="SitePages.close()" class="btn btn-ghost">إغلاق</button></div>
+      </div>
+    </div>
+
+    <!-- CUSTOMER PHOTOS MODAL -->
+    <div id="customerPhotosModal" class="modal-backdrop">
+      <div class="modal-box max-w-5xl">
+        <div class="modal-head">
+          <div>
+            <h3><span class="h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span>صور تقييمات العملاء</h3>
+            <p style="font-size:12px;color:#64748b">تُحفظ في مجلد customer_photo — تُحوَّل تلقائياً إلى WEBP مضغوطة.</p>
+          </div>
+          <button class="modal-close" onclick="CustomerPhotos.close()" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div class="modal-body scrollbar flex-1">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <label class="btn btn-primary" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg> رفع صور جديدة<input id="customerPhotosInput" type="file" accept="image/*" multiple style="display:none" onchange="CustomerPhotos.upload(this.files)"></label>
+            <span class="hint" id="customerPhotosStatus" style="margin:0"></span>
+          </div>
+          <div id="customerPhotosGrid" class="photo-grid" style="min-height:120px"></div>
+        </div>
+        <div class="modal-foot"><button onclick="CustomerPhotos.close()" class="btn btn-ghost">إغلاق</button></div>
+      </div>
+    </div>
+
+    <!-- GALLERY MODAL -->
+    <div id="galleryModal" class="modal-backdrop">
+      <div class="modal-box max-w-6xl">
+        <div class="modal-head">
+          <div>
+            <h3><span class="h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></span>معرض الصور والفيديو</h3>
+            <p style="font-size:12px;color:#64748b">إدارة عناصر قسم الصور وقسم الفيديوهات (عنوان + وصف + رابط + قسم + ترتيب).</p>
+          </div>
+          <button class="modal-close" onclick="GalleryManager.close()" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div class="modal-body scrollbar flex-1">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+            <button onclick="GalleryManager.switchType('photos')" id="galleryTabPhotos" class="btn btn-primary">الصور</button>
+            <button onclick="GalleryManager.switchType('videos')" id="galleryTabVideos" class="btn btn-ghost">الفيديوهات</button>
+            <span style="flex:1"></span>
+            <button onclick="GalleryManager.addItem()" class="btn btn-success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> إضافة عنصر</button>
+            <button onclick="GalleryManager.addCategory()" class="btn btn-soft">إضافة قسم</button>
+            <button onclick="GalleryManager.reload()" class="btn btn-ghost">تحديث</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <div class="side-search" style="flex:1;min-width:200px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="gallerySearch" type="text" placeholder="بحث بالعنوان أو الرابط..." oninput="GalleryManager.onSearch()" autocomplete="off"></div>
+            <select id="galleryFilter" class="input" style="max-width:200px" onchange="GalleryManager.onSearch()"></select>
+            <select id="gallerySortBy" class="input" style="max-width:170px" onchange="GalleryManager.onSearch()"><option value="order">الترتيب (order)</option><option value="title">العنوان</option><option value="new">الأحدث</option></select>
+          </div>
+          <div id="galleryEditor" style="display:none;border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:12px;background:#f8fafc">
+            <div id="galleryEditorTitle" style="font-weight:800;margin-bottom:8px">إضافة عنصر</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><label class="field-label">العنوان</label><input id="galTitle" class="input"></div>
+              <div><label class="field-label">القسم</label><select id="galCategory" class="input"></select></div>
+              <div><label class="field-label">الرابط (url)</label><input id="galUrl" class="input" dir="ltr" placeholder="https://... أو gallery/..."></div>
+              <div><label class="field-label">الترتيب</label><input id="galOrder" type="number" class="input" dir="ltr" value="0"></div>
+            </div>
+            <div style="margin-top:8px"><label class="field-label">الوصف</label><textarea id="galDesc" class="input" style="min-height:80px"></textarea></div>
+            <div style="margin-top:8px" id="galPhotoWrap">
+              <label class="field-label">رفع صورة (WEBP مضغوطة في مجلد gallery)</label>
+              <input id="galPhotoInput" type="file" accept="image/*" class="input file-input" onchange="GalleryManager.onPickPhoto(this.files)">
+              <div id="galPhotoPreview" class="hint" style="margin-top:6px"></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn btn-primary" onclick="GalleryManager.saveItem()">حفظ العنصر</button>
+              <button class="btn btn-ghost" onclick="GalleryManager.cancelItem()">إلغاء</button>
+            </div>
+          </div>
+          <div id="galleryStatus" class="hint" style="margin-top:0"></div>
+          <div id="galleryList"></div>
+        </div>
+        <div class="modal-foot"><button onclick="GalleryManager.close()" class="btn btn-ghost">إغلاق</button><div class="hint" style="margin:0">الحفظ محلي — ارفع بـ "نشر التعديلات".</div></div>
+      </div>
+    </div>
+
+    <!-- SHIPPING MODAL -->
+    <div id="shippingModal" class="modal-backdrop">
+      <div class="modal-box max-w-6xl">
+        <div class="modal-head">
+          <div>
+            <h3><span class="h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span>المحافظات وشركات الشحن والفروع</h3>
+            <p style="font-size:12px;color:#64748b">تُقرأ في صفحة إتمام الطلب: قائمة المحافظة، شركات الشحن، وفروع/مراكز الشحن.</p>
+          </div>
+          <button class="modal-close" onclick="ShippingManager.close()" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div class="modal-body scrollbar flex-1">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+            <button onclick="ShippingManager.switchTab('gov')" id="shipTabGov" class="btn btn-primary">المحافظات</button>
+            <button onclick="ShippingManager.switchTab('carriers')" id="shipTabCarriers" class="btn btn-ghost">شركات الشحن</button>
+            <button onclick="ShippingManager.switchTab('branches')" id="shipTabBranches" class="btn btn-ghost">الفروع ومراكز الشحن</button>
+          </div>
+          <div id="shippingBody"></div>
+        </div>
+        <div class="modal-foot"><button onclick="ShippingManager.close()" class="btn btn-ghost">إغلاق</button><div class="hint" style="margin:0">الحفظ محلي — ارفع بـ "نشر التعديلات".</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-backdrop">
+      <div class="modal-box max-w-lg">
+        <div class="modal-head">
+          <h3><span class="h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>إعدادات الصفحة</h3>
+          <button class="modal-close" onclick="App.closeSettings()" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div class="modal-body space-y-5">
+          <div class="set-group">
+            <div class="set-group-title"><span class="dot"></span>المزامنة المحلية (مجلد المشروع)</div>
+            <div class="hint" style="margin-top:0;margin-bottom:8px">اربط مجلد HJY-LAB-WEB المحلي ليتم كتابة كل تعديل فيه تلقائياً (نصوص + صور + CSV).</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="LocalSync.pickDir()" class="btn btn-ghost flex-1">ربط مجلد محلي</button>
+              <button onclick="LocalSync.clearDir()" class="btn btn-ghost flex-1">فك الارتباط</button>
+            </div>
+            <div id="localSyncStatus" class="text-xs font-bold mt-2 text-slate-500">غير مرتبط</div>
+            <div class="hint">يتطلب Chrome/Edge. ستُطلب إذن الوصول للمجلد مرة واحدة.</div>
+          </div>
+          <hr class="border-slate-200">
+          <div class="set-group">
+            <div class="set-group-title"><span class="dot"></span>بيانات GitHub</div>
+            <div style="margin-bottom:10px">
+              <label class="field-label">Token (GitHub)</label>
+              <div style="display:flex;gap:8px">
+                <input id="s_token" type="password" placeholder="ghp_xxxxxxxxxxxx" class="input font-mono" dir="ltr" style="flex:1">
+                <button onclick="App.importTokenFromFile()" class="btn btn-ghost" title="قراءة الرمز من token-github.txt">استيراد من الملف</button>
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <label class="field-label">Repo <span class="sub">(username/repo)</span></label>
+              <input id="s_repo" type="text" placeholder="username/HJY-LAB-WEB" class="input font-mono" dir="ltr">
+            </div>
+            <div>
+              <label class="field-label">Branch</label>
+              <input id="s_branch" type="text" value="main" class="input font-mono" dir="ltr">
+            </div>
+            <button onclick="App.testGithubConnection()" class="btn btn-ghost" style="width:100%;margin-top:10px">اختبار الاتصال</button>
+            <div id="githubTestResult" class="text-xs font-bold mt-2" style="min-height:16px"></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button onclick="App.closeSettings()" class="btn btn-ghost">إغلاق</button>
+          <button onclick="App.saveSettings()" class="btn btn-primary">حفظ الإعدادات</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRM DIALOG -->
+    <div id="confirmDialog" class="confirm-overlay">
+      <div class="confirm-box">
+        <div class="confirm-head">
+          <span class="h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+          <h3 id="confirmTitle">تأكيد الحذف</h3>
+        </div>
+        <div class="confirm-body">
+          <p id="confirmMsg">هل أنت متأكد من الحذف؟ هذه العملية لا ترجعية.</p>
+          <div id="confirmCheckWrap" class="checkrow" style="display:none;margin-top:12px"><input id="confirmCheck" type="checkbox" class="w-4 h-4"><span>أنا متأكد من الحذف</span></div>
+        </div>
+        <div class="confirm-foot">
+          <button id="confirmCancel" class="btn btn-ghost">إلغاء</button>
+          <button id="confirmOk" class="btn btn-danger">نعم، احذف</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMPT MODAL -->
+    <div id="promptModal" class="modal-backdrop">
+      <div class="modal-box max-w-sm">
+        <div class="modal-head">
+          <h3><span class="h-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><span id="promptTitle">أدخل القيمة</span></h3>
+          <button class="modal-close" onclick="promptModal.close()" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div class="modal-body"><input id="promptInput" type="text" class="input font-semibold" dir="rtl"></div>
+        <div class="modal-foot">
+          <button onclick="promptModal.close()" class="btn btn-ghost">إلغاء</button>
+          <button id="promptOk" class="btn btn-primary">موافق</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERT MODAL -->
+    <div id="alertModal" class="modal-backdrop">
+      <div class="modal-box max-w-md">
+        <div class="modal-head" style="background:#fff1f2;border-color:#fecdd3">
+          <h3 style="color:#be123c"><span class="h-ico" style="background:#ffe4e6;color:#e11d48"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>فشل في العملية</h3>
+          <button class="modal-close" onclick="closeAlert()" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div class="modal-body"><div id="alertBox" class="text-sm text-slate-700 font-semibold"></div></div>
+        <div class="modal-foot"><button onclick="closeAlert()" class="btn btn-danger">حسناً</button></div>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <button id="logFloatingBtn" class="log-float" onclick="openLogModal()" title="سجل العمليات">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+      <span id="logFloatBadge" class="log-float-badge"></span>
+    </button>
+    <div id="logModal" class="modal-backdrop">
+      <div class="modal-box max-w-2xl">
+        <div class="modal-head" style="background:#0f1115;color:#fff;border-color:#27272a">
+          <h3 style="color:#fff"><span class="h-ico" style="background:#27272a;color:#a5b4fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></span>سجل العمليات</h3>
+          <button class="modal-close" onclick="closeLogModal()" style="color:#9ca3af" title="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+        </div>
+        <div id="opLog" class="log-body log-body-lg"></div>
+      </div>
+    </div>
+
+    <div id="opLogInlineWrap" class="inline-log">
+      <div class="inline-log-header" onclick="toggleInlineLog()">
+        <span>سجل العمليات الأخيرة</span>
+        <span id="inlineLogToggle" class="chev"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+      </div>
+      <div id="opLogInline" class="inline-log-body"></div>
+    </div>
+
+    <div id="toast" class="toast">تم بنجاح</div>
+  </div><!-- /layout-main -->
+</div><!-- /layout -->
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+</script>
+<script src="js/admin.js?v=29"></script>
+</body>
+</html>

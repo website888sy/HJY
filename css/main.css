@@ -1658,3 +1658,48 @@
       .cat-sub-grid { width: 100%; }
       .cat-more-wrap { display: flex; justify-content: center; margin-top: 14px; }
       .cat-more-wrap .btn { font-weight: 800; }
+
+/* ============================================================
+   COMPANY BRANCHES PAGE (compact, pre-wrap safe)
+   ============================================================ */
+.branches-page, .branches-page * { white-space: normal; }
+.branches-page { display: grid; gap: 10px; }
+.branches-company-note {
+  background: #fffbeb; border: 1px solid #fcd34d; color: #92400e;
+  border-radius: 10px; padding: 9px 12px; font-size: 12.5px;
+  font-weight: 700; line-height: 1.7;
+}
+.branches-group {
+  border: 1px solid var(--border); border-radius: 11px;
+  background: #fff; overflow: hidden;
+}
+.branches-group > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center;
+  justify-content: space-between; gap: 8px; padding: 9px 12px;
+  background: var(--surface); color: var(--primary-3); font-weight: 900;
+  font-size: 12.5px; user-select: none;
+}
+.branches-group > summary::-webkit-details-marker { display: none; }
+.branches-group > summary::after { content: "▾"; font-size: 11px; color: var(--muted); transition: transform .15s; }
+.branches-group[open] > summary::after { transform: rotate(180deg); }
+.branches-gov { flex: 1; min-width: 0; }
+.branches-count {
+  flex: none; background: #fff; border: 1px solid var(--border);
+  border-radius: 999px; padding: 1px 8px; font-size: 10.5px;
+  color: var(--muted); font-weight: 800;
+}
+.branches-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px; padding: 8px;
+}
+.branch-item {
+  min-width: 0; border: 1px solid #eef2f7; border-radius: 8px;
+  padding: 6px 9px; background: #fff;
+}
+.branch-name { font-size: 12.5px; font-weight: 800; line-height: 1.6; color: var(--text); overflow-wrap: anywhere; }
+.branch-note { margin-top: 2px; font-size: 11.5px; line-height: 1.6; color: #b45309; font-weight: 700; overflow-wrap: anywhere; }
+.branches-empty { border: 1px dashed var(--border); border-radius: 10px; padding: 14px; text-align: center; color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.branches-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 2px; }
+@media (max-width: 560px) {
+  .branches-grid { grid-template-columns: 1fr; padding: 6px; }
+}

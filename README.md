@@ -5,7 +5,7 @@
 ## 🚀 التقنيات المستخدمة
 - **الواجهة الأمامية (Frontend):** HTML5, Tailwind CSS, Vanilla JS.
 - **إدارة البيانات:** ملفات CSV (عبر مكتبة PapaParse).
-- **الاستضافة والنشر (Hosting & CI/CD):** Cloudflare Pages للواجهة مع ربط مباشر بـ GitHub للتحديث التلقائي (Continuous Deployment).
+- **الاستضافة والنشر (Hosting & CI/CD):** GitHub Pages للواجهة مع ربط مباشر بـ GitHub للتحديث التلقائي. النسخة المنشورة حاليًا: https://website888sy.github.io/HJY/
 - **الواجهة الخلفية وقاعدة البيانات (Backend & DB):** Cloudflare Workers + D1 SQL Database (مخصصة لنظام تقييمات العملاء).
 - **معالجة الصور:** تقنية التحميل الكسول (Lazy Loading) باستخدام صور مصغرة `thumb_` وصيغ حديثة (WebP).
 - **الأمان:** Cloudflare Turnstile Captcha لحماية النماذج من البرمجيات الخبيثة.

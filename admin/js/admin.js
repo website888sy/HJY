@@ -122,12 +122,30 @@ const discountModal = {
     if (r) r(null);
   }
 };
-$('promptOk').addEventListener('click', () => promptModal.ok());
-$('promptInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') promptModal.ok(); });
-$('discountOk').addEventListener('click', () => discountModal.ok());
-$('discQty').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('discValue').focus(); });
-$('discValue').addEventListener('keydown', (e) => { if (e.key === 'Enter') discountModal.ok(); });
+if ($('promptOk')) $('promptOk').addEventListener('click', () => promptModal.ok());
+if ($('promptInput')) $('promptInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') promptModal.ok(); });
+if ($('discountOk')) $('discountOk').addEventListener('click', () => discountModal.ok());
+if ($('discQty')) $('discQty').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const dv = $('discValue'); if (dv) dv.focus(); } });
+if ($('discValue')) $('discValue').addEventListener('keydown', (e) => { if (e.key === 'Enter') discountModal.ok(); });
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+/* أدوات تنسيق النص: تُدرج العلامات التي يفهمها الموقع (**غامق** و RED//ملون//) */
+const TextTools = {
+  wrap(targetId, before, after = before) {
+    const el = document.getElementById(targetId);
+    if (!(el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement)) return;
+    const start = Number.isInteger(el.selectionStart) ? el.selectionStart : el.value.length;
+    const end = Number.isInteger(el.selectionEnd) ? el.selectionEnd : start;
+    const selected = el.value.slice(start, end) || 'نص';
+    const inserted = String(before) + selected + String(after);
+    el.value = el.value.slice(0, start) + inserted + el.value.slice(end);
+    const caret = start + String(before).length;
+    el.focus();
+    try { el.setSelectionRange(caret, caret + selected.length); } catch {}
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+};
+window.TextTools = TextTools;
 const nf = (n) => { const v = Number(n); if(isNaN(v)) return ''; return (Math.round(v*100)/100).toFixed(2).replace(/\.00$/,''); };
 
 /* ---- Monochrome SVG icons (fixed single color = currentColor) ---- */
@@ -170,11 +188,21 @@ function genPhotoCandidates(code, photoField, idx=0) {
       if (!list.includes(p)) list.push(p);
     }
   }
+  // صورة ثانوية -1 تُستخدم كبديل تلقائي عند غياب الأصلية
+  if (idx === 0 && code) {
+    const secBase = `${code}-1`;
+    for (const sub of PHOTO_SUBDIRS) {
+      for (const ext of PHOTO_EXTS) {
+        const p = sub ? `../photo/${sub}/${secBase}${ext}` : `../photo/${secBase}${ext}`;
+        if (!list.includes(p)) list.push(p);
+      }
+    }
+  }
   // photo/files.txt index: finds photos in any subfolder (including older uploads)
   try {
     const mp = App.photoIndexMap;
     if (mp instanceof Map && mp.size) {
-      const lookups = [String(code || '').toLowerCase(), String(targetName || '').toLowerCase()];
+      const lookups = [String(code || '').toLowerCase(), String(targetName || '').toLowerCase(), `${String(code || '').toLowerCase()}-1`, `${String(targetName || '').toLowerCase()}-1`];
       for (const k of lookups) {
         const arr = k ? mp.get(k) : null;
         if (!Array.isArray(arr)) continue;
@@ -300,6 +328,40 @@ const GH = {
       repo: localStorage.getItem('gh_repo') || '',
       branch: localStorage.getItem('gh_branch') || 'main',
     };
+  },
+  // Persistent settings file: admin/github-settings.json (via the local server).
+  // It travels with the project folder, so nothing is lost when moving to a new PC.
+  async loadFileSettings() {
+    if (!LocalSync.serverUrl) return false;
+    try {
+      const r = await fetch(LocalSync.serverUrl + '/settings', { cache: 'no-store' });
+      if (!r.ok) return false;
+      const j = await r.json();
+      const s = j && j.ok ? j.settings : null;
+      if (!s) return false;
+      if (s.token) localStorage.setItem('gh_token', String(s.token));
+      if (s.repo) localStorage.setItem('gh_repo', String(s.repo));
+      if (s.branch) localStorage.setItem('gh_branch', String(s.branch));
+      this._fileSettingsLoaded = true;
+      return true;
+    } catch { return false; }
+  },
+  async saveFileSettings() {
+    for (let i = 0; i < 10 && !LocalSync.serverUrl; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (!LocalSync.serverUrl) return false;
+    try {
+      const r = await fetch(LocalSync.serverUrl + '/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(this.getCfg()),
+        cache: 'no-store',
+      });
+      if (!r.ok) return false;
+      const j = await r.json();
+      return !!(j && j.ok);
+    } catch { return false; }
   },
   headers(tok=this.getCfg().token) {
     const h = {
@@ -461,6 +523,13 @@ const GH = {
         if (!ok2) ok = false;
       }
     } catch { ok = false; }
+    try {
+      const galList = await this.listFilesRecursive('gallery');
+      if (galList.length) {
+        const ok3 = await this.putFile('gallery/files.txt', galList.join('\n') + '\n', 'تحديث فهرس gallery/files.txt');
+        if (!ok3) ok = false;
+      }
+    } catch { ok = false; }
     return ok;
   }
 };
@@ -520,13 +589,27 @@ const App = {
   pendingPhotos: [],  // { name, base64, blob }
   photoUploads: [],   // pending GitHub uploads: { path, base64 }
   photoDeletions: [], // pending photo deletions: [ 'photo/X.webp', ... ]
+  fileDeletions: [],  // pending arbitrary file deletions: [ 'about/x.txt', 'QA/y.txt', ... ]
   photoIndexMap: null, // basename(lower) -> photo paths from photo/files.txt
   dirtyCount: 0,      // number of unpublished local edits
   csvFiles: [],       // list of CSV basenames in data-csv
+  remoteOnlyCsvFiles: new Set(), // CSV موجود على GitHub فقط (لا يوجد محلياً)
   csvStats: {},       // basename -> { count, loaded }
   globalIndex: null,  // Map lower(code) -> { code, name, price, about1, photo, csv }
   otherCsvDrafts: {}, // path -> csv text for CSVs modified by move/copy (pending publish)
   currentCsvDirty: false, // true when the currently-open CSV's products were edited
+  categoriesDirty: false, // true only when categories.csv was actually changed
+  subcatsDirty: false,    // true only when SubcategoriesA/B.csv were actually changed
+
+  /* ---- durable local drafts (all unpublished edits survive reload / app restart) ---- */
+  _pendingPersistKey: 'hjy_pending_v2',
+  _persistTimer: null,
+  _persistFailed: false,   // true when photo queue could not be persisted (storage quota)
+  _restoredPending: false, // a previous session's drafts were loaded on boot
+  _catsLoaded: false,      // categories.csv parsed into this.categories at least once
+  _subcatsLoaded: false,   // SubcategoriesA/B parsed into this.mainCats at least once
+  _catsPromise: null,
+  _subcatsPromise: null,
 
   collectPhotosForCode(code, photoField) {
     const paths = [];
@@ -544,6 +627,7 @@ const App = {
   /* ---------- CSV FILES LIST ---------- */
   async refreshCsvList() {
     const seen = new Set();
+    const localCsv = new Set();
     const add = (list) => {
       (Array.isArray(list) ? list : []).forEach(f => {
         let n = String(f || '').trim();
@@ -562,15 +646,33 @@ const App = {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dir: 'data-csv' }), cache: 'no-store'
         });
-        if (r.ok) { const j = await r.json(); if (Array.isArray(j.files)) add(j.files); }
+        if (r.ok) {
+          const j = await r.json();
+          if (Array.isArray(j.files)) {
+            add(j.files);
+            for (const f of j.files) localCsv.add(String(f || '').trim().toLowerCase());
+          }
+        }
       }
     } catch {}
-    // 2) the files.txt index
+    // 2) the files.txt index (محلي؛ يُستخدم أيضاً لتمييز ملفات GitHub فقط)
     const idx = await fetchTextRelatively('data-csv/files.txt');
-    if (idx) add(idx.split(/\r?\n/));
+    if (idx) {
+      const lines = idx.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+      add(lines);
+      for (const f of lines) localCsv.add(f.toLowerCase());
+    }
     // 3) the actual GitHub directory (catches files pushed to GitHub)
     const ghList = await GH.listFilesInDir('data-csv');
     add(ghList);
+    // ملفات موجودة على GitHub فقط: لا نطلبها من الخادم المحلي حتى لا تولّد 404
+    this.remoteOnlyCsvFiles = localCsv.size
+      ? new Set(
+          (Array.isArray(ghList) ? ghList : [])
+            .map((f) => String(f || '').trim().toLowerCase())
+            .filter((f) => f.endsWith('.csv') && !localCsv.has(f))
+        )
+      : new Set();
     // fallback if nothing found
     if (!seen.size) {
       ['cell-bms.csv','add.csv','aurd-elec.csv','e-bike-battery.csv','eva-prod.csv','hjy-code-remote-rx.csv','inverter.csv','our-prod.csv','qiachip-home-smart-eq.csv','remote-B.csv','rx.csv','smart-home-wifi.csv','smart-sensor-home.csv','solar-battery.csv','wifi-qiachip.csv','remote-A.csv','batt-acc.csv','home-smart-eq.csv','bike-charger.csv'].forEach(f => seen.add(f));
@@ -588,6 +690,11 @@ const App = {
 
   async getCsvText(path) {
     if (this.otherCsvDrafts && this.otherCsvDrafts[path]) return this.otherCsvDrafts[path];
+    const base = String(path || '').split('/').pop().toLowerCase();
+    if (String(path || '').startsWith('data-csv/') && this.remoteOnlyCsvFiles instanceof Set && this.remoteOnlyCsvFiles.has(base)) {
+      // موجود على GitHub فقط — تجنب طلب محلي سيفشل بـ 404
+      return await GH.getFile(path);
+    }
     let raw = await fetchTextRelatively(path);
     if (raw == null) raw = await GH.getFile(path);
     return raw;
@@ -625,6 +732,7 @@ const App = {
     if (LocalSync.isActive()) {
       try { const mf = await GH.getFile('photo/files.txt'); if (mf != null) await LocalSync.writeText('photo/files.txt', mf); } catch {}
       try { const cf = await GH.getFile('customer_photo/files.txt'); if (cf != null) await LocalSync.writeText('customer_photo/files.txt', cf); } catch {}
+      try { const gf = await GH.getFile('gallery/files.txt'); if (gf != null) await LocalSync.writeText('gallery/files.txt', gf); } catch {}
     }
     return ok;
   },
@@ -668,6 +776,7 @@ const App = {
     await this.updateCsvIndex(basename, 'remove');
     if (uniquePhotos.length) await this.syncPhotoManifests();
     delete this.otherCsvDrafts[path];
+    this.persistPendingNow();
     if (isCurrent) {
       this.currentCsv = ''; this.currentCsvBasename = '';
       this.products = [];
@@ -686,7 +795,7 @@ const App = {
     if (this.photoIndexMap == null) await this.loadPhotoIndex();
     if (!this.globalIndex) await this.buildGlobalIndex();
     if (!this.categories || !this.categories.some(c => c.name === 'رائج')) {
-      try { await this.loadCategories(); } catch {}
+      try { await this.ensureCategories(); } catch {}
     }
     const exact = new Set();
     const prefixes = [];
@@ -732,18 +841,46 @@ const App = {
     return unique;
   },
 
+  hasProductsUI() { return !!document.getElementById('workspace'); },
+
   init() {
     this.loadSettings();
     this.applyFontSize(localStorage.getItem('hjy_admin_font') || 'md');
+    // restore drafts from a previous session (survives closing/reopening the app)
+    const restored = this.restorePending();
     Sidebar.init();
-    this.refreshCsvList().then(() => { try { CatView.refresh(); } catch {} });
-    this.loadPhotoIndex();
+    if (this.hasProductsUI()) {
+      this.refreshCsvList().then(async () => {
+        try {
+          await this.ensureCategories();
+          await this.ensureSubcategories();
+          // re-open the file that had staged edits so the user sees them immediately
+          if (this.currentCsv && this.otherCsvDrafts[this.currentCsv]) {
+            await this.loadCsv(this.currentCsv);
+          }
+        } catch {}
+        try { CatView.refresh(); } catch {}
+      });
+      this.loadPhotoIndex();
+    }
     LocalSync.init();
     Products.applyPricesVisibility();
     Products.applyDensity();
     Sidebar.updateDefaultUI();
+    this._setupInstall();
+    if (restored) {
+      setTimeout(() => {
+        this._applyPublishState();
+        toast('تم استرجاع تعديلات محلية غير منشورة من جلسة سابقة', true);
+      }, 300);
+    }
+    // data is persisted to localStorage on every edit -> reload is safe. Warn only
+    // when queued photos could not be persisted (would be lost on reload).
     window.addEventListener('beforeunload', (e) => {
-      if (this.isDirty()) { e.preventDefault(); e.returnValue = ''; }
+      if (this.isDirty()) {
+        this.persistPendingNow();
+        if (this._persistFailed) { e.preventDefault(); e.returnValue = ''; }
+      }
     });
     document.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -762,20 +899,174 @@ const App = {
   },
 
   markDirty() {
-    this.dirtyCount++;
+    if (this.dirtyCount < 1) this.dirtyCount = 1;
+    try { this.stageDerivedFiles(); } catch (e) { console.error('stageDerivedFiles:', e); }
+    this._persistPendingSoon();
     this._applyPublishState();
   },
   resetDirty() {
     this.dirtyCount = 0;
     this._applyPublishState();
   },
+
+  /* ---------- DURABLE LOCAL STAGING (edit now, publish everything later) ---------- */
+  // Every unpublished edit is captured as a file draft (path -> full text) in
+  // this.otherCsvDrafts and mirrored to localStorage so it survives navigating
+  // between files/sections AND closing/reopening the admin page. "نشر التعديلات"
+  // then pushes all staged drafts to GitHub in one click.
+  stageDerivedFiles() {
+    // snapshot the currently-open products CSV whenever its rows are dirty
+    if (this.currentCsv && this.currentCsvDirty) {
+      this.otherCsvDrafts[this.currentCsv] = this.buildCsvFromProducts();
+    }
+    // keep category edits (categories.csv) as a staged draft ONLY when they changed
+    if (this.categoriesDirty && this.categories && this.categories.length) {
+      this.otherCsvDrafts['data/categories.csv'] = Categories.toCSV();
+    }
+    // keep subcategory edits (SubcategoriesA/B) as staged drafts ONLY when they changed
+    if (this.subcatsDirty && this.mainCats && this.mainCats.length) {
+      const subFiles = this.buildSubcategoryFiles();
+      this.otherCsvDrafts['data/SubcategoriesA.csv'] = subFiles.A;
+      this.otherCsvDrafts['data/SubcategoriesB.csv'] = subFiles.B;
+    }
+  },
+  pendingCount() {
+    return Object.keys(this.otherCsvDrafts || {}).length +
+      ((this.photoUploads && this.photoUploads.length) ? 1 : 0) +
+      ((this.photoDeletions && this.photoDeletions.length) ? 1 : 0) +
+      ((this.fileDeletions && this.fileDeletions.length) ? 1 : 0) +
+      (this._pendingRename ? 1 : 0);
+  },
+  _persistPendingSoon() {
+    clearTimeout(this._persistTimer);
+    this._persistTimer = setTimeout(() => { this._persistTimer = null; this.persistPendingNow(); }, 400);
+  },
+  persistPendingNow() {
+    try {
+      const payload = {
+        v: 2, savedAt: Date.now(),
+        currentCsv: this.currentCsv || '',
+        drafts: this.otherCsvDrafts || {},
+        photoUploads: (this.photoUploads || []).map(p => ({ path: p.path, base64: p.base64 })),
+        photoDeletions: (this.photoDeletions || []).slice(),
+        fileDeletions: (this.fileDeletions || []).slice(),
+        pendingRename: this._pendingRename || null
+      };
+      localStorage.setItem(this._pendingPersistKey, JSON.stringify(payload));
+      this._persistFailed = false;
+    } catch (e) {
+      // quota exceeded (usually a big queued photo) -> store drafts only, keep photos in RAM
+      try {
+        const payload = {
+          v: 2, savedAt: Date.now(),
+          currentCsv: this.currentCsv || '',
+          drafts: this.otherCsvDrafts || {},
+          photoUploads: [], photoDeletions: (this.photoDeletions || []).slice(),
+          fileDeletions: (this.fileDeletions || []).slice(),
+          pendingRename: this._pendingRename || null, photosOmitted: true
+        };
+        localStorage.setItem(this._pendingPersistKey, JSON.stringify(payload));
+        this._persistFailed = (this.photoUploads || []).length > 0;
+      } catch (e2) {
+        this._persistFailed = true;
+      }
+    }
+  },
+  restorePending() {
+    try {
+      const raw = localStorage.getItem(this._pendingPersistKey);
+      if (!raw) return 0;
+      const p = JSON.parse(raw);
+      if (!p || p.v !== 2) return 0;
+      this.otherCsvDrafts = (p.drafts && typeof p.drafts === 'object') ? p.drafts : {};
+      this.photoUploads = Array.isArray(p.photoUploads) ? p.photoUploads.filter(x => x && x.path) : [];
+      this.photoDeletions = Array.isArray(p.photoDeletions) ? p.photoDeletions : [];
+      this.fileDeletions = Array.isArray(p.fileDeletions) ? p.fileDeletions : [];
+      this._pendingRename = p.pendingRename || null;
+      this.dirtyCount = Object.keys(this.otherCsvDrafts).length ? 1 : 0;
+      this._persistFailed = !!p.photosOmitted && this.photoUploads.length > 0;
+      this._restoredPending = this.pendingCount() > 0;
+      if (p.currentCsv && this.otherCsvDrafts[p.currentCsv]) {
+        this.currentCsv = p.currentCsv;
+        this.currentCsvBasename = String(p.currentCsv).split('/').pop();
+      }
+      return this.pendingCount();
+    } catch { return 0; }
+  },
+  clearPendingLocal() {
+    this._pendingRename = null;
+    try { localStorage.removeItem(this._pendingPersistKey); } catch {}
+  },
   _applyPublishState() {
     const b = $('saveAllBtn');
     const badge = $('publishBadge');
-    const total = this.dirtyCount + Object.keys(this.otherCsvDrafts || {}).length +
-      (this.photoUploads && this.photoUploads.length ? 1 : 0) +
-      (this.photoDeletions && this.photoDeletions.length ? 1 : 0);
+    const total = this.pendingCount() || this.dirtyCount;
     if (b) { b.disabled = total === 0; if (badge) badge.textContent = total ? String(total) : ''; }
+    this.updatePendingBanner();
+  },
+  updatePendingBanner() {
+    const b = $('pendingBanner');
+    if (!b) return;
+    const count = Object.keys(this.otherCsvDrafts || {}).length;
+    const photoN = (this.photoUploads || []).length;
+    const delN = (this.photoDeletions || []).length;
+    const fileDelN = (this.fileDeletions || []).length;
+    const renameN = this._pendingRename ? 1 : 0;
+    if (!count && !photoN && !delN && !fileDelN && !renameN) { b.classList.add('hidden'); return; }
+    const parts = [];
+    if (count) parts.push(`${count} ملف`);
+    if (photoN) parts.push(`${photoN} صورة جديدة`);
+    if (delN) parts.push(`حذف ${delN} صورة`);
+    if (fileDelN) parts.push(`حذف ${fileDelN} ملف`);
+    if (renameN) parts.push('إعادة تسمية ملف');
+    const el = b.querySelector('.pending-banner-txt');
+    if (el) {
+      el.textContent = this._restoredPending
+        ? `تم استرجاع تعديلاتك المحلية من الجلسة السابقة (${parts.join('، ')}) — اضغط "نشر التعديلات" لرفعها كلها دفعة واحدة للجميع.`
+        : `لديك تعديلات محلية غير منشورة (${parts.join('، ')}) — تُحفظ تلقائياً حتى بعد إغلاق الصفحة. اضغط "نشر التعديلات" لرفعها للجميع.`;
+    }
+    b.classList.remove('hidden');
+  },
+  async discardPendingLocal() {
+    const n = this.pendingCount();
+    if (!n) { toast('لا توجد تعديلات محلية لتجاهلها', false); return; }
+    const ok = await confirmAsync('تجاهل التعديلات المحلية', `سيتم حذف التعديلات المحلية غير المنشورة نهائياً (${n} معلّقة) ولن تُرفع إلى GitHub.\n\nلا يمكن التراجع. هل تريد المتابعة؟`, 'نعم، تجاهل الكل', true);
+    if (!ok) return;
+    this.otherCsvDrafts = {};
+    this.photoUploads = [];
+    this.photoDeletions = [];
+    this.fileDeletions = [];
+    this._pendingRename = null;
+    this.currentCsvDirty = false;
+    this.categoriesDirty = false;
+    this.subcatsDirty = false;
+    this._restoredPending = false;
+    this.clearPendingLocal();
+    this.resetDirty();
+    if (this.currentCsv) { try { await this.loadCsv(this.currentCsv); } catch {} }
+    try { CatView.refresh(); } catch {}
+    toast('تم تجاهل التعديلات المحلية');
+    log('تم تجاهل كل التعديلات المحلية غير المنشورة', true);
+  },
+
+  /* ---- load-once helpers (so navigation never re-fetches over pending edits) ---- */
+  ensureCategories() {
+    if (this._catsLoaded) return Promise.resolve(this.categories);
+    if (!this._catsPromise) {
+      this._catsPromise = this.loadCategories()
+        .then(() => { this._catsLoaded = true; this._catsPromise = null; })
+        .catch(() => { this._catsPromise = null; });
+    }
+    return this._catsPromise;
+  },
+  ensureSubcategories() {
+    if (this._subcatsLoaded) return Promise.resolve(this.mainCats);
+    if (!this._subcatsPromise) {
+      this._subcatsPromise = this.loadSubcategories()
+        .then(() => { this._subcatsLoaded = true; this._subcatsPromise = null; })
+        .catch(() => { this._subcatsPromise = null; });
+    }
+    return this._subcatsPromise;
   },
 
   async loadPhotoIndex() {
@@ -799,23 +1090,34 @@ const App = {
   },
 
   isDirty() {
-    return this.dirtyCount > 0 || this.photoUploads.length > 0 || this.photoDeletions.length > 0 || Object.keys(this.otherCsvDrafts).length > 0;
+    return this.dirtyCount > 0 || this.pendingCount() > 0;
+  },
+
+  fillSettingsInputs() {
+    const c = GH.getCfg();
+    const t = $('s_token'); if (t) t.value = c.token;
+    const r = $('s_repo'); if (r) r.value = c.repo;
+    const b = $('s_branch'); if (b) b.value = c.branch;
   },
 
   loadSettings() {
-    const c = GH.getCfg();
-    $('s_token').value = c.token;
-    $('s_repo').value = c.repo;
-    $('s_branch').value = c.branch;
-    this.tryAutoLoadToken();
+    this.fillSettingsInputs();
+    this._loadSettingsFromSources();
+  },
+
+  async _loadSettingsFromSources() {
+    const fromFile = await GH.loadFileSettings();
+    if (!fromFile) await this.tryAutoLoadToken();
+    this.fillSettingsInputs();
   },
 
   async tryAutoLoadToken() {
+    if (GH._fileSettingsLoaded) return;
     try {
       const raw = await fetchTextRelatively('token-github.txt');
       if (raw) {
         const t = String(raw).trim();
-        if (t && /^[A-Za-z0-9_]{20,}$/.test(t)) {
+        if (t && /^[A-Za-z0-9_]{20,}$/.test(t) && !GH._fileSettingsLoaded) {
           if (localStorage.getItem('gh_token') !== t) {
             localStorage.setItem('gh_token', t);
             if ($('s_token')) $('s_token').value = t;
@@ -835,12 +1137,53 @@ const App = {
     toast('تم استيراد الرمز من الملف — اضغط حفظ الإعدادات');
   },
   openSettings() { $('settingsModal').classList.add('open'); this.loadSettings(); this.applyFontSize(localStorage.getItem('hjy_admin_font') || 'md', true); Products.applyDensity(); Products.updatePricesToggleUI(); Sidebar.updateDefaultUI(); },
-  closeSettings() { $('settingsModal').classList.remove('open'); },
-  saveSettings() {
+  closeSettings() { $('settingsModal').classList.remove('open'); try { if (window.AdminTabs) AdminTabs.setActive('products'); } catch {} },
+
+  /* ---------- INSTALL AS PWA APP (opens outside the browser) ---------- */
+  _setupInstall() {
+    try {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window._hjyInstallPrompt = e;
+        const ib = $('installAppBtn');
+        if (ib && !window.matchMedia('(display-mode: standalone)').matches) ib.style.display = 'inline-flex';
+      });
+      window.addEventListener('appinstalled', () => {
+        window._hjyInstallPrompt = null;
+        const ib = $('installAppBtn');
+        if (ib) ib.style.display = 'none';
+        toast('تم تثبيت التطبيق بنجاح ✓ — ستجده الآن في قائمة ابدأ وسطح المكتب');
+      });
+    } catch {}
+  },
+  async installAsApp() {
+    const promptEvt = window._hjyInstallPrompt;
+    const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+    if (isStandalone) { toast('التطبيق يعمل الآن كنافذة مستقلة ✓'); return; }
+    if (promptEvt && promptEvt.prompt) {
+      try {
+        promptEvt.prompt();
+        await promptEvt.userChoice;
+        window._hjyInstallPrompt = null;
+        const ib = $('installAppBtn');
+        if (ib) ib.style.display = 'none';
+      } catch {}
+      return;
+    }
+    // PWA install not available yet (e.g. needs a secure context / first visit)
+    const secure = location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname);
+    if (!secure) {
+      toast('لتفعيل التثبيت افتح اللوحة عبر https أو الخادم المحلي (admin\\start_admin.bat)', false);
+      return;
+    }
+    alertFailure('ظهور زر "تثبيت" يتطلب أن تزور اللوحة عبر خادم محلي أو https.\n\nمن متصفح Chrome/Edge: اضغط أيقونة التثبيت (⤓) في شريط العنوان، أو من القائمة ⋮ → تثبيت التطبيق → تثبيت.\n\nبعد التثبيت ستفتح اللوحة كنافذة تطبيق مستقلة من سطح المكتب أو قائمة ابدأ.');
+  },
+  async saveSettings() {
     localStorage.setItem('gh_token', $('s_token').value.trim());
     localStorage.setItem('gh_repo', $('s_repo').value.trim());
     localStorage.setItem('gh_branch', $('s_branch').value.trim());
-    toast('تم حفظ الإعدادات');
+    const saved = await GH.saveFileSettings();
+    toast(saved ? 'تم حفظ الإعدادات داخل مجلد المشروع ✓' : 'تم حفظ الإعدادات في المتصفح');
     this.closeSettings();
     this.populateCsvSelector();
   },
@@ -849,6 +1192,7 @@ const App = {
     localStorage.setItem('gh_token', $('s_token').value.trim());
     localStorage.setItem('gh_repo', $('s_repo').value.trim());
     localStorage.setItem('gh_branch', $('s_branch').value.trim());
+    await GH.saveFileSettings();
     const box = $('githubTestResult');
     if (box) { box.textContent = 'جارٍ فحص الاتصال...'; box.style.color = '#475569'; }
     const res = await GH.testConnection();
@@ -876,6 +1220,7 @@ const App = {
 
   async populateCsvSelector() {
     const sel = $('csvSelector');
+    if (!sel) return;
     const files = (this.csvFiles && this.csvFiles.length) ? this.csvFiles : [];
     sel.innerHTML = '<option value="">-- اختر ملف المنتجات CSV للبدء --</option>' +
       files.map(f => `<option value="data-csv/${f}">${esc(f)}</option>`).join('');
@@ -892,6 +1237,17 @@ const App = {
 
   async reloadCurrentCsv() {
     if (!this.currentCsv) { toast('اختر ملفاً أولاً', false); return; }
+    // If this file has staged (unpublished) local edits, reloading from the source
+    // discards ONLY those edits for this file.
+    if (this.otherCsvDrafts && this.otherCsvDrafts[this.currentCsv]) {
+      const ok = await confirmAsync('إعادة تحميل من المصدر',
+        'يوجد تعديلات محلية غير منشورة لهذا الملف. إعادة التحميل ستتجاهل تعديلات هذا الملف فقط (تبقى باقي تعديلاتك كما هي).\n\nهل تريد المتابعة؟',
+        'نعم، تجاهل محلي هذا الملف');
+      if (!ok) return;
+      delete this.otherCsvDrafts[this.currentCsv];
+      this.currentCsvDirty = false;
+      this.persistPendingNow();
+    }
     toast('جاري إعادة تحميل الملف...');
     await this.loadCsv(this.currentCsv);
   },
@@ -924,7 +1280,20 @@ const App = {
     if (path && this.currentCsv && path !== this.currentCsv && this.currentCsvDirty && this.products.length) {
       this.otherCsvDrafts[this.currentCsv] = this.buildCsvFromProducts();
     }
-    if (path) { this.currentCsv = path; this.currentCsvBasename = path.split('/').pop(); if (sel.value !== path) sel.value = path; this.currentCsvDirty = false; }
+    if (path) {
+      this.currentCsv = path;
+      this.currentCsvBasename = path.split('/').pop();
+      if (sel && sel.value !== path) sel.value = path;
+      this.currentCsvDirty = false;
+      // clear the previous file's products so a failed load can never be staged/published
+      this.products = [];
+      try { if ($('productsTableBody')) $('productsTableBody').innerHTML = ''; } catch {}
+    }
+    // a manually-chosen file replaces any staged draft of that same path
+    if (manualText && path && this.otherCsvDrafts[path]) {
+      delete this.otherCsvDrafts[path];
+      this.persistPendingNow();
+    }
     let raw = manualText;
     let rawSource = '';
     if (!raw && path && this.otherCsvDrafts[path]) {
@@ -977,8 +1346,10 @@ const App = {
     $('welcomeState').classList.add('hidden');
     $('workspace').classList.remove('hidden');
     this.resetDirty();
-    await this.loadCategories();
-    if (!this.mainCats || this.mainCats.length === 0) await this.loadSubcategories();
+    // Load categories/subcategories only when not yet in memory — this is what keeps
+    // pending category edits intact while the user navigates between CSV files/sections.
+    await this.ensureCategories();
+    await this.ensureSubcategories();
     Products.renderTable();
     // selection belongs to a single file — clear it when switching
     Products.selected = new Set();
@@ -1053,11 +1424,19 @@ const App = {
     }
     sel.value = this.currentCsv;
     this._pendingRename = { from: oldPath, to: this.currentCsv };
-    toast('تم تغيير الاسم. اضغط "حفظ ونشر" للتنفيذ');
+    // any staged draft of the old path moves under the new path (products live in RAM now)
+    if (this.otherCsvDrafts[oldPath]) delete this.otherCsvDrafts[oldPath];
+    this.currentCsvDirty = true;
+    this.markDirty();
+    this.persistPendingNow();
+    toast('تم تغيير الاسم محلياً — اضغط "نشر التعديلات" للتنفيذ (حذف القديم + رفع الجديد)');
   },
 
-  async loadCategories() {
-    let raw = await fetchTextRelatively('data/categories.csv');
+  async loadCategories(preferRemote = false) {
+    let raw = null;
+    if (preferRemote) raw = await GH.getFile('data/categories.csv');
+    else if (this.otherCsvDrafts && this.otherCsvDrafts['data/categories.csv']) raw = this.otherCsvDrafts['data/categories.csv'];
+    if (!raw) raw = await fetchTextRelatively('data/categories.csv');
     if (!raw) raw = await GH.getFile('data/categories.csv');
     const fixedNames = ['منتهي كمية', 'رائج', 'صفحة رئيسية'];
     const cleanHeader = (s) => String(s ?? '').replace(/^\uFEFF/, '').trim();
@@ -1107,6 +1486,7 @@ const App = {
     };
     const rowsA = parseGrid(rawA);
     const rowsB = parseGrid(rawB);
+    const mainByName = new Map();
     if (rowsA.length) {
       const width = Math.max(...rowsA.map(r => r.length), 0);
       for (let c = 0; c < width; c++) {
@@ -1117,10 +1497,18 @@ const App = {
           const s = String(rowsA[r]?.[c] ?? '').trim();
           if (s && !subs.includes(s)) subs.push(s);
         }
-        this.mainCats.push({ name, subs: subs.map(s => ({ name: s, codes: [] })) });
+        // dedupe main categories that appear more than once (corrupted/duplicated columns)
+        if (!mainByName.has(name)) {
+          mainByName.set(name, { name, subs });
+        } else {
+          const existing = mainByName.get(name);
+          for (const s of subs) if (!existing.subs.includes(s)) existing.subs.push(s);
+        }
       }
     }
-    // attach codes from B (sub name -> codes)
+    this.mainCats = Array.from(mainByName.values())
+      .map(m => ({ name: m.name, subs: m.subs.map(s => ({ name: s, codes: [] })) }));
+    // attach codes from B (sub name -> codes); merge duplicate sub columns
     const subCodes = {};
     if (rowsB.length) {
       const width = Math.max(...rowsB.map(r => r.length), 0);
@@ -1130,9 +1518,10 @@ const App = {
         const codes = [];
         for (let r = 1; r < rowsB.length; r++) {
           const v = String(rowsB[r]?.[c] ?? '').trim();
-          if (v) codes.push(v);
+          if (v && !codes.includes(v)) codes.push(v);
         }
-        subCodes[sname] = codes;
+        subCodes[sname] = subCodes[sname] || [];
+        for (const v of codes) if (!subCodes[sname].includes(v)) subCodes[sname].push(v);
       }
     }
     for (const m of this.mainCats) {
@@ -1290,12 +1679,17 @@ const App = {
   async _doPublish(includeManifests) {
     const cfg = GH.getCfg();
     if (!cfg.token || !cfg.repo) { toast('اضبط إعدادات GitHub أولاً حتى تُحفظ التعديلات', false); App.openSettings(); log('مطلوب ضبط إعدادات GitHub أولاً', false); return false; }
-    if (!this.currentCsv) { toast('اختر ملف CSV أولاً', false); log('لم يُنشر: لا يوجد ملف CSV محدد', false); return false; }
+    // capture the current open file + derived files (categories / subcategories) as drafts
+    try { this.stageDerivedFiles(); } catch {}
+    const totalPending = this.pendingCount();
+    if (!totalPending && !this.currentCsvDirty) { toast('لا توجد تعديلات غير منشورة للنشر', false); log('لا توجد تعديلات للنشر', false); return false; }
+
     toast('جاري حفظ التعديلات ونشرها...');
     log('بدء نشر التعديلات...', true);
-    const pendingPhotos = this.photoUploads.slice();
-    const photosChanged = pendingPhotos.length > 0 || this.photoDeletions.length > 0;
-    // upload pending photos first (they were queued on save)
+    const pendingPhotos = (this.photoUploads || []).slice();
+    const photosChanged = pendingPhotos.length > 0 || (this.photoDeletions || []).length > 0;
+
+    // 1) upload queued photos first (they were queued on save)
     if (this.photoUploads.length) {
       let okP = 0, failP = 0;
       for (const ph of this.photoUploads.slice()) {
@@ -1311,25 +1705,55 @@ const App = {
       if (failP) log(`رُفعت ${okP} صورة وفشل ${failP}`, failP === 0);
       else if (okP) log(`تم رفع ${okP} صورة`, true);
     }
-    const csv = this.buildCsvFromProducts();
-    const okP = await GH.putFile(this.currentCsv, csv, `تحديث المنتجات: ${this.currentCsvBasename}`);
-    if (!okP) { log('توقف النشر بسبب فشل رفع CSV المنتجات', false, true); return false; }
-    const catsCSV = Categories.toCSV();
-    const okC = await GH.putFile('data/categories.csv', catsCSV, 'تحديث categories.csv');
-    if (!okC) log('فشل نشر categories.csv', false, true);
-    // publish the subcategory structure (SubcategoriesA.csv + SubcategoriesB.csv)
-    try {
-      const subFiles = this.buildSubcategoryFiles();
-      await GH.putFile('data/SubcategoriesA.csv', subFiles.A, 'تحديث الفئات الفرعية SubcategoriesA.csv');
-      await GH.putFile('data/SubcategoriesB.csv', subFiles.B, 'تحديث الفئات الفرعية SubcategoriesB.csv');
-      if (LocalSync.isActive()) {
-        await LocalSync.writeText('data/SubcategoriesA.csv', subFiles.A);
-        await LocalSync.writeText('data/SubcategoriesB.csv', subFiles.B);
-      }
-    } catch {}
-    await this.syncLegacyFiles();
 
-    // handle pending rename (old file deleted + index updated)
+    // 2) publish EVERY staged file in one pass: product CSVs + categories.csv +
+    //    SubcategoriesA/B. Each file is removed from the draft list only on success,
+    //    so a failed file stays saved locally for the next attempt.
+    const draftPaths = Object.keys(this.otherCsvDrafts || {});
+    let okD = 0, failD = 0, catsPublished = false;
+    for (const path of draftPaths) {
+      const txt = this.otherCsvDrafts[path];
+      // SAFETY: never silently overwrite a non-empty product CSV with a header-only file
+      if (/^data-csv\/.+\.csv$/i.test(path)) {
+        const newRows = String(txt).split(/\r?\n/).filter(l => l.trim()).length;
+        if (newRows <= 1) {
+          let cur = await fetchTextRelatively(path);
+          if (cur == null) cur = await GH.getFile(path);
+          const curRows = cur ? String(cur).split(/\r?\n/).filter(l => l.trim()).length : 0;
+          if (curRows > 1) {
+            const proceed = await confirmAsync(
+              'تحذير: ملف منتجات سيصبح فارغاً',
+              `الملف "${path.split('/').pop()}" سيُنشر فارغاً (0 منتج)، بينما النسخة الحالية تحتوي ${curRows - 1} منتج.\n\nهل أنت متأكد؟ (هذا يحذف كل منتجات هذا الملف)`,
+              'نعم، أفرغه'
+            );
+            if (!proceed) {
+              delete this.otherCsvDrafts[path];
+              log(`حماية البيانات: أُلغي نشر ملف فارغ ${path}`, false);
+              continue;
+            }
+          }
+        }
+      }
+      const ok = await GH.putFile(path, txt, `تحديث: ${path.split('/').pop()}`);
+      if (ok) {
+        okD++;
+        delete this.otherCsvDrafts[path];
+        if (LocalSync.isActive()) await LocalSync.writeText(path, txt);
+        if (path === 'data/categories.csv') catsPublished = true;
+      } else {
+        failD++;
+        log(`فشل نشر ${path} — سيبقى محفوظاً محلياً`, false);
+      }
+    }
+    if (draftPaths.length) {
+      if (failD) log(`نشر الملفات: نجح ${okD} فشل ${failD}`, failD === 0);
+      else if (okD) log(`تم نشر ${okD} ملف`, true);
+    }
+
+    // 3) legacy files (out_products.csv / hot-price.csv / home.txt) derive from categories.csv
+    if (catsPublished) await this.syncLegacyFiles();
+
+    // 4) handle pending rename (delete the old path + update data-csv/files.txt index)
     if (this._pendingRename) {
       const oldPath = this._pendingRename.from;
       const oldName = oldPath.split('/').pop();
@@ -1359,23 +1783,7 @@ const App = {
       log(`تمت إعادة تسمية الملف: ${oldName} → ${this.currentCsvBasename}`, true);
     }
 
-    // publish CSVs modified by move/copy (other than the current one)
-    const draftPaths = Object.keys(this.otherCsvDrafts || {});
-    if (draftPaths.length) {
-      let okD = 0, failD = 0;
-      for (const path of draftPaths) {
-        if (path === this.currentCsv) continue;
-        const txt = this.otherCsvDrafts[path];
-        const ok = await GH.putFile(path, txt, `تحديث المنتجات: ${path.split('/').pop()}`);
-        if (ok) { okD++; if (LocalSync.isActive()) await LocalSync.writeText(path, txt); }
-        else failD++;
-      }
-      this.otherCsvDrafts = {};
-      if (failD) log(`نشر الملفات الأخرى: نجح ${okD} فشل ${failD}`, failD === 0);
-      else if (okD) log(`تم نشر ${okD} ملف CSV إضافي (نقل/نسخ)`, true);
-    }
-
-    // delete queued photos (product deletion) from GitHub + local
+    // 5) delete queued photos (product deletion) from GitHub + local
     if (this.photoDeletions.length) {
       let delOk = 0, delFail = 0;
       for (const path of this.photoDeletions.slice()) {
@@ -1386,30 +1794,60 @@ const App = {
       }
       if (delOk) log(`تم حذف ${delOk} صورة من GitHub` + (delFail ? `، فشل ${delFail}` : ''), delFail === 0);
     }
-    // regenerate photo/customer_photo manifests ONLY if photos actually changed
+    // 5b) delete queued arbitrary files (about/QA pages ...) from GitHub + local
+    if ((this.fileDeletions || []).length) {
+      let fOk = 0;
+      for (const path of this.fileDeletions.slice()) {
+        const ok = await GH.deleteFile(path);
+        if (ok) fOk++;
+        if (LocalSync.isActive()) await LocalSync.deleteFile(path);
+        const i = this.fileDeletions.indexOf(path); if (i >= 0) this.fileDeletions.splice(i, 1);
+      }
+      log(`تم حذف ${fOk} ملف من GitHub`, true);
+    }
+    // 6) regenerate photo/customer_photo manifests ONLY if photos actually changed
     if (photosChanged) await GH.regenerateManifests();
-    // reload categories from GitHub so the admin always reflects the latest state
-    try { await this.loadCategories(); } catch {}
-    this.resetDirty();
-    this.currentCsvDirty = false;
-    // refresh counts / sidebar after publish
-    ProductData.refresh();
-    CsvSidebar.render();
-    // local sync: write the same changes into the local project folder (auto server or linked folder)
+    // 7) local sync: write the same changes into the local project folder (server or linked folder)
+    //    NOTE: must run BEFORE reloading categories, otherwise the stale local categories.csv
+    //    would be reloaded first and syncAll() would overwrite the local file with it again.
     if (LocalSync.isActive()) {
       if (photosChanged) {
         try { const mf = await GH.getFile('photo/files.txt'); if (mf != null) await LocalSync.writeText('photo/files.txt', mf); } catch {}
         try { const cf = await GH.getFile('customer_photo/files.txt'); if (cf != null) await LocalSync.writeText('customer_photo/files.txt', cf); } catch {}
+        try { const gf = await GH.getFile('gallery/files.txt'); if (gf != null) await LocalSync.writeText('gallery/files.txt', gf); } catch {}
       }
       await LocalSync.syncAll(pendingPhotos);
     }
-    toast('تم نشر التعديلات بنجاح');
-    log('تم نشر التعديلات بنجاح ✓', true);
-    return true;
+    // 8) reload categories/subcategories so the admin reflects what was published
+    //    (drafts-first: if a file failed it stays as a local draft and is re-applied)
+    try {
+      this._catsLoaded = false;
+      const catStillPending = !!(this.otherCsvDrafts && this.otherCsvDrafts['data/categories.csv']);
+      await this.loadCategories(!catStillPending);
+      this._catsLoaded = true;
+      this._subcatsLoaded = false;
+      await this.loadSubcategories();
+      this._subcatsLoaded = true;
+    } catch {}
+    this.resetDirty();
+    this.currentCsvDirty = false;
+    this.categoriesDirty = false;
+    this.subcatsDirty = false;
+    this._restoredPending = false;
+    // refresh counts / sidebar after publish
+    ProductData.refresh();
+    CsvSidebar.render();
+    try { CatView.refresh(); } catch {}
+    // keep anything that failed saved locally, otherwise clear the durable store
+    if (this.pendingCount() > 0) this.persistPendingNow(); else this.clearPendingLocal();
+    const hadFails = failD > 0;
+    toast(hadFails ? `تم نشر التعديلات (نجح ${okD}، فشل ${failD} — تبقّت محفوظة محلياً)` : 'تم نشر التعديلات بنجاح ✓');
+    log(hadFails ? `اكتمل النشر مع أخطاء: نجح ${okD} فشل ${failD}` : 'تم نشر التعديلات بنجاح ✓', !hadFails);
+    return !hadFails;
   },
 
   openCategoriesManager() {
-    this.loadCategories().then(() => { Categories.render(); $('categoriesModal').classList.add('open'); try { CatView.refresh(); } catch {} });
+    this.ensureCategories().then(() => { Categories.render(); $('categoriesModal').classList.add('open'); try { CatView.refresh(); } catch {} });
   },
 
   /* ---------- PULL FROM GITHUB → LOCAL ----------
@@ -1460,12 +1898,13 @@ const App = {
     // 2) photos: only the ones missing locally
     const photoPaths = await GH.listFilesRecursive('photo');
     const custPaths = await GH.listFilesRecursive('customer_photo');
-    const allPhotos = [...photoPaths, ...custPaths];
+    const galPaths = await GH.listFilesRecursive('gallery');
+    const allPhotos = [...photoPaths, ...custPaths, ...galPaths];
     let localExists = {};
     try { localExists = (await LocalSync.existsBatch(allPhotos)) || {}; } catch {}
     const missingPhotos = allPhotos.filter(p => !localExists[p]);
     // also pull the photo index manifests (needed by the site + admin photo lookup)
-    textPaths.push('photo/files.txt', 'customer_photo/files.txt');
+    textPaths.push('photo/files.txt', 'customer_photo/files.txt', 'gallery/files.txt');
 
     log(`سحب نصي: ${textPaths.length} ملف | صور مفقودة محلياً: ${missingPhotos.length}`, true);
 
@@ -1602,10 +2041,10 @@ const CatView = {
   subExpanded: new Set(),   // subcategory names that are open
   loaded: false,
   async refresh(force = false) {
-    if (!App.categories.length || !App.categories.some(c => c.name === 'رائج') || force) {
-      try { await App.loadCategories(); } catch {}
-    }
-    try { await App.loadSubcategories(); } catch {}
+    try {
+      await App.ensureCategories();
+      await App.ensureSubcategories();
+    } catch {}
     if (!App.globalIndex) await App.buildGlobalIndex();
     this.render();
   },
@@ -2075,6 +2514,9 @@ const LocalSync = {
           if (j && j.ok) {
             this.serverUrl = u;
             this.serverMode = true;
+            try {
+              if (await GH.loadFileSettings()) App.fillSettingsInputs();
+            } catch {}
             this.updateStatus();
             return;
           }
@@ -2233,18 +2675,23 @@ const LocalSync = {
     const files = [];
     if (App.currentCsv) files.push({ path: App.currentCsv, content: App.buildCsvFromProducts() });
     for (const [path, txt] of Object.entries(App.otherCsvDrafts || {})) {
-      if (path !== App.currentCsv) files.push({ path, content: txt });
+      // data/ files (categories + SubcategoriesA/B + legacy) are re-derived below
+      if (path !== App.currentCsv && !String(path).startsWith('data/')) files.push({ path, content: txt });
     }
-    files.push({ path: 'data/categories.csv', content: Categories.toCSV() });
-    try {
-      const subFiles = App.buildSubcategoryFiles();
-      files.push({ path: 'data/SubcategoriesA.csv', content: subFiles.A });
-      files.push({ path: 'data/SubcategoriesB.csv', content: subFiles.B });
-    } catch {}
-    const col = (name) => (App.categories.find(c => c.name === name)?.codes || []);
-    files.push({ path: 'data/out_products.csv', content: col('منتهي كمية').join('\n') + '\n' });
-    files.push({ path: 'data/hot-price.csv', content: col('رائج').join('\n') + '\n' });
-    files.push({ path: 'data/home.txt', content: col('صفحة رئيسية').join('\n') + '\n' });
+    // only (re)write the category-derived files when categories are actually loaded
+    // (prevents clobbering them with empty content when publishing from the site page)
+    if (App.categories && App.categories.length) {
+      files.push({ path: 'data/categories.csv', content: Categories.toCSV() });
+      try {
+        const subFiles = App.buildSubcategoryFiles();
+        files.push({ path: 'data/SubcategoriesA.csv', content: subFiles.A });
+        files.push({ path: 'data/SubcategoriesB.csv', content: subFiles.B });
+      } catch {}
+      const col = (name) => (App.categories.find(c => c.name === name)?.codes || []);
+      files.push({ path: 'data/out_products.csv', content: col('منتهي كمية').join('\n') + '\n' });
+      files.push({ path: 'data/hot-price.csv', content: col('رائج').join('\n') + '\n' });
+      files.push({ path: 'data/home.txt', content: col('صفحة رئيسية').join('\n') + '\n' });
+    }
     for (const ph of (pendingPhotos || [])) files.push({ path: ph.path, base64: ph.base64 });
     let n = 0, fail = 0;
     for (const f of files) {
@@ -2303,12 +2750,16 @@ const Categories = {
     if (!cols[ci]) return;
     // Trim empty trailing cells live
     cols[ci].codes[ri] = e.target.value;
+    App.categoriesDirty = true;
+    App.markDirty();
   },
 
   async addCategoryColumn() {
     const name = await promptModal.open('اسم الفئة الجديدة (مثل: بطاريات ليثيوم):', '');
     if (!name || !name.trim()) return;
     App.categories.push({ name: name.trim(), codes: [], fixed: false });
+    App.categoriesDirty = true;
+    App.markDirty();
     this.render();
   },
 
@@ -2318,6 +2769,8 @@ const Categories = {
     const n = await promptModal.open('اسم جديد للفئة:', c.name);
     if (!n || !n.trim()) return;
     c.name = n.trim();
+    App.categoriesDirty = true;
+    App.markDirty();
     this.render();
   },
 
@@ -2327,6 +2780,8 @@ const Categories = {
     const ok = await confirmAsync('حذف فئة', `هل تريد حذف الفئة "${c.name}" كاملاً مع كل الأكواد التي تحتها؟`, 'حذف');
     if (!ok) return;
     App.categories.splice(i, 1);
+    App.categoriesDirty = true;
+    App.markDirty();
     this.render();
   },
 
@@ -2336,13 +2791,14 @@ const Categories = {
       while (c.codes.length && !String(c.codes[c.codes.length-1]).trim()) c.codes.pop();
     });
     this.close();
+    App.categoriesDirty = true;
     App.markDirty();
     try { CatView.refresh(); } catch {}
     toast('تم حفظ الفئات محلياً — اضغط "نشر التعديلات" لنشرها');
     log('تم حفظ الفئات محلياً (بانتظار النشر)', true);
   },
 
-  close() { $('categoriesModal').classList.remove('open'); },
+  close() { $('categoriesModal').classList.remove('open'); try { if (window.AdminTabs) AdminTabs.setActive('products'); } catch {} },
 
   toCSV() {
     // Clean
@@ -2365,11 +2821,11 @@ const Categories = {
 const SubCat = {
   expanded: new Set(),
   async open() {
-    await App.loadSubcategories();
+    await App.ensureSubcategories();
     $('subCatsModal').classList.add('open');
     this.render();
   },
-  close() { $('subCatsModal').classList.remove('open'); },
+  close() { $('subCatsModal').classList.remove('open'); try { if (window.AdminTabs) AdminTabs.setActive('products'); } catch {} },
   render() {
     const box = $('subCatsList');
     if (!box) return;
@@ -2412,15 +2868,20 @@ const SubCat = {
   onCodesInput(mi, si, val) {
     const s = App.mainCats[mi]?.subs?.[si]; if (!s) return;
     s.codes = String(val || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    App.subcatsDirty = true;
+    App.markDirty();
   },
   async addMain() {
     const name = await promptModal.open('اسم الفئة الأساسية الجديدة:', '');
     if (!name || !name.trim()) return;
     App.mainCats.push({ name: name.trim(), subs: [] });
+    App.subcatsDirty = true;
+    App.markDirty();
     this.render();
   },
   async renameMain(mi, val) {
     const m = App.mainCats[mi]; if (m && val) m.name = String(val).trim();
+    if (m && val) { App.subcatsDirty = true; App.markDirty(); }
   },
   async deleteMain(mi) {
     const m = App.mainCats[mi]; if (!m) return;
@@ -2428,6 +2889,8 @@ const SubCat = {
     if (!ok) return;
     App.mainCats.splice(mi, 1);
     this.expanded.delete(mi);
+    App.subcatsDirty = true;
+    App.markDirty();
     this.render();
   },
   async addSub(mi) {
@@ -2435,6 +2898,8 @@ const SubCat = {
     const name = await promptModal.open(`اسم الفئة الفرعية ضمن "${m.name}":`, '');
     if (!name || !name.trim()) return;
     m.subs.push({ name: name.trim(), codes: [] });
+    App.subcatsDirty = true;
+    App.markDirty();
     this.render();
   },
   async deleteSub(mi, si) {
@@ -2443,9 +2908,12 @@ const SubCat = {
     const ok = await confirmAsync('حذف فئة فرعية', `حذف الفئة الفرعية "${s.name}" مع ${s.codes.length} كود؟`, 'حذف');
     if (!ok) return;
     m.subs.splice(si, 1);
+    App.subcatsDirty = true;
+    App.markDirty();
     this.render();
   },
   save() {
+    App.subcatsDirty = true;
     App.markDirty();
     this.close();
     toast('تم حفظ الفئات الفرعية — اضغط "نشر التعديلات" لرفعها');
@@ -2493,7 +2961,7 @@ const Products = {
     if (this.selected.size === 0) { toast('اختر منتجات أولاً', false); return; }
     const box = $('bulkCatsBox');
     if (!box) return;
-    if (!App.mainCats || App.mainCats.length === 0) await App.loadSubcategories();
+    await App.ensureSubcategories();
     let html = '';
     const fixedNames = ['منتهي كمية', 'رائج', 'صفحة رئيسية'];
     html += `<div class="flex flex-wrap gap-2" style="width:100%">`;
@@ -2537,6 +3005,8 @@ const Products = {
     } else return;
     this.closeBulkCats();
     this.renderTable();
+    if (subKey) App.subcatsDirty = true;
+    else App.categoriesDirty = true;
     App.markDirty();
     toast(`تم تصنيف ${codes.length} منتجات ضمن "${label}" — اضغط نشر التعديلات`);
     log(`تم تصنيف ${codes.length} منتجات ضمن "${label}" محلياً`, true);
@@ -2557,8 +3027,11 @@ const Products = {
         App.products.splice(idx, 1);
       }
       App.categories.forEach(col => { col.codes = col.codes.filter(c => c !== code); });
+      App.removeCodeFromAllSubcats(code);
     });
     App.currentCsvDirty = true;
+    App.categoriesDirty = true;
+    App.subcatsDirty = true;
     this.clearSelection();
     this.renderTable();
     App.markDirty();
@@ -2640,6 +3113,7 @@ const Products = {
     const idx = col.codes.indexOf(code);
     if (idx >= 0) col.codes.splice(idx, 1);
     else col.codes.push(code);
+    App.categoriesDirty = true;
     this.renderTable();
     App.markDirty();
     try { CatView.refresh(); } catch {}
@@ -2738,6 +3212,13 @@ const Products = {
         App.categories.forEach(col => {
           col.codes = col.codes.map(c => (String(c).trim() === oldCode ? newCode : c));
         });
+        App.categoriesDirty = true;
+        let subChanged = false;
+        (App.mainCats || []).forEach(m => (m.subs || []).forEach(s => {
+          const idx = (s.codes || []).indexOf(oldCode);
+          if (idx >= 0) { s.codes[idx] = newCode; subChanged = true; }
+        }));
+        if (subChanged) App.subcatsDirty = true;
       }
     } else {
       p[field] = val;
@@ -2762,6 +3243,23 @@ const Products = {
     if (this.selected.size > 1 && this.selected.has(code)) codes = Array.from(this.selected);
     else codes = [code];
     MoveProducts.open(codes, codes.length > 1 ? `${codes.length} منتج محدد` : `منتج واحد: ${p.code} — ${p.name || ''}`);
+  },
+
+  /* ---------- PRODUCT ORDER (inside the current CSV) ---------- */
+  moveProduct(index, dir) {
+    if (String($('searchInput')?.value || '').trim()) {
+      return toast('امسح البحث أولاً حتى يكون الترتيب واضحاً', false);
+    }
+    const arr = App.products || [];
+    const j = Number(index) + Number(dir);
+    if (!Number.isInteger(index) || index < 0 || j < 0 || j >= arr.length) return;
+    [arr[index], arr[j]] = [arr[j], arr[index]];
+    App.currentCsvDirty = true;
+    if (App.currentCsv) App.otherCsvDrafts[App.currentCsv] = App.buildCsvFromProducts();
+    App.markDirty();
+    App.persistPendingNow();
+    this.renderTable();
+    toast('تم تغيير الترتيب محلياً — اضغط نشر التعديلات');
   },
 
   /* ---------- RENDER TABLE ---------- */
@@ -2817,6 +3315,8 @@ const Products = {
         </td>
         <td class="cell cats-cell"><div class="cats-wrap">${cats.join('') || '<span class="text-xs" style="color:#c0c4cc">—</span>'}</div></td>
         <td class="cell actions-cell">
+          <button onclick="Products.moveProduct(${realIndex}, -1)" class="btn btn-sm btn-ghost" title="رفع المنتج للأعلى">↑</button>
+          <button onclick="Products.moveProduct(${realIndex}, 1)" class="btn btn-sm btn-ghost" title="إنزال المنتج للأسفل">↓</button>
           <button onclick="Products.openEditor(${realIndex})" class="btn btn-sm btn-ghost" title="تعديل">${ico('edit')} تعديل</button>
           <button class="stock-toggle${isOut ? ' out' : ''}" onclick="Products.toggleStock(${realIndex})" role="switch" aria-checked="${isOut}" title="${isOut ? 'غير متوفر — اضغط لإعادته متوفراً' : 'اضغط لوضعه ضمن منتهي الكمية (غير متوفر)'}">
             <span class="stock-knob"></span>
@@ -2842,7 +3342,7 @@ const Products = {
     this.tempPhotos = [];
     $('productModalTitle').textContent = index < 0 ? 'إضافة منتج جديد' : 'تعديل المنتج';
     if (App.photoIndexMap == null) await App.loadPhotoIndex();
-    if (!App.mainCats || App.mainCats.length === 0) await App.loadSubcategories();
+    await App.ensureSubcategories();
     const p = index >= 0 ? App.products[index] : { code:'', name:'', about1:'', about2:'', price:'', h:'', p:'', photo:'', dis:'' };
     $('f_code').value = p.code || '';
     $('f_name').value = p.name || '';
@@ -3205,36 +3705,51 @@ const Products = {
       category: App.products[this.editingIndex]?.category || '',
     };
 
+    // capture the previous code BEFORE replacing the product
+    const prevCode = this.editingIndex >= 0 ? String(App.products[this.editingIndex]?.code || '') : code;
+
     // Update product in list
     if (this.editingIndex < 0) App.products.unshift(obj);
     else App.products[this.editingIndex] = obj;
     App.currentCsvDirty = true;
 
-    // Update checkboxes -> categories (fixed 3 + custom)
-    const prevCode = this.editingIndex >= 0 ? String(App.products[this.editingIndex]?.code || '') : code;
-    // Remove all old codes first in all columns for this product being edited
-    App.categories.forEach(col => {
-      col.codes = col.codes.filter(c => c !== prevCode && c !== code);
-    });
-    const ensureCat = (name) => {
-      let col = App.categories.find(c => c.name === name);
-      if (!col) { col = { name, codes: [], fixed: true }; App.categories.push(col); }
-      return col;
-    };
-    // Re-add based on checkboxes
-    if ($('cat_out').checked) ensureCat('منتهي كمية').codes.push(code);
-    if ($('cat_hot').checked) ensureCat('رائج').codes.push(code);
-    if ($('cat_home').checked) ensureCat('صفحة رئيسية').codes.push(code);
-    // Subcategories (main -> sub): remove from all, then add to checked ones
+    // Checkboxes -> categories (only touch them when the classification really changed)
+    const desiredOut = $('cat_out').checked;
+    const desiredHot = $('cat_hot').checked;
+    const desiredHome = $('cat_home').checked;
     const checkedSubs = new Set();
     document.querySelectorAll('input[data-subcat]').forEach(chk => {
       if (chk.checked) checkedSubs.add(chk.dataset.subcat);
     });
-    App.removeCodeFromAllSubcats(code);
-    for (const key of checkedSubs) {
-      const [mi, si] = String(key).split(':').map(Number);
-      const sub = App.mainCats[mi]?.subs?.[si];
-      if (sub) { if (!sub.codes.includes(code)) sub.codes.push(code); }
+    const codeChanged = prevCode !== code;
+    const hasCode = (name) => !!App.categories.find(c => c.name === name)?.codes.includes(prevCode);
+    const catsNeed = codeChanged || desiredOut !== hasCode('منتهي كمية') || desiredHot !== hasCode('رائج') || desiredHome !== hasCode('صفحة رئيسية');
+    const curSubs = new Set();
+    (App.mainCats || []).forEach((m, mi) => (m.subs || []).forEach((s, si) => { if ((s.codes || []).includes(prevCode)) curSubs.add(`${mi}:${si}`); }));
+    const sameSet = (a, b) => a.size === b.size && Array.from(a).every(x => b.has(x));
+    const subsNeed = codeChanged || !sameSet(curSubs, checkedSubs);
+
+    if (catsNeed) {
+      App.categories.forEach(col => { col.codes = col.codes.filter(c => c !== prevCode && c !== code); });
+      const ensureCat = (name) => {
+        let col = App.categories.find(c => c.name === name);
+        if (!col) { col = { name, codes: [], fixed: true }; App.categories.push(col); }
+        return col;
+      };
+      if (desiredOut) ensureCat('منتهي كمية').codes.push(code);
+      if (desiredHot) ensureCat('رائج').codes.push(code);
+      if (desiredHome) ensureCat('صفحة رئيسية').codes.push(code);
+      App.categoriesDirty = true;
+    }
+    if (subsNeed) {
+      App.removeCodeFromAllSubcats(prevCode);
+      App.removeCodeFromAllSubcats(code);
+      for (const key of checkedSubs) {
+        const [mi, si] = String(key).split(':').map(Number);
+        const sub = App.mainCats[mi]?.subs?.[si];
+        if (sub) { if (!sub.codes.includes(code)) sub.codes.push(code); }
+      }
+      App.subcatsDirty = true;
     }
 
     // Queue photos to be uploaded on publish (manual)
@@ -3259,14 +3774,719 @@ const Products = {
     const photoPaths = App.collectPhotosForCode(code, p.photo || '');
     for (const ph of photoPaths) if (!App.photoDeletions.includes(ph)) App.photoDeletions.push(ph);
     App.products.splice(i, 1);
-    // Also remove from all categories
+    // Also remove from all categories + subcategories
     App.categories.forEach(col => { col.codes = col.codes.filter(c => c !== code); });
+    App.removeCodeFromAllSubcats(code);
+    App.categoriesDirty = true;
+    App.subcatsDirty = true;
     App.currentCsvDirty = true;
     this.renderTable();
     App.markDirty();
     toast('تم حذف المنتج محلياً — اضغط "نشر التعديلات" لرفعه');
     log(`تم حذف المنتج ${code} محلياً (بانتظار النشر)` + (photoPaths.length ? ` + ${photoPaths.length} صورة` : ''), true);
   }
+};
+
+/* ======================= SITE TEXT EDITOR (promo / what_new / new_offer) ======================= */
+const SiteText = {
+  _path: null,
+  async open(title, path, hint) {
+    this._path = String(path || '');
+    const t = $('siteTextTitle'); if (t) t.textContent = String(title || 'تحرير النص');
+    const h = $('siteTextHint'); if (h) h.textContent = String(hint || '');
+    const area = $('siteTextArea');
+    if (area) { area.value = 'جارٍ التحميل...'; area.disabled = true; }
+    $('siteTextModal').classList.add('open');
+    let txt = null;
+    try { txt = await App.getCsvText(this._path); } catch {}
+    if (txt == null) txt = '';
+    if (area) { area.value = String(txt); area.disabled = false; area.focus(); }
+  },
+  close() { $('siteTextModal').classList.remove('open'); this._path = null; },
+  save() {
+    if (!this._path) return;
+    const area = $('siteTextArea'); if (!area) return;
+    App.otherCsvDrafts[this._path] = String(area.value ?? '');
+    App.markDirty();
+    App.persistPendingNow();
+    log('تم تعديل ' + this._path + ' محلياً (بانتظار النشر)', true);
+    toast('تم الحفظ محلياً — اضغط "نشر التعديلات"');
+    this.close();
+  }
+};
+
+/* ======================= SITE PAGES MANAGER (about / QA) ======================= */
+const SitePages = {
+  type: 'about',
+  _lines: [],
+  indexPath() { return this.type === 'qa' ? 'data/qa_files.txt' : 'data/about_files.txt'; },
+  dir() { return this.type === 'qa' ? 'QA' : 'about'; },
+  async open(type) {
+    this.type = (type === 'qa') ? 'qa' : 'about';
+    const isQa = this.type === 'qa';
+    const t = $('sitePagesTitle'); if (t) t.textContent = isQa ? 'إدارة أقسام الأسئلة الشائعة (QA)' : 'إدارة صفحات about';
+    const s = $('sitePagesSub');
+    if (s) s.textContent = isQa
+      ? 'كل ملف = قسم/زر في صفحة الأسئلة الشائعة. يمكنك الإضافة والتعديل والحذف.'
+      : 'كل ملف = صفحة تظهر في شريط الأسفل. يمكنك الإضافة والتعديل والحذف (ملفات CSV غير مشمولة).';
+    $('sitePagesModal').classList.add('open');
+    await this.render();
+  },
+  close() { $('sitePagesModal').classList.remove('open'); try { if (window.AdminTabs) AdminTabs.setActive('products'); } catch {} },
+  async reload() { await this.render(); },
+  async loadIndex() {
+    let raw = null;
+    try { raw = await App.getCsvText(this.indexPath()); } catch {}
+    return String(raw || '').split(/\r?\n/).map(s => s.trim()).filter(l => l && !l.startsWith('#'));
+  },
+  saveIndex(lines) {
+    App.otherCsvDrafts[this.indexPath()] = lines.join('\n') + (lines.length ? '\n' : '');
+    App.markDirty();
+    App.persistPendingNow();
+  },
+  async render() {
+    const box = $('sitePagesList'); if (!box) return;
+    box.innerHTML = '<div class="hint">جارٍ التحميل...</div>';
+    const lines = await this.loadIndex();
+    this._lines = lines;
+    if (!lines.length) { box.innerHTML = '<div class="hint" style="margin:0">لا يوجد صفحات بعد. أضف صفحة/قسم جديد.</div>'; return; }
+    let html = '';
+    lines.forEach((name, i) => {
+      const path = this.dir() + '/' + name;
+      const isDraft = Object.prototype.hasOwnProperty.call(App.otherCsvDrafts, path);
+      html += `<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;background:#fff">
+        <div style="min-width:0">
+          <div style="font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</div>
+          <div class="hint" style="margin:0">${esc(path)}${isDraft ? ' <b style="color:#2563eb">— تعديل محلي</b>' : ''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-ghost" onclick="SitePages.edit(${i})">تعديل</button>
+          <button class="btn btn-sm btn-danger" onclick="SitePages.remove(${i})">حذف</button>
+        </div>
+      </div>`;
+    });
+    box.innerHTML = html;
+  },
+  async edit(i) {
+    const lines = await this.loadIndex();
+    const name = lines[i]; if (!name) return;
+    const path = this.dir() + '/' + name;
+    SiteText.open('تحرير: ' + name.replace(/\.txt$/i, ''), path, 'محتوى ' + path);
+  },
+  async addNew() {
+    const nameRaw = await promptModal.open('اسم الصفحة/القسم الجديد:', '');
+    const name = String(nameRaw || '').trim().replace(/[\/\\:*?"<>|]/g, '').replace(/\.txt$/i, '').trim();
+    if (!name) return;
+    const fileName = name + '.txt';
+    const lines = await this.loadIndex();
+    if (lines.some(l => l.toLowerCase() === fileName.toLowerCase())) { toast('يوجد صفحة بنفس الاسم', false); return; }
+    const path = this.dir() + '/' + fileName;
+    App.otherCsvDrafts[path] = '';
+    const nl = lines.concat([fileName]);
+    this.saveIndex(nl);
+    await this.render();
+    SiteText.open('تحرير: ' + name, path, 'اكتب محتوى الصفحة ثم احفظ.');
+  },
+  async remove(i) {
+    const lines = await this.loadIndex();
+    const name = lines[i]; if (!name) return;
+    const ok = await confirmAsync('حذف صفحة', `سيتم حذف «${name}» من مجلد ${this.dir()} ونشر الحذف.\nهل أنت متأكد؟`, 'نعم، احذف', true);
+    if (!ok) return;
+    const path = this.dir() + '/' + name;
+    delete App.otherCsvDrafts[path];
+    const nl = lines.filter((_, idx) => idx !== i);
+    this.saveIndex(nl);
+    if (!App.fileDeletions.includes(path)) App.fileDeletions.push(path);
+    App.markDirty();
+    App.persistPendingNow();
+    await this.render();
+    toast('تم الحذف محلياً — اضغط "نشر التعديلات"');
+    log('حذف صفحة ' + path + ' محلياً', true);
+  }
+};
+
+/* ======================= CUSTOMER PHOTOS MANAGER ======================= */
+const CustomerPhotos = {
+  open() { $('customerPhotosModal').classList.add('open'); this.render(); },
+  close() { $('customerPhotosModal').classList.remove('open'); try { if (window.AdminTabs) AdminTabs.setActive('products'); } catch {} },
+  async list() {
+    let lines = [];
+    try {
+      const raw = await App.getCsvText('customer_photo/files.txt');
+      lines = String(raw || '').split(/\r?\n/).map(s => s.trim()).filter(l => l && !l.startsWith('#'));
+    } catch {}
+    const out = []; const seen = new Set();
+    for (const l of lines) {
+      let p = String(l).replace(/\\/g, '/').replace(/^\/+/, '');
+      if (!p.toLowerCase().startsWith('customer_photo/')) p = 'customer_photo/' + p;
+      if (seen.has(p)) continue; seen.add(p);
+      if ((App.photoDeletions || []).includes(p)) continue;
+      out.push(p);
+    }
+    for (const up of (App.photoUploads || [])) {
+      if (!String(up.path).toLowerCase().startsWith('customer_photo/')) continue;
+      if (!seen.has(up.path)) { seen.add(up.path); out.push(up.path); }
+    }
+    return out;
+  },
+  srcFor(p) {
+    const up = (App.photoUploads || []).find(x => x.path === p);
+    if (up) return 'data:image/webp;base64,' + up.base64;
+    return '../' + String(p).split('/').map(encodeURIComponent).join('/');
+  },
+  async render() {
+    const grid = $('customerPhotosGrid'); if (!grid) return;
+    grid.innerHTML = '<div class="hint">جارٍ التحميل...</div>';
+    const items = await this.list();
+    if (!items.length) { grid.innerHTML = '<div class="hint" style="margin:0">لا يوجد صور حالياً.</div>'; return; }
+    let html = '';
+    for (const p of items) {
+      const up = (App.photoUploads || []).find(x => x.path === p);
+      const src = this.srcFor(p);
+      html += `<div style="position:relative;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;aspect-ratio:1;background:#fff">
+        <img src="${esc(src)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block" onclick="CustomerPhotos.view(this.src)">
+        <button title="حذف" onclick="CustomerPhotos.remove('${esc(p)}')" style="position:absolute;top:6px;${'inset-inline-end'}:6px;background:#e11d48;color:#fff;border:0;border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px">حذف</button>
+        ${up ? '<span style="position:absolute;bottom:6px;inset-inline-start:6px;background:#2563eb;color:#fff;border-radius:8px;padding:2px 6px;font-size:10px">جديدة</span>' : ''}
+      </div>`;
+    }
+    grid.innerHTML = html;
+  },
+  view(src) {
+    try { const w = window.open('', '_blank'); if (w) w.document.write('<title>صورة</title><body style="margin:0;background:#111"><img src="' + src + '" style="max-width:100%;max-height:100vh;display:block;margin:auto"></body>'); } catch {}
+  },
+  async upload(files) {
+    const arr = Array.from(files || []).filter(f => f && /^image\//.test(f.type));
+    const inp = $('customerPhotosInput'); if (inp) inp.value = '';
+    if (!arr.length) return;
+    const status = $('customerPhotosStatus');
+    let n = 0;
+    for (const f of arr) {
+      n++;
+      if (status) status.textContent = `جارٍ ضغط وتحويل ${n}/${arr.length}...`;
+      try {
+        const blob = await ImgConv.toWebP(f, 1200);
+        const b64 = await ImgConv.blobToBase64(blob);
+        const name = `cust-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.webp`;
+        App.photoUploads.push({ path: 'customer_photo/' + name, base64: b64 });
+      } catch (e) { log('فشل تحويل صورة: ' + (e.message || e), false); }
+    }
+    App.markDirty();
+    App.persistPendingNow();
+    if (status) status.textContent = `تم تجهيز ${arr.length} صورة — اضغط "نشر التعديلات" لرفعها`;
+    await this.render();
+    toast('تم تجهيز الصور — اضغط "نشر التعديلات"');
+  },
+  async remove(path) {
+    const ok = await confirmAsync('حذف صورة', 'سيتم حذف الصورة نهائياً من الموقع عند النشر. هل أنت متأكد؟', 'حذف');
+    if (!ok) return;
+    const i = (App.photoUploads || []).findIndex(x => x.path === path);
+    if (i >= 0) App.photoUploads.splice(i, 1);
+    else if (!App.photoDeletions.includes(path)) App.photoDeletions.push(path);
+    App.markDirty();
+    App.persistPendingNow();
+    await this.render();
+    toast('تم تجهيز الحذف — اضغط "نشر التعديلات"');
+  }
+};
+
+/* ======================= GALLERY MANAGER (photos / videos) ======================= */
+function csvCell(v) {
+  const s = String(v ?? '');
+  return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+const GalleryManager = {
+  type: 'photos',
+  items: [],
+  categories: [],
+  editingId: null,
+  _pickedPath: null,
+  _pickedBase64: null,
+  open() {
+    $('galleryModal').classList.add('open');
+    this.type = 'photos';
+    this.setTabs();
+    this.loadData().then(() => this.render());
+  },
+  close() { $('galleryModal').classList.remove('open'); this.cancelItem(); try { if (window.AdminTabs) AdminTabs.setActive('products'); } catch {} },
+  async reload() { await this.loadData(); this.render(); },
+  setTabs() {
+    const p = $('galleryTabPhotos'), v = $('galleryTabVideos');
+    if (p) p.className = 'btn ' + (this.type === 'photos' ? 'btn-primary' : 'btn-ghost');
+    if (v) v.className = 'btn ' + (this.type === 'videos' ? 'btn-primary' : 'btn-ghost');
+    const wrap = $('galPhotoWrap');
+    if (wrap) wrap.style.display = this.type === 'photos' ? '' : 'none';
+  },
+  switchType(t) { this.type = (t === 'videos') ? 'videos' : 'photos'; this.setTabs(); this.cancelItem(); this.loadData().then(() => this.render()); },
+  listPath() { return 'data/' + this.type + '_list.csv'; },
+  catPath() { return 'data/' + this.type + '_categories.csv'; },
+  async loadData() {
+    let listTxt = '', catTxt = '';
+    try { listTxt = String((await App.getCsvText(this.listPath())) || ''); } catch {}
+    try { catTxt = String((await App.getCsvText(this.catPath())) || ''); } catch {}
+    this.items = this.parseList(listTxt);
+    const parsed = this.parseCats(catTxt);
+    this.categories = parsed.categories;
+    for (const it of this.items) it.category = parsed.byId[it.id] || '';
+    for (const c of this.categories) { /* keep */ }
+  },
+  parseList(txt) {
+    if (!String(txt).trim()) return [];
+    let data = [];
+    try { data = (Papa.parse(String(txt).trim(), { header: true, skipEmptyLines: true }).data) || []; } catch { return []; }
+    const out = [];
+    for (const r of data) {
+      const keys = Object.keys(r || {});
+      const get = (names) => {
+        for (const k of keys) {
+          const kk = String(k).replace(/^\uFEFF/, '').trim().toLowerCase();
+          if (names.includes(kk)) return String(r[k] ?? '').trim();
+        }
+        return '';
+      };
+      const id = get(['#', 'id', 'رقم']);
+      const title = get(['title', 'name', 'اسم', 'عنوان']);
+      const url = get(['url', 'link', 'رابط', 'لينك']);
+      if (!id && !url && !title) continue;
+      out.push({
+        id: id || String(out.length + 1),
+        title,
+        url,
+        description: get(['description', 'desc', 'about', 'وصف']),
+        order: Number(get(['order', 'sort', 'ترتيب']) || 0) || 0,
+        category: ''
+      });
+    }
+    return out;
+  },
+  parseCats(txt) {
+    const categories = []; const byId = {};
+    if (!String(txt).trim()) return { categories, byId };
+    let rows = [];
+    try { rows = (Papa.parse(String(txt).trim(), { header: false, skipEmptyLines: true }).data) || []; } catch { return { categories, byId }; }
+    if (!rows.length) return { categories, byId };
+    const header = (rows[0] || []).map(c => String(c ?? '').trim());
+    header.forEach((name, i) => {
+      if (!name) return;
+      categories.push(name);
+      for (let r = 1; r < rows.length; r++) {
+        const id = String((rows[r] || [])[i] ?? '').trim();
+        if (id && byId[id] === undefined) byId[id] = name;
+      }
+    });
+    return { categories, byId };
+  },
+  persist() {
+    this.items.forEach((it, i) => { if (!it.id) it.id = String(i + 1); });
+    const titleKey = this.type === 'videos' ? 'title' : 'name';
+    const listRows = [`#;${titleKey};url;description;order`];
+    for (const it of this.items) {
+      listRows.push([it.id, it.title || '', it.url || '', it.description || '', Number(it.order) || 0].map(csvCell).join(';'));
+    }
+    App.otherCsvDrafts[this.listPath()] = listRows.join('\n') + '\n';
+    const cats = [];
+    for (const c of this.categories) if (c && !cats.includes(c)) cats.push(c);
+    for (const it of this.items) if (it.category && !cats.includes(it.category)) cats.push(it.category);
+    const idCols = cats.map(c => this.items.filter(it => it.category === c).map(it => it.id));
+    const maxLen = Math.max(0, ...idCols.map(a => a.length));
+    const catRows = [cats.map(csvCell).join(';')];
+    for (let r = 0; r < maxLen; r++) catRows.push(idCols.map(a => csvCell(a[r] || '')).join(';'));
+    App.otherCsvDrafts[this.catPath()] = catRows.join('\n') + '\n';
+    App.markDirty();
+    App.persistPendingNow();
+  },
+  srcFor(it) {
+    const url = String(it.url || '');
+    if (!url) return '';
+    if (/^https?:/i.test(url)) return url;
+    const up = (App.photoUploads || []).find(x => x.path === url);
+    if (up) return 'data:image/webp;base64,' + up.base64;
+    return '../' + url.split('/').map(encodeURIComponent).join('/');
+  },
+  onSearch() { this.render(); },
+  render() {
+    const box = $('galleryList'); if (!box) return;
+    const filter = $('galleryFilter');
+    if (filter) {
+      const cur = filter.value;
+      filter.innerHTML = '<option value="">كل الأقسام</option>' +
+        this.categories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('') +
+        '<option value="__none__">غير مصنّف</option>';
+      if (cur && Array.from(filter.options).some(o => o.value === cur)) filter.value = cur;
+    }
+    const catSel = $('galCategory');
+    if (catSel) {
+      const cur = catSel.value;
+      catSel.innerHTML = '<option value="">— بدون قسم —</option>' + this.categories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+      if (cur) catSel.value = cur;
+    }
+    const q = String($('gallerySearch')?.value || '').trim().toLowerCase();
+    const cat = String(filter?.value || '');
+    const sortBy = String($('gallerySortBy')?.value || 'order');
+    let items = this.items.slice();
+    if (cat === '__none__') items = items.filter(it => !it.category);
+    else if (cat) items = items.filter(it => it.category === cat);
+    if (q) items = items.filter(it => `${it.title} ${it.url} ${it.description}`.toLowerCase().includes(q));
+    if (sortBy === 'title') items.sort((a, b) => String(a.title).localeCompare(String(b.title), 'ar'));
+    else if (sortBy === 'new') items.sort((a, b) => Number(b.id) - Number(a.id));
+    else items.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+    const st = $('galleryStatus');
+    if (st) st.textContent = `${items.length} من ${this.items.length} عنصر — ${this.categories.length} قسم`;
+    if (!items.length) { box.innerHTML = '<div class="hint" style="margin:0">لا يوجد عناصر.</div>'; return; }
+    let html = '<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">';
+    for (const it of items) {
+      const src = this.srcFor(it);
+      const yt = this.type === 'videos' ? extractYtId(it.url) : '';
+      const thumb = yt ? `https://img.youtube.com/vi/${encodeURIComponent(yt)}/hqdefault.jpg` : (this.type === 'photos' ? src : '');
+      html += `<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column">
+        <div style="aspect-ratio:16/9;background:#f1f5f9;overflow:hidden">
+          ${thumb ? `<img src="${esc(thumb)}" loading="lazy" style="width:100%;height:100%;object-fit:cover">` : `<div style="height:100%;display:grid;place-items:center;color:#94a3b8;font-weight:800">${this.type === 'videos' ? 'VIDEO' : 'لا صورة'}</div>`}
+        </div>
+        <div style="padding:10px;display:grid;gap:4px;flex:1">
+          <div style="font-weight:800;line-height:1.35">${esc(it.title || '(بدون عنوان)')}</div>
+          <div class="hint" style="margin:0">${esc(it.category || 'غير مصنّف')} • ترتيب: ${esc(Number(it.order) || 0)} • #${esc(it.id)}</div>
+          ${it.description ? `<div style="font-size:12px;color:#475569;line-height:1.5">${esc(String(it.description).slice(0, 140))}</div>` : ''}
+          <div class="hint" style="margin:0;direction:ltr;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.url || '')}</div>
+        </div>
+        <div style="display:flex;gap:6px;padding:0 10px 10px">
+          <button class="btn btn-sm btn-ghost" style="flex:1" onclick="GalleryManager.editItem('${esc(it.id)}')">تعديل</button>
+          <button class="btn btn-sm btn-danger" onclick="GalleryManager.deleteItem('${esc(it.id)}')">حذف</button>
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+    box.innerHTML = html;
+  },
+  addItem() {
+    this.editingId = null;
+    this._pickedPath = null; this._pickedBase64 = null;
+    const set = (id, v) => { const e = $(id); if (e) e.value = v; };
+    set('galTitle', ''); set('galUrl', ''); set('galDesc', ''); set('galOrder', '0');
+    const c = $('galCategory'); if (c) c.value = '';
+    const pv = $('galPhotoPreview'); if (pv) pv.textContent = '';
+    const t = $('galleryEditorTitle'); if (t) t.textContent = this.type === 'videos' ? 'إضافة فيديو' : 'إضافة صورة';
+    const ed = $('galleryEditor'); if (ed) ed.style.display = 'block';
+    setTimeout(() => { try { $('galTitle')?.focus(); } catch {} }, 50);
+  },
+  editItem(id) {
+    const it = this.items.find(x => String(x.id) === String(id));
+    if (!it) return;
+    this.editingId = it.id;
+    this._pickedPath = null; this._pickedBase64 = null;
+    const set = (i, v) => { const e = $(i); if (e) e.value = v; };
+    set('galTitle', it.title || ''); set('galUrl', it.url || ''); set('galDesc', it.description || ''); set('galOrder', String(Number(it.order) || 0));
+    const c = $('galCategory'); if (c) c.value = it.category || '';
+    const pv = $('galPhotoPreview'); if (pv) pv.textContent = '';
+    const t = $('galleryEditorTitle'); if (t) t.textContent = 'تعديل العنصر';
+    const ed = $('galleryEditor'); if (ed) ed.style.display = 'block';
+  },
+  cancelItem() {
+    this.editingId = null; this._pickedPath = null; this._pickedBase64 = null;
+    const ed = $('galleryEditor'); if (ed) ed.style.display = 'none';
+  },
+  async onPickPhoto(files) {
+    const f = (files || [])[0];
+    const inp = $('galPhotoInput'); if (inp) inp.value = '';
+    if (!f) return;
+    const pv = $('galPhotoPreview'); if (pv) pv.textContent = 'جارٍ تحويل الصورة...';
+    try {
+      const blob = await ImgConv.toWebP(f, 1400);
+      const b64 = await ImgConv.blobToBase64(blob);
+      const name = `gal-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.webp`;
+      this._pickedPath = 'gallery/' + name;
+      this._pickedBase64 = b64;
+      const u = $('galUrl'); if (u) u.value = this._pickedPath;
+      if (pv) pv.textContent = 'تم تجهيز الصورة: ' + this._pickedPath;
+    } catch (e) {
+      if (pv) pv.textContent = 'فشل تحويل الصورة: ' + (e.message || e);
+    }
+  },
+  saveItem() {
+    const title = String($('galTitle')?.value || '').trim();
+    const url = String($('galUrl')?.value || '').trim();
+    const description = String($('galDesc')?.value || '').trim();
+    const category = String($('galCategory')?.value || '').trim();
+    const order = Number($('galOrder')?.value || 0) || 0;
+    if (!title && !url) { toast('ضع عنواناً أو رابطاً على الأقل', false); return; }
+    if (this.editingId != null) {
+      const it = this.items.find(x => String(x.id) === String(this.editingId));
+      if (it) { it.title = title; it.url = url; it.description = description; it.category = category; it.order = order; }
+    } else {
+      let maxId = 0;
+      for (const it of this.items) { const n = parseInt(String(it.id).replace(/\D/g, ''), 10); if (Number.isFinite(n) && n > maxId) maxId = n; }
+      this.items.push({ id: String(maxId + 1), title, url, description, category, order });
+    }
+    if (this._pickedPath && this._pickedBase64) {
+      App.photoUploads.push({ path: this._pickedPath, base64: this._pickedBase64 });
+    }
+    this.persist();
+    this.cancelItem();
+    this.render();
+    toast('تم الحفظ محلياً — اضغط "نشر التعديلات"');
+    log('حفظ عنصر ' + this.type + ' محلياً', true);
+  },
+  async deleteItem(id) {
+    const it = this.items.find(x => String(x.id) === String(id));
+    if (!it) return;
+    const ok = await confirmAsync('حذف عنصر', `سيتم حذف «${it.title || it.url}» من القائمة.`, 'حذف');
+    if (!ok) return;
+    const url = String(it.url || '');
+    if (/^gallery\//i.test(url)) {
+      const i = (App.photoUploads || []).findIndex(x => x.path === url);
+      if (i >= 0) App.photoUploads.splice(i, 1);
+      else if (!App.photoDeletions.includes(url)) App.photoDeletions.push(url);
+    }
+    this.items = this.items.filter(x => String(x.id) !== String(id));
+    this.persist();
+    this.render();
+    toast('تم تجهيز الحذف — اضغط "نشر التعديلات"');
+  },
+  async addCategory() {
+    const name = await promptModal.open('اسم القسم الجديد:', '');
+    const n = String(name || '').trim();
+    if (!n) return;
+    if (this.categories.includes(n)) { toast('القسم موجود', false); return; }
+    this.categories.push(n);
+    this.persist();
+    this.render();
+    toast('تمت إضافة القسم محلياً');
+  }
+};
+function extractYtId(url) {
+  const u = String(url || '');
+  let m = u.match(/[?&]v=([\w-]{6,})/);
+  if (m) return m[1];
+  m = u.match(/youtu\.be\/([\w-]{6,})/);
+  if (m) return m[1];
+  m = u.match(/youtube\.com\/shorts\/([\w-]{6,})/);
+  if (m) return m[1];
+  return '';
+}
+
+/* ======================= ADMIN TABS ======================= */
+const AdminTabs = {
+  setActive(tab) {
+    const t = String(tab || 'products');
+    document.querySelectorAll('#adminTabs .admin-tab').forEach((b) => {
+      b.classList.toggle('active', String(b.getAttribute('data-admin-tab') || '') === t);
+    });
+  },
+  open(tab) {
+    const t = String(tab || 'products');
+    this.setActive(t);
+    if (t === 'products') {
+      ['categoriesModal', 'settingsModal', 'sitePagesModal', 'galleryModal', 'shippingModal', 'customerPhotosModal']
+        .forEach((id) => { const el = $(id); if (el) el.classList.remove('open'); });
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+      return;
+    }
+    if (t === 'categories') { try { App.openCategoriesManager(); } catch {} return; }
+    if (t === 'shipping') { try { ShippingManager.open(); } catch {} return; }
+    if (t === 'pages') { try { SitePages.open('about'); } catch {} return; }
+    if (t === 'media') { try { GalleryManager.open(); } catch {} return; }
+    if (t === 'settings') { try { App.openSettings(); } catch {} return; }
+  }
+};
+window.AdminTabs = AdminTabs;
+
+/* ======================= SHIPPING MANAGER ======================= */
+const ShippingManager = {
+  tab: 'gov',
+  govs: [],
+  carriers: [],
+  branches: [],
+  _branchView: [],
+  open() { $('shippingModal').classList.add('open'); this.loadAll().then(() => this.render()); },
+  close() {
+    $('shippingModal').classList.remove('open');
+    try { if (window.AdminTabs) AdminTabs.setActive('products'); } catch {}
+  },
+  async loadAll() {
+    this.govs = await this.loadLines('data/governorates.csv');
+    this.carriers = await this.loadLines('data/carriers.csv');
+    this.branches = await this.loadBranches();
+  },
+  async loadLines(path) {
+    let raw = '';
+    try { raw = String((await App.getCsvText(path)) || ''); } catch {}
+    return raw.split(/\r?\n/).map(s => s.trim()).filter(l => l && !l.startsWith('#') && !/^(name|governorate|محافظة|شركة)$/i.test(l));
+  },
+  async loadBranches() {
+    let raw = '';
+    try { raw = String((await App.getCsvText('data/branches.csv')) || ''); } catch {}
+    if (!raw.trim()) return [];
+    let data = [];
+    try { data = (Papa.parse(raw.trim(), { header: true, skipEmptyLines: true }).data) || []; } catch { return []; }
+    const out = [];
+    for (const r of data) {
+      const keys = Object.keys(r || {});
+      const get = (names) => { for (const k of keys) { const kk = String(k).replace(/^\uFEFF/, '').trim().toLowerCase(); if (names.includes(kk)) return String(r[k] ?? '').trim(); } return ''; };
+      const company = get(['company', 'carrier', 'شركة']);
+      const gov = get(['governorate', 'gov', 'محافظة']);
+      const branch = get(['branch', 'center', 'فرع', 'مركز']);
+      const note = get(['note', 'notes', 'ملاحظة', 'ملاحظات']);
+      if (company || branch) out.push({ company, gov, branch, note });
+    }
+    return out;
+  },
+  switchTab(t) {
+    this.tab = t;
+    const map = { gov: 'shipTabGov', carriers: 'shipTabCarriers', branches: 'shipTabBranches' };
+    for (const [k, id] of Object.entries(map)) { const b = $(id); if (b) b.className = 'btn ' + (k === this.tab ? 'btn-primary' : 'btn-ghost'); }
+    this.render();
+  },
+  render() {
+    const box = $('shippingBody'); if (!box) return;
+    if (this.tab === 'gov') return this.renderGov(box);
+    if (this.tab === 'carriers') return this.renderCarriers(box);
+    return this.renderBranches(box);
+  },
+  rowStyle: 'display:flex;gap:8px;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;background:#fff',
+  moveBtns(kind, i) {
+    return `<button class="btn btn-sm btn-ghost" title="أعلى" onclick="ShippingManager.move${kind}(${i},-1)">↑</button>
+      <button class="btn btn-sm btn-ghost" title="أسفل" onclick="ShippingManager.move${kind}(${i},1)">↓</button>`;
+  },
+  renderGov(box) {
+    let html = `<div style="display:flex;gap:8px;margin-bottom:12px"><input id="shipGovNew" class="input" placeholder="اسم محافظة جديدة..." style="max-width:320px"><button class="btn btn-primary" onclick="ShippingManager.addGov()">إضافة محافظة</button></div>`;
+    html += this.govs.length ? this.govs.map((g, i) => `<div style="${this.rowStyle}"><div style="font-weight:800">${esc(g)}</div><div style="display:flex;gap:6px">${this.moveBtns('Gov', i)}<button class="btn btn-sm btn-ghost" onclick="ShippingManager.editGov(${i})">تعديل</button><button class="btn btn-sm btn-danger" onclick="ShippingManager.delGov(${i})">حذف</button></div></div>`).join('') : '<div class="hint" style="margin:0">لا يوجد محافظات بعد.</div>';
+    box.innerHTML = html;
+  },
+  renderCarriers(box) {
+    let html = `<div style="display:flex;gap:8px;margin-bottom:12px"><input id="shipCarrierNew" class="input" placeholder="اسم شركة شحن جديدة..." style="max-width:320px"><button class="btn btn-primary" onclick="ShippingManager.addCarrier()">إضافة شركة</button></div>`;
+    html += this.carriers.length ? this.carriers.map((g, i) => {
+      const count = this.branches.filter(b => b.company === g).length;
+      return `<div style="${this.rowStyle}"><div style="font-weight:800">${esc(g)} <span class="hint" style="font-weight:600">— ${count} فرع</span></div><div style="display:flex;gap:6px">${this.moveBtns('Carrier', i)}<button class="btn btn-sm btn-ghost" onclick="ShippingManager.editCarrier(${i})">تعديل</button><button class="btn btn-sm btn-danger" onclick="ShippingManager.delCarrier(${i})">حذف</button></div></div>`;
+    }).join('') : '<div class="hint" style="margin:0">لا يوجد شركات بعد.</div>';
+    box.innerHTML = html;
+  },
+  renderBranches(box) {
+    const compOpts = this.carriers.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    const govOpts = this.govs.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    const filterComp = this.carriers.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    const filterGov = this.govs.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    let html = `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;background:#f8fafc;margin-bottom:12px">
+      <div style="font-weight:800;margin-bottom:8px">إضافة فرع/مركز شحن</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px">
+        <div><label class="field-label">شركة الشحن</label><select id="shipBrCompany" class="input"><option value="">اختر الشركة</option>${compOpts}</select></div>
+        <div><label class="field-label">المحافظة</label><select id="shipBrGov" class="input"><option value="">اختر المحافظة</option>${govOpts}</select></div>
+        <div><label class="field-label">اسم الفرع/المركز</label><input id="shipBrName" class="input"></div>
+      </div>
+      <div style="margin-top:8px"><label class="field-label">ملاحظة صغيرة (اختياري)</label><input id="shipBrNote" class="input" placeholder="مثال: يفتح 9-5 / لا يوجد رقم هاتف / ..."></div>
+      <button class="btn btn-primary" style="margin-top:10px" onclick="ShippingManager.addBranch()">إضافة</button>
+    </div>`;
+    html += `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <div class="side-search" style="flex:1;min-width:200px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="shipBranchSearch" placeholder="بحث في الفروع..." oninput="ShippingManager.renderBranchesList()"></div>
+      <select id="shipBranchFilterCompany" class="input" style="max-width:180px" onchange="ShippingManager.renderBranchesList()"><option value="">كل الشركات</option>${filterComp}</select>
+      <select id="shipBranchFilterGov" class="input" style="max-width:180px" onchange="ShippingManager.renderBranchesList()"><option value="">كل المحافظات</option>${filterGov}</select>
+    </div>`;
+    html += '<div id="shipBranchesList"></div>';
+    box.innerHTML = html;
+    this.renderBranchesList();
+  },
+  renderBranchesList() {
+    const box = $('shipBranchesList'); if (!box) return;
+    const q = String($('shipBranchSearch')?.value || '').trim().toLowerCase();
+    const fc = String($('shipBranchFilterCompany')?.value || '').trim();
+    const fg = String($('shipBranchFilterGov')?.value || '').trim();
+    this._branchView = this.branches.map((b, i) => ({ ...b, _i: i })).filter(b => {
+      if (fc && b.company !== fc) return false;
+      if (fg && b.gov !== fg) return false;
+      if (q && !`${b.company} ${b.gov} ${b.branch} ${b.note || ''}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    box.innerHTML = this._branchView.length ? this._branchView.map((b, vi) => `<div style="${this.rowStyle}">
+      <div style="min-width:0"><div style="font-weight:800">${esc(b.branch)}</div><div class="hint" style="margin:0">${esc(b.company || '—')} • ${esc(b.gov || '—')}${b.note ? ' • ' + esc(b.note) : ''}</div></div>
+      <div style="display:flex;gap:6px">${this.moveBtns('BranchView', vi)}<button class="btn btn-sm btn-ghost" onclick="ShippingManager.editBranch(${b._i})">تعديل</button><button class="btn btn-sm btn-danger" onclick="ShippingManager.delBranch(${b._i})">حذف</button></div>
+    </div>`).join('') : '<div class="hint" style="margin:0">لا يوجد فروع مطابقة.</div>';
+  },
+  persistGov() { App.otherCsvDrafts['data/governorates.csv'] = this.govs.join('\n') + (this.govs.length ? '\n' : ''); App.markDirty(); App.persistPendingNow(); },
+  persistCarriers() { App.otherCsvDrafts['data/carriers.csv'] = this.carriers.join('\n') + (this.carriers.length ? '\n' : ''); App.markDirty(); App.persistPendingNow(); },
+  persistBranches() {
+    const rows = ['company;governorate;branch;note'];
+    for (const b of this.branches) rows.push([b.company, b.gov, b.branch, b.note || ''].map(csvCell).join(';'));
+    App.otherCsvDrafts['data/branches.csv'] = rows.join('\n') + '\n';
+    App.markDirty(); App.persistPendingNow();
+  },
+  moveGov(i, dir) { const j = i + dir; if (i < 0 || j < 0 || j >= this.govs.length) return; [this.govs[i], this.govs[j]] = [this.govs[j], this.govs[i]]; this.persistGov(); this.render(); },
+  moveCarrier(i, dir) { const j = i + dir; if (i < 0 || j < 0 || j >= this.carriers.length) return; [this.carriers[i], this.carriers[j]] = [this.carriers[j], this.carriers[i]]; this.persistCarriers(); this.render(); },
+  moveBranchView(vi, dir) {
+    const cur = this._branchView[vi], other = this._branchView[vi + dir];
+    if (!cur || !other) return;
+    const a = cur._i, b = other._i;
+    [this.branches[a], this.branches[b]] = [this.branches[b], this.branches[a]];
+    this.persistBranches();
+    this.renderBranchesList();
+  },
+  addGov() { const v = String($('shipGovNew')?.value || '').trim(); if (!v) return; if (this.govs.includes(v)) return toast('موجود', false); this.govs.push(v); this.persistGov(); this.render(); },
+  async editGov(i) {
+    const oldName = this.govs[i] || '';
+    const v = await promptModal.open('تعديل المحافظة:', oldName);
+    if (v === null) return;
+    const n = String(v).trim(); if (!n) return;
+    this.govs[i] = n;
+    if (oldName && n !== oldName) {
+      for (const b of this.branches) if (b.gov === oldName) b.gov = n;
+      this.persistBranches();
+    }
+    this.persistGov(); this.render();
+  },
+  async delGov(i) {
+    const name = this.govs[i] || '';
+    const count = this.branches.filter(b => b.gov === name).length;
+    const ok = await confirmAsync('حذف محافظة', `حذف «${name}»${count ? ` و${count} فرع مرتبط بها` : ''}؟`, 'حذف');
+    if (!ok) return;
+    this.govs.splice(i, 1);
+    if (count) { this.branches = this.branches.filter(b => b.gov !== name); this.persistBranches(); }
+    this.persistGov(); this.render();
+  },
+  addCarrier() { const v = String($('shipCarrierNew')?.value || '').trim(); if (!v) return; if (this.carriers.includes(v)) return toast('موجود', false); this.carriers.push(v); this.persistCarriers(); this.render(); },
+  async editCarrier(i) {
+    const oldName = this.carriers[i] || '';
+    const v = await promptModal.open('تعديل الشركة:', oldName);
+    if (v === null) return;
+    const n = String(v).trim(); if (!n) return;
+    this.carriers[i] = n;
+    if (oldName && n !== oldName) {
+      for (const b of this.branches) if (b.company === oldName) b.company = n;
+      this.persistBranches();
+    }
+    this.persistCarriers(); this.render();
+  },
+  async delCarrier(i) {
+    const name = this.carriers[i] || '';
+    const count = this.branches.filter(b => b.company === name).length;
+    const ok = await confirmAsync('حذف شركة', `حذف «${name}»${count ? ` و${count} فرع مرتبط بها` : ''}؟`, 'حذف');
+    if (!ok) return;
+    this.carriers.splice(i, 1);
+    if (count) { this.branches = this.branches.filter(b => b.company !== name); this.persistBranches(); }
+    this.persistCarriers(); this.render();
+  },
+  addBranch() {
+    const company = String($('shipBrCompany')?.value || '').trim();
+    const gov = String($('shipBrGov')?.value || '').trim();
+    const branch = String($('shipBrName')?.value || '').trim();
+    const note = String($('shipBrNote')?.value || '').trim();
+    if (!company) return toast('اختر شركة الشحن', false);
+    if (!gov) return toast('اختر المحافظة', false);
+    if (!branch) return toast('اكتب اسم الفرع', false);
+    this.branches.push({ company, gov, branch, note });
+    this.persistBranches();
+    const n = $('shipBrName'); if (n) n.value = '';
+    const nt = $('shipBrNote'); if (nt) nt.value = '';
+    this.renderBranchesList();
+    toast('تمت إضافة الفرع محلياً');
+  },
+  async editBranch(i) {
+    const b = this.branches[i]; if (!b) return;
+    const v = await promptModal.open('اسم الفرع/المركز:', b.branch || '');
+    if (v === null) return;
+    const n = String(v).trim(); if (!n) return;
+    b.branch = n;
+    const nt = await promptModal.open('ملاحظة صغيرة (اختياري):', b.note || '');
+    if (nt !== null) b.note = String(nt).trim();
+    this.persistBranches();
+    this.renderBranchesList();
+  },
+  async delBranch(i) { const b = this.branches[i]; if (!b) return; const ok = await confirmAsync('حذف فرع', `حذف «${b.branch}»?`, 'حذف'); if (!ok) return; this.branches.splice(i, 1); this.persistBranches(); this.renderBranchesList(); }
 };
 
 /* ======================= BOOT ======================= */

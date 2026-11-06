@@ -237,6 +237,7 @@ function debounce(fn, ms) {
         newOfferText: "",
         governorates: [],
         carriers: [],
+        carrierNotes: new Map(),
         branches: [],
       };
 
@@ -4183,9 +4184,14 @@ function debounce(fn, ms) {
         }
         const list = (state.branches || []).filter((b) => String(b.company || "").trim() === name);
         els.infoMeta.textContent = list.length ? `${list.length} فرع` : "لا توجد فروع مضافة";
+        const companyNote = String(state.carrierNotes?.get(name) || "").trim();
+        const back = `<button class="btn btn-ghost" type="button" onclick="setHash('info=${encodeURIComponent("تفاصيل الشحن")}')">رجوع لتفاصيل الشحن</button>`;
         if (!list.length) {
-          els.infoText.innerHTML = `<div class="panel-sub" style="line-height:1.8">لا توجد فروع مضافة لهذه الشركة حالياً. يمكن إضافتها من لوحة الإدارة ← المحافظات والشحن.</div>
-            <div style="margin-top:12px"><button class="btn btn-ghost" type="button" onclick="setHash('info=${encodeURIComponent("تفاصيل الشحن")}')">رجوع لتفاصيل الشحن</button></div>`;
+          els.infoText.innerHTML = `<div class="branches-page">
+            ${companyNote ? `<div class="branches-company-note">${escapeHtml(companyNote)}</div>` : ""}
+            <div class="branches-empty">لا توجد فروع مضافة لهذه الشركة حاليًا. يمكن إضافتها من لوحة الإدارة ← الشحن.</div>
+            <div class="branches-actions">${back}</div>
+          </div>`;
           return;
         }
         const groups = new Map();
@@ -4194,23 +4200,24 @@ function debounce(fn, ms) {
           if (!groups.has(gov)) groups.set(gov, []);
           groups.get(gov).push(b);
         }
-        let html = `<div style="display:grid;gap:14px">`;
+        const openAll = groups.size <= 3;
+        let html = `<div class="branches-page">`;
+        if (companyNote) html += `<div class="branches-company-note">${escapeHtml(companyNote)}</div>`;
+        let gi = 0;
         for (const [gov, rows] of groups) {
-          html += `<div style="border:1px solid var(--border);border-radius:12px;padding:10px;background:var(--surface)">
-            <div style="font-weight:900;color:var(--primary-3);margin-bottom:8px">${escapeHtml(gov)}</div>
-            <div style="display:grid;gap:8px">`;
+          html += `<details class="branches-group" ${openAll || gi === 0 ? "open" : ""}>
+            <summary><span class="branches-gov">${escapeHtml(gov)}</span><span class="branches-count">${rows.length}</span></summary>
+            <div class="branches-grid">`;
           for (const b of rows) {
-            html += `<div style="padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#fff">
-              <div style="font-weight:800">${escapeHtml(b.branch)}</div>
-              ${b.note ? `<div class="mini-note" style="margin-top:4px;color:#b45309;font-weight:700">${escapeHtml(b.note)}</div>` : ""}
+            html += `<div class="branch-item">
+              <div class="branch-name">${escapeHtml(b.branch)}</div>
+              ${b.note ? `<div class="branch-note">${escapeHtml(b.note)}</div>` : ""}
             </div>`;
           }
-          html += `</div></div>`;
+          html += `</div></details>`;
+          gi++;
         }
-        html += `</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-            <button class="btn btn-ghost" type="button" onclick="setHash('info=${encodeURIComponent("تفاصيل الشحن")}')">رجوع لتفاصيل الشحن</button>
-          </div>`;
+        html += `<div class="branches-actions">${back}</div></div>`;
         els.infoText.innerHTML = html;
       }
       async function renderInfo(key) {
@@ -4425,8 +4432,18 @@ function debounce(fn, ms) {
         try {
           const res = await fetchTextCached("data/carriers.csv", 60 * 60 * 1000);
           if (res && res.text) {
-            state.carriers = String(res.text).split(/\r?\n/).map((l) => l.trim())
+            state.carriers = [];
+            state.carrierNotes = new Map();
+            const lines = String(res.text).split(/\r?\n/).map((l) => l.trim())
               .filter((l) => l && !l.startsWith("#") && !/^(name|carrier|شركة)$/i.test(l));
+            for (const line of lines) {
+              const sep = line.indexOf(";");
+              const name = (sep >= 0 ? line.slice(0, sep) : line).trim();
+              const note = sep >= 0 ? line.slice(sep + 1).trim() : "";
+              if (!name) continue;
+              state.carriers.push(name);
+              if (note) state.carrierNotes.set(name, note);
+            }
           }
         } catch {}
         if (!state.carriers.length) state.carriers = ["مسارات", "قدموس"];

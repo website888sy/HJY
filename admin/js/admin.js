@@ -4425,7 +4425,7 @@ const ShippingManager = {
     });
     box.innerHTML = this._branchView.length ? this._branchView.map((b, vi) => `<div style="${this.rowStyle}">
       <div style="min-width:0"><div style="font-weight:800">${esc(b.branch)}</div><div class="hint" style="margin:0">${esc(b.company || '—')} • ${esc(b.gov || '—')}${b.note ? ' • ' + esc(b.note) : ''}</div></div>
-      <div style="display:flex;gap:6px">${this.moveBtns('BranchView', vi)}<button class="btn btn-sm btn-ghost" onclick="ShippingManager.editBranch(${b._i})">تعديل</button><button class="btn btn-sm btn-danger" onclick="ShippingManager.delBranch(${b._i})">حذف</button></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${this.moveBtns('BranchView', vi)}<button class="btn btn-sm btn-ghost" onclick="ShippingManager.editBranchNote(${b._i})">ملاحظة</button><button class="btn btn-sm btn-ghost" onclick="ShippingManager.editBranch(${b._i})">تعديل</button><button class="btn btn-sm btn-danger" onclick="ShippingManager.delBranch(${b._i})">حذف</button></div>
     </div>`).join('') : '<div class="hint" style="margin:0">لا يوجد فروع مطابقة.</div>';
   },
   persistGov() { App.otherCsvDrafts['data/governorates.csv'] = this.govs.join('\n') + (this.govs.length ? '\n' : ''); App.markDirty(); App.persistPendingNow(); },
@@ -4541,6 +4541,14 @@ const ShippingManager = {
     b.branch = n;
     const nt = await promptModal.open('ملاحظة صغيرة (اختياري):', b.note || '');
     if (nt !== null) b.note = String(nt).trim();
+    this.persistBranches();
+    this.renderBranchesList();
+  },
+  async editBranchNote(i) {
+    const b = this.branches[i]; if (!b) return;
+    const v = await promptModal.open(`ملاحظة عن «${b.branch}»:`, b.note || '');
+    if (v === null) return;
+    b.note = String(v).trim();
     this.persistBranches();
     this.renderBranchesList();
   },

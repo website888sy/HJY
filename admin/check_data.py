@@ -189,7 +189,8 @@ def check_shipping():
         problems.append("shipping: missing data/branches.csv")
         return
     gov_map = {norm_gov(g): g for g in govs}
-    carrier_set = set(carriers)
+    # carriers.csv يدعم صيغة: اسم الشركة;ملاحظة عامة
+    carrier_set = {str(line).split(";", 1)[0].strip() for line in carriers if str(line).strip()}
     seen = set()
     with open(branches_path, "r", encoding="utf-8-sig", newline="") as fh:
         reader = csv.DictReader(fh, delimiter=";")

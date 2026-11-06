@@ -4293,6 +4293,7 @@ const ShippingManager = {
   tab: 'gov',
   govs: [],
   carriers: [],
+  carrierNotes: new Map(),
   branches: [],
   _branchView: [],
   open() { $('shippingModal').classList.add('open'); this.loadAll().then(() => this.render()); },
@@ -4302,7 +4303,17 @@ const ShippingManager = {
   },
   async loadAll() {
     this.govs = await this.loadLines('data/governorates.csv');
-    this.carriers = await this.loadLines('data/carriers.csv');
+    const carrierLines = await this.loadLines('data/carriers.csv');
+    this.carriers = [];
+    this.carrierNotes = new Map();
+    for (const line of carrierLines) {
+      const sep = line.indexOf(';');
+      const name = (sep >= 0 ? line.slice(0, sep) : line).trim();
+      const note = sep >= 0 ? line.slice(sep + 1).trim() : '';
+      if (!name) continue;
+      this.carriers.push(name);
+      if (note) this.carrierNotes.set(name, note);
+    }
     this.branches = await this.loadBranches();
   },
   async loadLines(path) {
@@ -4351,10 +4362,29 @@ const ShippingManager = {
     box.innerHTML = html;
   },
   renderCarriers(box) {
-    let html = `<div style="display:flex;gap:8px;margin-bottom:12px"><input id="shipCarrierNew" class="input" placeholder="اسم شركة شحن جديدة..." style="max-width:320px"><button class="btn btn-primary" onclick="ShippingManager.addCarrier()">إضافة شركة</button></div>`;
+    let html = `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;background:#f8fafc;margin-bottom:12px">
+      <div style="font-weight:800;margin-bottom:8px">إضافة شركة شحن</div>
+      <div style="display:grid;grid-template-columns:minmax(180px,1fr) minmax(220px,2fr) auto;gap:8px;align-items:end">
+        <div><label class="field-label">اسم الشركة</label><input id="shipCarrierNew" class="input" placeholder="مثال: مسارات"></div>
+        <div><label class="field-label">ملاحظة عامة عن الشركة (اختياري)</label><input id="shipCarrierNoteNew" class="input" placeholder="تظهر أعلى صفحة فروع الشركة"></div>
+        <button class="btn btn-primary" onclick="ShippingManager.addCarrier()">إضافة شركة</button>
+      </div>
+    </div>`;
     html += this.carriers.length ? this.carriers.map((g, i) => {
       const count = this.branches.filter(b => b.company === g).length;
-      return `<div style="${this.rowStyle}"><div style="font-weight:800">${esc(g)} <span class="hint" style="font-weight:600">— ${count} فرع</span></div><div style="display:flex;gap:6px">${this.moveBtns('Carrier', i)}<button class="btn btn-sm btn-ghost" onclick="ShippingManager.editCarrier(${i})">تعديل</button><button class="btn btn-sm btn-danger" onclick="ShippingManager.delCarrier(${i})">حذف</button></div></div>`;
+      const note = String(this.carrierNotes.get(g) || '').trim();
+      return `<div style="${this.rowStyle}">
+        <div style="min-width:0">
+          <div style="font-weight:800">${esc(g)} <span class="hint" style="font-weight:600">— ${count} فرع</span></div>
+          ${note ? `<div class="hint" style="margin:2px 0 0;color:#b45309;font-weight:700">${esc(note)}</div>` : '<div class="hint" style="margin:2px 0 0">لا توجد ملاحظة عامة</div>'}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          ${this.moveBtns('Carrier', i)}
+          <button class="btn btn-sm btn-ghost" onclick="ShippingManager.editCarrierNote(${i})">ملاحظة</button>
+          <button class="btn btn-sm btn-ghost" onclick="ShippingManager.editCarrier(${i})">تعديل</button>
+          <button class="btn btn-sm btn-danger" onclick="ShippingManager.delCarrier(${i})">حذف</button>
+        </div>
+      </div>`;
     }).join('') : '<div class="hint" style="margin:0">لا يوجد شركات بعد.</div>';
     box.innerHTML = html;
   },
@@ -4399,7 +4429,14 @@ const ShippingManager = {
     </div>`).join('') : '<div class="hint" style="margin:0">لا يوجد فروع مطابقة.</div>';
   },
   persistGov() { App.otherCsvDrafts['data/governorates.csv'] = this.govs.join('\n') + (this.govs.length ? '\n' : ''); App.markDirty(); App.persistPendingNow(); },
-  persistCarriers() { App.otherCsvDrafts['data/carriers.csv'] = this.carriers.join('\n') + (this.carriers.length ? '\n' : ''); App.markDirty(); App.persistPendingNow(); },
+  persistCarriers() {
+    const lines = this.carriers.map((name) => {
+      const note = String(this.carrierNotes.get(name) || '').trim();
+      return note ? `${name};${note}` : name;
+    });
+    App.otherCsvDrafts['data/carriers.csv'] = lines.join('\n') + (lines.length ? '\n' : '');
+    App.markDirty(); App.persistPendingNow();
+  },
   persistBranches() {
     const rows = ['company;governorate;branch;note'];
     for (const b of this.branches) rows.push([b.company, b.gov, b.branch, b.note || ''].map(csvCell).join(';'));
@@ -4438,7 +4475,15 @@ const ShippingManager = {
     if (count) { this.branches = this.branches.filter(b => b.gov !== name); this.persistBranches(); }
     this.persistGov(); this.render();
   },
-  addCarrier() { const v = String($('shipCarrierNew')?.value || '').trim(); if (!v) return; if (this.carriers.includes(v)) return toast('موجود', false); this.carriers.push(v); this.persistCarriers(); this.render(); },
+  addCarrier() {
+    const v = String($('shipCarrierNew')?.value || '').trim();
+    const note = String($('shipCarrierNoteNew')?.value || '').trim();
+    if (!v) return;
+    if (this.carriers.includes(v)) return toast('موجود', false);
+    this.carriers.push(v);
+    if (note) this.carrierNotes.set(v, note); else this.carrierNotes.delete(v);
+    this.persistCarriers(); this.render();
+  },
   async editCarrier(i) {
     const oldName = this.carriers[i] || '';
     const v = await promptModal.open('تعديل الشركة:', oldName);
@@ -4446,9 +4491,21 @@ const ShippingManager = {
     const n = String(v).trim(); if (!n) return;
     this.carriers[i] = n;
     if (oldName && n !== oldName) {
+      const oldNote = this.carrierNotes.get(oldName) || '';
+      this.carrierNotes.delete(oldName);
+      if (oldNote) this.carrierNotes.set(n, oldNote);
       for (const b of this.branches) if (b.company === oldName) b.company = n;
       this.persistBranches();
     }
+    this.persistCarriers(); this.render();
+  },
+  async editCarrierNote(i) {
+    const name = this.carriers[i] || '';
+    if (!name) return;
+    const v = await promptModal.open(`ملاحظة عامة عن «${name}»:`, this.carrierNotes.get(name) || '');
+    if (v === null) return;
+    const note = String(v).trim();
+    if (note) this.carrierNotes.set(name, note); else this.carrierNotes.delete(name);
     this.persistCarriers(); this.render();
   },
   async delCarrier(i) {
@@ -4457,6 +4514,7 @@ const ShippingManager = {
     const ok = await confirmAsync('حذف شركة', `حذف «${name}»${count ? ` و${count} فرع مرتبط بها` : ''}؟`, 'حذف');
     if (!ok) return;
     this.carriers.splice(i, 1);
+    this.carrierNotes.delete(name);
     if (count) { this.branches = this.branches.filter(b => b.company !== name); this.persistBranches(); }
     this.persistCarriers(); this.render();
   },

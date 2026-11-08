@@ -4174,6 +4174,86 @@ function debounce(fn, ms) {
         const s = String(key ?? "").trim();
         return s.startsWith("فروع ") ? s.slice(5).trim() : "";
       }
+      const branchPageState = { company: "", gov: "", query: "" };
+      const branchPageData = { list: [], groups: new Map(), govs: [] };
+
+      function branchPageMatch(branch, query) {
+        const q = normalizeArabicText(query);
+        if (!q) return true;
+        const hay = normalizeArabicText(`${branch.branch || ""} ${branch.note || ""} ${branch.gov || ""}`);
+        return q.split(/\s+/).filter(Boolean).every((token) => hay.includes(token));
+      }
+
+      function branchGroupHtml(gov, rows, open) {
+        const cards = rows.map((b) => `<div class="branch-item">
+          <div class="branch-name">${escapeHtml(b.branch)}</div>
+          ${b.note ? `<div class="branch-note">${escapeHtml(b.note)}</div>` : ""}
+        </div>`).join("");
+        return `<details class="branches-group" ${open ? "open" : ""}>
+          <summary><span class="branches-gov">${escapeHtml(gov)}</span><span class="branches-count">${rows.length}</span></summary>
+          <div class="branches-grid">${cards}</div>
+        </details>`;
+      }
+
+      function branchPageResultsHtml() {
+        const { list, groups, govs } = branchPageData;
+        const query = String(branchPageState.query || "").trim();
+        const selected = String(branchPageState.gov || govs[0] || "");
+        if (!list.length) return `<div class="branches-empty">لا توجد فروع مضافة لهذه الشركة حاليًا.</div>`;
+        if (selected === "__ALL__") {
+          let html = `<div class="branches-section-label">${query ? "نتائج البحث في كل المحافظات" : "كل المحافظات"}</div>`;
+          let first = true;
+          for (const [gov, rows] of groups) {
+            const filtered = query ? rows.filter((b) => branchPageMatch(b, query)) : rows;
+            if (!filtered.length) continue;
+            html += branchGroupHtml(gov, filtered, query ? true : first);
+            first = false;
+          }
+          return query && html === `<div class="branches-section-label">نتائج البحث في كل المحافظات</div>`
+            ? `<div class="branches-no-match">لا توجد فروع مطابقة لبحثك.</div>`
+            : html;
+        }
+        const selectedRows = groups.get(selected) || [];
+        const selectedMatches = query ? selectedRows.filter((b) => branchPageMatch(b, query)) : selectedRows;
+        let html = "";
+        if (selectedMatches.length) {
+          html += `<div class="branches-section-label">${query ? "نتائج في المحافظة المحددة" : "فروع المحافظة المحددة"}</div>`;
+          html += branchGroupHtml(selected, selectedMatches, true);
+        } else if (query) {
+          html += `<div class="branches-no-match">لا يوجد فرع مطابق في «${escapeHtml(selected)}» — تظهر النتائج من محافظات أخرى أدناه.</div>`;
+        }
+        const others = [];
+        for (const [gov, rows] of groups) {
+          if (gov === selected) continue;
+          const filtered = query ? rows.filter((b) => branchPageMatch(b, query)) : rows;
+          if (filtered.length) others.push([gov, filtered]);
+        }
+        if (others.length) {
+          html += `<div class="branches-other-title">${query ? "نتائج من محافظات أخرى" : "محافظات أخرى"}</div>`;
+          for (const [gov, rows] of others) html += branchGroupHtml(gov, rows, query ? true : false);
+        }
+        if (!html) html = `<div class="branches-no-match">لا توجد فروع مطابقة لبحثك.</div>`;
+        return html;
+      }
+
+      function updateBranchGovUi() {
+        const selected = String(branchPageState.gov || "");
+        document.querySelectorAll("[data-branch-gov]").forEach((btn) => {
+          btn.classList.toggle("active", String(btn.getAttribute("data-branch-gov") || "") === selected);
+        });
+        const more = document.getElementById("branchGovMore");
+        if (more instanceof HTMLSelectElement) {
+          const first3 = (branchPageData.govs || []).slice(0, 3);
+          more.value = selected && selected !== "__ALL__" && !first3.includes(selected) ? selected : "";
+        }
+      }
+
+      function refreshBranchResults() {
+        const box = document.getElementById("branchResults");
+        if (!box) return;
+        box.innerHTML = branchPageResultsHtml();
+      }
+
       async function renderCompanyBranchesPage(company) {
         const name = String(company || "").trim();
         els.infoTitle.textContent = `فروع ${name}`;
@@ -4200,25 +4280,66 @@ function debounce(fn, ms) {
           if (!groups.has(gov)) groups.set(gov, []);
           groups.get(gov).push(b);
         }
-        const openAll = groups.size <= 3;
-        let html = `<div class="branches-page">`;
-        if (companyNote) html += `<div class="branches-company-note">${escapeHtml(companyNote)}</div>`;
-        let gi = 0;
-        for (const [gov, rows] of groups) {
-          html += `<details class="branches-group" ${openAll || gi === 0 ? "open" : ""}>
-            <summary><span class="branches-gov">${escapeHtml(gov)}</span><span class="branches-count">${rows.length}</span></summary>
-            <div class="branches-grid">`;
-          for (const b of rows) {
-            html += `<div class="branch-item">
-              <div class="branch-name">${escapeHtml(b.branch)}</div>
-              ${b.note ? `<div class="branch-note">${escapeHtml(b.note)}</div>` : ""}
-            </div>`;
-          }
-          html += `</div></details>`;
-          gi++;
+        const govs = Array.from(groups.keys());
+        const sameCompany = branchPageState.company === name;
+        branchPageData.list = list;
+        branchPageData.groups = groups;
+        branchPageData.govs = govs;
+        branchPageState.company = name;
+        if (!sameCompany) {
+          branchPageState.gov = govs[0] || "__ALL__";
+          branchPageState.query = "";
+        } else if (!branchPageState.gov || (!groups.has(branchPageState.gov) && branchPageState.gov !== "__ALL__")) {
+          branchPageState.gov = govs[0] || "__ALL__";
         }
-        html += `<div class="branches-actions">${back}</div></div>`;
-        els.infoText.innerHTML = html;
+        const selected = branchPageState.gov;
+        const first3 = govs.slice(0, 3);
+        const quick = first3.map((g) => `<button type="button" class="branch-gov-pill${selected === g ? " active" : ""}" data-branch-gov="${escapeHtmlAttr(g)}">${escapeHtml(g)}</button>`).join("");
+        const allBtn = `<button type="button" class="branch-gov-pill${selected === "__ALL__" ? " active" : ""}" data-branch-gov="__ALL__">الكل</button>`;
+        const more = govs.length > 3
+          ? `<select id="branchGovMore" class="branch-gov-more" aria-label="المزيد من المحافظات">
+              <option value="">المزيد</option>
+              ${govs.map((g) => `<option value="${escapeHtmlAttr(g)}" ${selected === g && !first3.includes(g) ? "selected" : ""}>${escapeHtml(g)}</option>`).join("")}
+            </select>`
+          : "";
+        els.infoText.innerHTML = `<div class="branches-page">
+          ${companyNote ? `<div class="branches-company-note">${escapeHtml(companyNote)}</div>` : ""}
+          <div class="branches-toolbar">
+            <div class="branch-search-wrap">
+              <span aria-hidden="true">🔍</span>
+              <input id="branchSearchInput" class="branch-search" type="search" autocomplete="off" placeholder="ابحث عن فرع أو ملاحظة..." value="${escapeHtmlAttr(branchPageState.query)}" />
+            </div>
+            <div class="branch-gov-pills">${quick}${allBtn}${more}</div>
+          </div>
+          <div id="branchResults">${branchPageResultsHtml()}</div>
+          <div class="branches-actions">${back}</div>
+        </div>`;
+
+        const input = document.getElementById("branchSearchInput");
+        if (input instanceof HTMLInputElement) {
+          input.addEventListener("input", debounce(() => {
+            branchPageState.query = String(input.value || "");
+            refreshBranchResults();
+          }, 120));
+        }
+        document.querySelectorAll("[data-branch-gov]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            branchPageState.gov = String(btn.getAttribute("data-branch-gov") || "");
+            branchPageState.query = String(document.getElementById("branchSearchInput")?.value || "");
+            updateBranchGovUi();
+            refreshBranchResults();
+          });
+        });
+        const moreSelect = document.getElementById("branchGovMore");
+        if (moreSelect instanceof HTMLSelectElement) {
+          moreSelect.addEventListener("change", () => {
+            if (!moreSelect.value) return;
+            branchPageState.gov = moreSelect.value;
+            branchPageState.query = String(document.getElementById("branchSearchInput")?.value || "");
+            updateBranchGovUi();
+            refreshBranchResults();
+          });
+        }
       }
       async function renderInfo(key) {
         const k = String(key ?? "").trim();

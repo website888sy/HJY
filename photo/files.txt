@@ -29,6 +29,9 @@ photo/BS-35CM.webp
 photo/BS-40CM.webp
 photo/BS-50CM.webp
 photo/BS-55CM.webp
+photo/CABK20A-1.webp
+photo/CABK20A-2.webp
+photo/CABK20A.webp
 photo/CB-60-10.webp
 photo/CB-60-5.webp
 photo/CB-60-8.webp
@@ -324,6 +327,10 @@ photo/PT22624C.webp
 photo/PT22625A.webp
 photo/PT22628A-1.webp
 photo/PT22628A.webp
+photo/PURENICKLE99-1.webp
+photo/PURENICKLE99-2.webp
+photo/PURENICKLE99-3.webp
+photo/PURENICKLE99.webp
 photo/QAR.webp
 photo/QR-206.webp
 photo/QSS052RF.webp

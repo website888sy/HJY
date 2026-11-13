@@ -194,6 +194,7 @@ photo/GREE24300.webp
 photo/GREE48300-1.webp
 photo/GREE48300-2.webp
 photo/GREE48300-3.webp
+photo/HOLDER40140.webp
 photo/INV-AST-4K-5G-1.webp
 photo/INV-AST-4K-5G.webp
 photo/JK-APK1.webp

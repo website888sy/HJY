@@ -330,6 +330,11 @@ photo/LEP300-GREE.webp
 photo/LOCK12-L.webp
 photo/LOCK12-MINI.webp
 photo/NI-10MM.webp
+photo/PB2A16S20P-1.webp
+photo/PB2A16S20P-2.webp
+photo/PB2A16S20P-3.webp
+photo/PB2A16S20P-4.webp
+photo/PB2A16S20P.webp
 photo/POINTS12V-1.webp
 photo/POINTS12V.webp
 photo/PS12-1A.jpg

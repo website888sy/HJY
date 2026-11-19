@@ -53,6 +53,8 @@ photo/CBAK72-20-3.webp
 photo/CBAK72-40-1.webp
 photo/CBAK72-40-2.webp
 photo/CBAK72-40-3.webp
+photo/CBAK72-40-4.webp
+photo/CBAK72-40.webp
 photo/DALY-24-LEP-60A.webp
 photo/DATA-206.webp
 photo/DESAY-DATA.webp

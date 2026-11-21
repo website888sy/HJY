@@ -536,7 +536,7 @@ const GH = {
 
 /* ======================= WEBP CONVERTER ======================= */
 const ImgConv = {
-  async toWebP(file, maxDim = 1000) {
+  async toWebP(file, maxDim = 1000, quality = 0.8) {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file);
       const img = new Image();
@@ -558,9 +558,10 @@ const ImgConv = {
             else onDone(null);
           }, 'image/webp', quality);
         };
-        attempt(0.8, (b1) => {
+        const q = Math.max(0.5, Math.min(0.98, Number(quality) || 0.8));
+        attempt(q, (b1) => {
           if (b1) return resolve(b1);
-          attempt(0.65, (b2) => {
+          attempt(Math.max(0.5, q - 0.15), (b2) => {
             if (b2) return resolve(b2);
             reject(new Error('فشل تحويل الصورة'));
           });
@@ -3790,23 +3791,103 @@ const Products = {
 /* ======================= SITE TEXT EDITOR (promo / what_new / new_offer) ======================= */
 const SiteText = {
   _path: null,
+  _pendingImages: [],
   async open(title, path, hint) {
     this._path = String(path || '');
+    this._pendingImages = [];
     const t = $('siteTextTitle'); if (t) t.textContent = String(title || 'تحرير النص');
     const h = $('siteTextHint'); if (h) h.textContent = String(hint || '');
     const area = $('siteTextArea');
     if (area) { area.value = 'جارٍ التحميل...'; area.disabled = true; }
     $('siteTextModal').classList.add('open');
+    this.renderImagePreview();
     let txt = null;
     try { txt = await App.getCsvText(this._path); } catch {}
     if (txt == null) txt = '';
     if (area) { area.value = String(txt); area.disabled = false; area.focus(); }
   },
-  close() { $('siteTextModal').classList.remove('open'); this._path = null; },
-  save() {
+  close() {
+    $('siteTextModal').classList.remove('open');
+    this._path = null;
+    this._pendingImages = [];
+    this.renderImagePreview();
+  },
+  renderImagePreview() {
+    const box = $('siteTextImagesPreview');
+    if (!box) return;
+    const list = this._pendingImages || [];
+    box.innerHTML = list.map((img, i) => `<div class="site-text-image-thumb" title="${esc(img.path)}">
+      <img src="${esc(img.dataUrl)}" alt="">
+      <button type="button" onclick="SiteText.removePendingImage(${i})" title="حذف الصورة من النص">×</button>
+    </div>`).join('');
+  },
+  removePendingImage(i) {
+    const img = this._pendingImages[i];
+    if (!img) return;
+    this._pendingImages.splice(i, 1);
+    const area = $('siteTextArea');
+    if (area) {
+      area.value = String(area.value || '').split(img.token).join('');
+      area.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    this.renderImagePreview();
+  },
+  async uploadImages(files) {
+    const list = Array.from(files || []).filter((f) => f && /^image\//i.test(String(f.type || '')));
+    if (!list.length) return;
+    if (!this._path) { toast('افتح صفحة أولاً', false); return; }
+    const area = $('siteTextArea');
+    if (!area) return;
+    const folder = this._path.startsWith('QA/') ? 'QA/images'
+      : this._path.startsWith('about/') ? 'about/images'
+      : 'data/images';
+    const wasDisabled = area.disabled;
+    area.disabled = true;
+    let added = 0;
+    for (const file of list) {
+      try {
+        const blob = await ImgConv.toWebP(file, 1800, 0.92);
+        const b64 = await ImgConv.blobToBase64(blob);
+        const base = String(file.name || 'image').replace(/\.[^.]+$/, '')
+          .replace(/[^\w\u0600-\u06FF-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 45) || 'image';
+        const unique = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        const path = `${folder}/${base}-${unique}.webp`;
+        const token = `[[img:${path}|${base}]]`;
+        this._pendingImages.push({
+          path, base64: b64, token,
+          dataUrl: 'data:image/webp;base64,' + b64,
+        });
+        const insert = `${area.value.trim() ? '\n\n' : ''}${token}\n`;
+        const start = Number.isInteger(area.selectionStart) ? area.selectionStart : area.value.length;
+        const end = Number.isInteger(area.selectionEnd) ? area.selectionEnd : start;
+        area.value = area.value.slice(0, start) + insert + area.value.slice(end);
+        area.selectionStart = area.selectionEnd = start + insert.length;
+        area.dispatchEvent(new Event('input', { bubbles: true }));
+        added++;
+      } catch (e) {
+        toast('تعذر تحويل الصورة: ' + String(file.name || ''), false);
+      }
+    }
+    area.disabled = wasDisabled;
+    this.renderImagePreview();
+    if (added) toast(`تم تجهيز ${added} صورة WebP عالية الجودة — اضغط حفظ`);
+  },
+  async save() {
     if (!this._path) return;
     const area = $('siteTextArea'); if (!area) return;
-    App.otherCsvDrafts[this._path] = String(area.value ?? '');
+    const text = String(area.value ?? '');
+    for (const img of (this._pendingImages || [])) {
+      if (!text.includes(img.token)) continue;
+      if (!App.photoUploads.some((x) => x.path === img.path)) {
+        App.photoUploads.push({ path: img.path, base64: img.base64 });
+      }
+      if (LocalSync.isActive()) {
+        try { await LocalSync.writeBinary(img.path, img.base64); } catch {}
+      }
+    }
+    this._pendingImages = [];
+    this.renderImagePreview();
+    App.otherCsvDrafts[this._path] = text;
     App.markDirty();
     App.persistPendingNow();
     log('تم تعديل ' + this._path + ' محلياً (بانتظار النشر)', true);

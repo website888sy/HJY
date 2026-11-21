@@ -1114,6 +1114,9 @@ const App = {
 
   async tryAutoLoadToken() {
     if (GH._fileSettingsLoaded) return;
+    const host = String(location.hostname || '').toLowerCase();
+    const isLocal = location.protocol === 'file:' || !host || host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal) return;
     try {
       const raw = await fetchTextRelatively('token-github.txt');
       if (raw) {
@@ -2506,6 +2509,9 @@ const LocalSync = {
     this.restoreHandle();
   },
   async probeServer() {
+    const host = String(location.hostname || '').toLowerCase();
+    const isLocal = location.protocol === 'file:' || !host || host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal) { this.updateStatus(); return; }
     const urls = ['http://localhost:8333', 'http://127.0.0.1:8333'];
     for (const u of urls) {
       try {

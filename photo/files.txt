@@ -16,6 +16,7 @@ photo/5301.webp
 photo/8266-12.jpg
 photo/AB-48V-16S.webp
 photo/ARD-SH-NANO.webp
+photo/BD6A24S4PD-2.webp
 photo/BIWO24-50-1.webp
 photo/BIWO24-50-2.webp
 photo/BIWO24-50.webp

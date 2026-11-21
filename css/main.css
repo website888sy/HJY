@@ -1744,3 +1744,28 @@
   .branch-search-wrap { flex-basis: 100%; }
   .branch-gov-pills { width: 100%; }
 }
+
+/* ============================================================
+   INLINE IMAGES IN ABOUT / FAQ / SITE TEXT
+   ============================================================ */
+.site-inline-image {
+  margin: 10px 0; text-align: center; white-space: normal;
+}
+.site-inline-image, .site-inline-image * { white-space: normal; }
+.site-inline-image img {
+  display: inline-block; max-width: 100%; height: auto;
+  border-radius: 12px; border: 1px solid var(--border);
+  cursor: zoom-in; box-shadow: 0 3px 14px rgba(15, 23, 42, .10);
+  background: #fff;
+}
+.site-inline-image figcaption {
+  margin-top: 5px; font-size: 11.5px; color: var(--muted);
+  font-weight: 700; line-height: 1.6;
+}
+.site-inline-image figcaption:empty { display: none; }
+.site-inline-image.img-error img { display: none; }
+.site-inline-image.img-error::after {
+  content: "تعذر تحميل الصورة"; display: block; padding: 10px;
+  border: 1px dashed var(--border); border-radius: 10px;
+  color: var(--muted); font-size: 12px; font-weight: 700;
+}

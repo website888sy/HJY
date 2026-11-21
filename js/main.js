@@ -362,6 +362,28 @@ function debounce(fn, ms) {
         });
         return html.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[+i] || m);
       }
+      function protectInlineImages(line) {
+        const images = [];
+        const replaced = String(line ?? "").replace(/\[\[img:([^|\]]+)(?:\|([^\]]*))?\]\]/gi, (m, src, alt) => {
+          images.push({ src: String(src || "").trim(), alt: String(alt || "").trim() });
+          return `\u0001G${images.length - 1}\u0002`;
+        });
+        return { replaced, images };
+      }
+      function restoreInlineImages(html, images) {
+        if (!images || !images.length) return html;
+        return String(html).replace(/\u0001G(\d+)\u0002/g, (m, i) => {
+          const im = images[+i];
+          if (!im) return "";
+          const src = String(im.src || "").trim();
+          if (!src) return "";
+          if (/^\s*(?:javascript|vbscript|data):/i.test(src)) return "";
+          if (/^\s*\/\//.test(src)) return "";
+          if (!/^(https?:\/\/|\/|\.{1,2}\/|[^:]+$)/i.test(src)) return "";
+          const alt = escapeHtml(im.alt || "");
+          return `<figure class="site-inline-image"><img src="${escapeHtmlAttr(src)}" alt="${alt}" loading="lazy" decoding="async" onclick="window.openImgModal && window.openImgModal(this.src)" onerror="this.style.display='none';this.closest('figure').classList.add('img-error')"><figcaption>${alt}</figcaption></figure>`;
+        });
+      }
       function formatAboutTextPlain(raw, alignOverride) {
         let cleaned = String(raw ?? "").replace(/^\uFEFF/, "");
         let lines = cleaned.split(/\r?\n/);
@@ -375,7 +397,8 @@ function debounce(fn, ms) {
           }
           
           let hasUrl = /(?:https?:\/\/|www\.)[^\s<"']+/.test(line);
-          let escapedLine = escapeHtml(line);
+          const inlineImages = protectInlineImages(line);
+          let escapedLine = escapeHtml(inlineImages.replaced);
           
           // protect URLs FIRST (so bdi/phone/markdown replaces don't corrupt links)
           const links = [];
@@ -399,6 +422,7 @@ function debounce(fn, ms) {
           escapedLine = escapedLine.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
           escapedLine = escapedLine.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
           escapedLine = escapedLine.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[+i] || m);
+          escapedLine = restoreInlineImages(escapedLine, inlineImages.images);
           
           if (alignOverride === "center") {
             htmlParts.push(`<div style="direction: rtl; text-align: center; overflow-wrap: break-word; word-wrap: break-word;">${escapedLine}</div>`);
@@ -424,7 +448,8 @@ function debounce(fn, ms) {
           }
           
           let hasUrl = /(?:https?:\/\/|www\.)[^\s<"']+/.test(line);
-          let escapedLine = escapeHtml(line);
+          const inlineImages = protectInlineImages(line);
+          let escapedLine = escapeHtml(inlineImages.replaced);
           
           // protect URLs FIRST (so bdi/phone/markdown replaces don't corrupt links)
           const links = [];
@@ -447,7 +472,8 @@ function debounce(fn, ms) {
           });
           escapedLine = escapedLine.replace(/\/\/\s*([\s\S]+?)\s*\/\//g, `<strong class="about-warn">$1</strong>`);
           escapedLine = escapedLine.replace(/\*\*\s*([\s\S]+?)\s*\*\*/g, `<strong class="about-em">$1</strong>`);
-          escapedLine = escapedLine.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[+i] || m);
+          escapedLine = escapedLine.replace(/\u0001L(\d+)\u0002/g, (m, i) => links[i] || m);
+          escapedLine = restoreInlineImages(escapedLine, inlineImages.images);
           
           if (hasUrl) {
             htmlParts.push(`<div style="direction: ltr; text-align: left; overflow-wrap: break-word; word-wrap: break-word; text-overflow: ellipsis; white-space: pre-wrap;">${escapedLine}</div>`);

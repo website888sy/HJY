@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'hjy-admin-cache-v31';
+﻿const CACHE_NAME = 'hjy-admin-cache-v32';
 const urlsToCache = [
   './',
   './index.html',

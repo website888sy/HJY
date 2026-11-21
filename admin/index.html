@@ -32,7 +32,7 @@
     }
   }
 </script>
-<link rel="stylesheet" href="css/admin.css?v=31">
+<link rel="stylesheet" href="css/admin.css?v=32">
 </head>
 <body>
 
@@ -811,6 +811,14 @@
     </div>
     <div class="modal-body">
       <div class="hint" id="siteTextHint" style="margin-top:0"></div>
+      <div class="site-text-image-tools">
+        <label class="btn btn-soft btn-sm" style="cursor:pointer;margin:0">
+          🖼 إضافة صورة WebP
+          <input id="siteTextImageInput" type="file" accept="image/*" multiple style="display:none" onchange="SiteText.uploadImages(this.files); this.value='';">
+        </label>
+        <span class="hint" style="margin:0">تحويل تلقائي إلى WebP عالية الجودة — الصورة تُعرض في الموقع وقابلة للتكبير.</span>
+      </div>
+      <div id="siteTextImagesPreview" class="site-text-images-preview"></div>
       <div class="text-tools" title="حدد النص ثم اضغط على التنسيق">
         <button type="button" class="text-tool" onclick="TextTools.wrap('siteTextArea','**','**')"><b>غامق</b></button>
         <button type="button" class="text-tool" style="color:#e11d48" onclick="TextTools.wrap('siteTextArea','RED//','//')">أحمر</button>
@@ -1173,6 +1181,6 @@
     el.style.height = Math.max(66, el.scrollHeight) + 'px';
   }
 </script>
-<script src="js/admin.js?v=31"></script>
+<script src="js/admin.js?v=32"></script>
 </body>
 </html>

@@ -108,6 +108,11 @@ photo/EVE-15A-C33.webp
 photo/EVE-20A-C40-1.webp
 photo/EVE-20A-C40-2.webp
 photo/EVE-20A-C40.webp
+photo/EVE-C40KS-V2-20A-1.webp
+photo/EVE-C40KS-V2-20A-2.webp
+photo/EVE-C40KS-V2-20A-3.webp
+photo/EVE-C40KS-V2-20A-4.webp
+photo/EVE-C40KS-V2-20A.webp
 photo/EVE48-15-1.webp
 photo/EVE48-15-2.webp
 photo/EVE48-20-1.webp

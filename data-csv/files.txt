@@ -4,7 +4,6 @@ Elevators.csv
 ReceiverRF.csv
 battery-accessories.csv
 bike-charger.csv
-cell-bms.csv
 e-bike-battery.csv
 inverter.csv
 receiver-with-antena.csv
@@ -15,4 +14,3 @@ solar-battery.csv
 water-sensor.csv
 wifi-qiachip.csv
 powre-supply.csv
-BMS.csv
